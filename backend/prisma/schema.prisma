@@ -1,0 +1,435 @@
+// Schema source of truth is backend/prisma/migrations/*.sql (see docs/09-kararlar.md K-04).
+// This file is the Prisma-side reflection of that SQL, kept in sync by hand.
+// Never run `prisma migrate dev` / `db push` -- see CLAUDE.md and docs/10-gelistirme-rehberi.md.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Enums -- DB values are lowercase snake_case, Prisma members are UPPERCASE (K-09)
+// ---------------------------------------------------------------------------
+
+enum UserRole {
+  USER           @map("user")
+  FACILITY_ADMIN @map("facility_admin")
+  EXPERT         @map("expert")
+  OSB_MANAGER    @map("osb_manager")
+  ADMIN          @map("admin")
+
+  @@map("user_role")
+}
+
+enum MaterialClass {
+  METAL    @map("metal")
+  PLASTIC  @map("plastic")
+  ORGANIC  @map("organic")
+  CHEMICAL @map("chemical")
+  TEXTILE  @map("textile")
+  GLASS    @map("glass")
+  PAPER    @map("paper")
+  OTHER    @map("other")
+
+  @@map("material_class")
+}
+
+enum RecordType {
+  INPUT  @map("input")
+  OUTPUT @map("output")
+
+  @@map("record_type")
+}
+
+enum MatchStatus {
+  PENDING   @map("pending")
+  ACCEPTED  @map("accepted")
+  REJECTED  @map("rejected")
+  COMPLETED @map("completed")
+  EXPIRED   @map("expired")
+
+  @@map("match_status")
+}
+
+enum ReportType {
+  ENVIRONMENTAL @map("environmental")
+  CBAM          @map("cbam")
+  DPP           @map("dpp")
+
+  @@map("report_type")
+}
+
+enum ChatRole {
+  USER      @map("user")
+  ASSISTANT @map("assistant")
+
+  @@map("chat_role")
+}
+
+enum ReviewStatus {
+  PENDING  @map("pending")
+  APPROVED @map("approved")
+  REJECTED @map("rejected")
+
+  @@map("review_status")
+}
+
+// ---------------------------------------------------------------------------
+// Identity and facility
+// ---------------------------------------------------------------------------
+
+model Osb {
+  id        String                              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String                              @db.VarChar(255)
+  city      String                              @db.VarChar(100)
+  region    Unsupported("geography(Polygon, 4326)")?
+  createdAt DateTime?                           @default(now()) @map("created_at")
+
+  facilities Facility[]
+
+  @@map("osbs")
+}
+
+model Facility {
+  id        String                            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String                            @db.VarChar(255)
+  taxId     String                            @unique @map("tax_id") @db.VarChar(20)
+  sector    String                            @db.VarChar(150)
+  location  Unsupported("geography(Point, 4326)")?
+  osbId     String?                           @map("osb_id") @db.Uuid
+  verified  Boolean                           @default(false)
+  createdAt DateTime?                         @default(now()) @map("created_at")
+  updatedAt DateTime?                         @default(now()) @map("updated_at")
+
+  osb                  Osb?                   @relation(fields: [osbId], references: [id], onDelete: SetNull)
+  users                User[]
+  inputs               Input[]
+  outputs              Output[]
+  sensorData           SensorData[]
+  facilityVerification FacilityVerification[]
+
+  @@map("facilities")
+}
+
+model User {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  facilityId    String    @map("facility_id") @db.Uuid
+  email         String    @unique @db.VarChar(255)
+  passwordHash  String    @map("password_hash") @db.VarChar(255)
+  role          UserRole  @default(USER)
+  contactName   String?   @map("contact_name") @db.VarChar(150)
+  phone         String?   @db.VarChar(30)
+  emailVerified Boolean   @default(false) @map("email_verified")
+  refreshToken  String?   @map("refresh_token") @db.VarChar(255)
+  lastLogin     DateTime? @map("last_login")
+  createdAt     DateTime? @default(now()) @map("created_at")
+
+  facility             Facility               @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+  apiKeys              ApiKey[]
+  reviewedVerifications FacilityVerification[] @relation("VerificationReviewer")
+  reviewedQueueItems   HumanReviewQueue[]     @relation("ReviewQueueReviewer")
+  notifications        Notification[]
+  notificationPrefs    NotificationPref[]
+  messages             Message[]
+  systemConfigUpdates  SystemConfig[]
+  weightsConfigs       WeightsConfig[]
+
+  @@map("users")
+}
+
+model ApiKey {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  keyHash   String    @unique @map("key_hash") @db.VarChar(255)
+  name      String    @db.VarChar(100)
+  scopes    String[]  @default(["read"])
+  lastUsed  DateTime? @map("last_used")
+  expiresAt DateTime? @map("expires_at")
+  createdAt DateTime? @default(now()) @map("created_at")
+  revokedAt DateTime? @map("revoked_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("api_keys")
+}
+
+model FacilityVerification {
+  id               String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  facilityId       String        @map("facility_id") @db.Uuid
+  documentType     String        @map("document_type") @db.VarChar(50)
+  documentUrl      String        @map("document_url") @db.VarChar(500)
+  status           ReviewStatus  @default(PENDING)
+  reviewedBy       String?       @map("reviewed_by") @db.Uuid
+  reviewedAt       DateTime?     @map("reviewed_at")
+  rejectionReason  String?       @map("rejection_reason")
+  createdAt        DateTime?     @default(now()) @map("created_at")
+
+  facility Facility @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+  reviewer User?    @relation("VerificationReviewer", fields: [reviewedBy], references: [id], onDelete: SetNull)
+
+  @@map("facility_verification")
+}
+
+// ---------------------------------------------------------------------------
+// Materials
+// ---------------------------------------------------------------------------
+
+model Input {
+  id            String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  facilityId    String         @map("facility_id") @db.Uuid
+  materialClass MaterialClass? @map("material_class")
+  description   String
+  specs         Json?
+  quantityKg    Decimal        @map("quantity_kg") @db.Decimal(12, 2)
+  frequency     String?        @db.VarChar(50)
+  active        Boolean        @default(true)
+  pendingReview    Boolean      @default(false) @map("pending_review")
+  embeddingPending Boolean      @default(false) @map("embedding_pending")
+  createdAt     DateTime?      @default(now()) @map("created_at")
+
+  facility Facility @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+  matches  Match[]
+
+  @@map("inputs")
+}
+
+model Output {
+  id                String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  facilityId        String         @map("facility_id") @db.Uuid
+  materialClass     MaterialClass? @map("material_class")
+  description       String
+  composition       Json?
+  quantityKg        Decimal        @map("quantity_kg") @db.Decimal(12, 2)
+  stock             Decimal        @default(0) @db.Decimal(12, 2)
+  availability      Boolean        @default(true)
+  pendingReview     Boolean        @default(false) @map("pending_review")
+  embeddingPending  Boolean        @default(false) @map("embedding_pending")
+  createdAt         DateTime?      @default(now()) @map("created_at")
+
+  facility          Facility           @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+  matches           Match[]
+  materialPassport  MaterialPassport?
+  sensorData        SensorData[]
+  reviewQueueItems  HumanReviewQueue[]
+
+  @@map("outputs")
+}
+
+model Embedding {
+  id           String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  recordId     String     @map("record_id") @db.Uuid
+  recordType   RecordType @map("record_type")
+  vector       Unsupported("vector(768)")
+  modelVersion String     @map("model_version") @db.VarChar(100)
+  createdAt    DateTime?  @default(now()) @map("created_at")
+
+  @@unique([recordId, recordType])
+  @@map("embeddings")
+}
+
+model MaterialPassport {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  outputId      String    @unique @map("output_id") @db.Uuid
+  passportData  Json      @map("passport_data")
+  dppCompliant  Boolean   @default(false) @map("dpp_compliant")
+  qrCode        String?   @map("qr_code") @db.VarChar(500)
+  pdfUrl        String?   @map("pdf_url") @db.VarChar(500)
+  createdAt     DateTime? @default(now()) @map("created_at")
+
+  output Output @relation(fields: [outputId], references: [id], onDelete: Cascade)
+
+  @@map("material_passports")
+}
+
+// ---------------------------------------------------------------------------
+// Matching
+// ---------------------------------------------------------------------------
+
+model Match {
+  id                        String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  outputId                  String       @map("output_id") @db.Uuid
+  inputId                   String       @map("input_id") @db.Uuid
+  totalScore                Int          @map("total_score")
+  breakdown                 Json
+  status                    MatchStatus  @default(PENDING)
+  demandQty                 Decimal?     @map("demand_qty") @db.Decimal(12, 2)
+  co2Saved                  Decimal?     @map("co2_saved") @db.Decimal(12, 2)
+  costSaving                Decimal?     @map("cost_saving") @db.Decimal(12, 2)
+  cbamImpact                Decimal?     @map("cbam_impact") @db.Decimal(12, 2)
+  rejectionReasonCategory   String?      @map("rejection_reason_category") @db.VarChar(50)
+  rejectionReasonText       String?      @map("rejection_reason_text")
+  acceptedBySupplierAt      DateTime?    @map("accepted_by_supplier_at")
+  acceptedByConsumerAt      DateTime?    @map("accepted_by_consumer_at")
+  expiresAt                 DateTime     @map("expires_at")
+  createdAt                 DateTime?    @default(now()) @map("created_at")
+
+  output           Output             @relation(fields: [outputId], references: [id], onDelete: Cascade)
+  input            Input              @relation(fields: [inputId], references: [id], onDelete: Cascade)
+  reviewQueueItems HumanReviewQueue[]
+  reports          Report[]
+
+  @@map("matches")
+}
+
+model HumanReviewQueue {
+  id           String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  outputId     String?       @map("output_id") @db.Uuid
+  matchId      String?       @map("match_id") @db.Uuid
+  confidence   Decimal       @db.Decimal(4, 3)
+  reason       String?       @db.VarChar(255)
+  aiSuggestion Json?         @map("ai_suggestion")
+  status       ReviewStatus  @default(PENDING)
+  reviewedBy   String?       @map("reviewed_by") @db.Uuid
+  reviewedAt   DateTime?     @map("reviewed_at")
+  notes        String?
+  createdAt    DateTime?     @default(now()) @map("created_at")
+
+  output   Output? @relation(fields: [outputId], references: [id], onDelete: Cascade)
+  match    Match?  @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  reviewer User?   @relation("ReviewQueueReviewer", fields: [reviewedBy], references: [id], onDelete: SetNull)
+
+  @@map("human_review_queue")
+}
+
+model Report {
+  id         String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  matchId    String     @map("match_id") @db.Uuid
+  reportType ReportType @map("report_type")
+  data       Json
+  pdfUrl     String?    @map("pdf_url") @db.VarChar(500)
+  createdAt  DateTime?  @default(now()) @map("created_at")
+
+  match Match @relation(fields: [matchId], references: [id], onDelete: Cascade)
+
+  @@map("reports")
+}
+
+// ---------------------------------------------------------------------------
+// Platform
+// ---------------------------------------------------------------------------
+
+model Notification {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  type      String    @db.VarChar(50)
+  title     String    @db.VarChar(255)
+  body      String?
+  payload   Json?
+  readAt    DateTime? @map("read_at")
+  createdAt DateTime? @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+model NotificationPref {
+  userId String  @map("user_id") @db.Uuid
+  type   String  @db.VarChar(50)
+  inApp  Boolean @default(true) @map("in_app")
+  email  Boolean @default(false)
+  push   Boolean @default(false)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, type])
+  @@map("notification_prefs")
+}
+
+model Message {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  sessionId String    @default(dbgenerated("gen_random_uuid()")) @map("session_id") @db.Uuid
+  role      ChatRole
+  content   String
+  tokenCost Int?      @map("token_cost")
+  createdAt DateTime? @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, sessionId])
+  @@map("messages")
+}
+
+model SensorData {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  facilityId String   @map("facility_id") @db.Uuid
+  outputId   String?  @map("output_id") @db.Uuid
+  sensorType String   @map("sensor_type") @db.VarChar(50)
+  value      Decimal  @db.Decimal(12, 4)
+  unit       String   @db.VarChar(20)
+  timestamp  DateTime
+
+  facility Facility @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+  output   Output?  @relation(fields: [outputId], references: [id], onDelete: SetNull)
+
+  @@map("sensor_data")
+}
+
+// actorId is intentionally not a foreign key -- an audit trail must survive
+// the actor being deleted (e.g. a user deleting their own facility, which
+// cascades to delete that same user row). See docs/09-kararlar.md K-14.
+model AuditLog {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  actorId   String?   @map("actor_id") @db.Uuid
+  action    String    @db.VarChar(50)
+  entity    String    @db.VarChar(50)
+  entityId  String    @map("entity_id") @db.Uuid
+  before    Json?
+  after     Json?
+  ipAddress String?   @map("ip_address") @db.Inet
+  createdAt DateTime? @default(now()) @map("created_at")
+
+  @@map("audit_log")
+}
+
+// ---------------------------------------------------------------------------
+// Configuration
+// ---------------------------------------------------------------------------
+
+model SystemConfig {
+  key         String    @id @db.VarChar(100)
+  value       Json
+  description String?
+  updatedAt   DateTime? @default(now()) @map("updated_at")
+  updatedBy   String?   @map("updated_by") @db.Uuid
+
+  updater User? @relation(fields: [updatedBy], references: [id], onDelete: SetNull)
+
+  @@map("system_config")
+}
+
+model WeightsConfig {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  version       Int
+  material      Decimal   @db.Decimal(4, 3)
+  quality       Decimal   @db.Decimal(4, 3)
+  environmental Decimal   @db.Decimal(4, 3)
+  logistics     Decimal   @db.Decimal(4, 3)
+  economic      Decimal   @db.Decimal(4, 3)
+  active        Boolean   @default(false)
+  createdBy     String?   @map("created_by") @db.Uuid
+  createdAt     DateTime? @default(now()) @map("created_at")
+
+  creator User? @relation(fields: [createdBy], references: [id], onDelete: SetNull)
+
+  @@map("weights_config")
+}
+
+model CarbonFactor {
+  id            String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  materialClass MaterialClass @map("material_class")
+  factorType    String        @map("factor_type") @db.VarChar(20)
+  co2PerKg      Decimal       @map("co2_per_kg") @db.Decimal(10, 4)
+  source        String        @db.VarChar(255)
+  validFrom     DateTime      @map("valid_from") @db.Date
+  validTo       DateTime?     @map("valid_to") @db.Date
+  createdAt     DateTime?     @default(now()) @map("created_at")
+
+  @@map("carbon_factors")
+}
