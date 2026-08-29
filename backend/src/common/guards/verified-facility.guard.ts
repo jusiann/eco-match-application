@@ -1,8 +1,7 @@
 import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 
-// Runs after JwtAuthGuard. Blocks facilities that have not passed admin
-// document verification (S1) from reaching material/matching endpoints.
+// Verify facility approval status
 @Injectable()
 export class VerifiedFacilityGuard implements CanActivate {
   constructor(private readonly prisma: PrismaService) {}

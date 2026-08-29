@@ -2,6 +2,8 @@ import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
 import { ValidationPipe, Logger } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule, OpenAPIObject } from '@nestjs/swagger';
+import fastifyCookie from '@fastify/cookie';
+import fastifyMultipart from '@fastify/multipart';
 import * as yaml from 'js-yaml';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -43,6 +45,11 @@ async function bootstrap() {
 
   app.setGlobalPrefix('v1', {
     exclude: ['health', 'health/ready'],
+  });
+
+  await app.register(fastifyCookie);
+  await app.register(fastifyMultipart, {
+    limits: { fileSize: 10 * 1024 * 1024 }, // facility verification documents, max 10 MB
   });
 
   app.useGlobalPipes(

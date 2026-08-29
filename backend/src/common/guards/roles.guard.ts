@@ -3,9 +3,6 @@ import { Reflector } from '@nestjs/core';
 import { UserRole } from '@prisma/client';
 import { ROLES_KEY } from '../decorators/roles.decorator';
 
-// Runs after JwtAuthGuard on the same route -- it reads request.user.role,
-// which JwtAuthGuard is responsible for populating. Use together:
-// @UseGuards(JwtAuthGuard, RolesGuard) @Roles(UserRole.ADMIN)
 @Injectable()
 export class RolesGuard implements CanActivate {
   constructor(private readonly reflector: Reflector) {}

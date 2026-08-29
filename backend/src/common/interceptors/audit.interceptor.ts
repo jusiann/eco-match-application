@@ -4,14 +4,6 @@ import { Observable, tap } from 'rxjs';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AUDIT_KEY, AuditMetadata } from '../decorators/audit.decorator';
 
-// Global interceptor, opt-in via @Audit(action, entity) on a route handler.
-// Writes happen after the handler succeeds and never block or fail the
-// response -- a broken audit write must not break the underlying mutation.
-//
-// before/after diffing is intentionally out of scope here: it needs a
-// pre-mutation read that only the owning service can do cheaply. Faz 1+
-// services that need it should pass `before`/`after` explicitly instead of
-// extending this interceptor's guesswork.
 @Injectable()
 export class AuditInterceptor implements NestInterceptor {
   private readonly logger = new Logger('AuditInterceptor');

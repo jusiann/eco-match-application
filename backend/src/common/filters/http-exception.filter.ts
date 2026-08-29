@@ -19,10 +19,7 @@ const DEFAULT_ERROR_CODES: Record<number, string> = {
   503: 'SERVICE_UNAVAILABLE',
 };
 
-// Single source of the error response shape documented in docs/04-api-sozlesmesi.md:
-// { error: MACHINE_CODE, message: Turkish text, details?: ... }. Handlers may throw
-// `new ForbiddenException({ error: 'FACILITY_NOT_VERIFIED', message: '...' })` for a
-// specific code, or a plain string/Nest default and let this filter fill in the rest.
+// Transforms all HTTP exceptions into standard API response format
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger('ExceptionFilter');
@@ -55,8 +52,6 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
       const payload = response as Record<string, unknown>;
 
-      // class-validator via the global ValidationPipe throws BadRequestException
-      // with { message: string[], error: 'Bad Request', statusCode }.
       if (Array.isArray(payload.message)) {
         return {
           error: 'VALIDATION_ERROR',
