@@ -1,0 +1,67 @@
+openapi: 3.0.0
+info:
+  title: EcoMatch API - Admin
+  description: Facility verification review (admin only)
+  version: 1.0.0
+paths:
+  /v1/admin/verifications:
+    get:
+      summary: List pending facility verifications
+      tags:
+        - Admin
+      security:
+        - bearer: []
+      responses:
+        '200':
+          description: Pending verification list
+        '403':
+          description: Insufficient role
+  /v1/admin/verifications/{id}/approve:
+    post:
+      summary: Approve a verification document, sets facility.verified = true
+      tags:
+        - Admin
+      security:
+        - bearer: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '201':
+          description: Facility approved
+        '404':
+          description: Verification record not found
+  /v1/admin/verifications/{id}/reject:
+    post:
+      summary: Reject a verification document
+      tags:
+        - Admin
+      security:
+        - bearer: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - reason
+              properties:
+                reason:
+                  type: string
+      responses:
+        '201':
+          description: Verification rejected
+        '404':
+          description: Verification record not found
