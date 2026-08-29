@@ -1,0 +1,190 @@
+openapi: 3.0.0
+info:
+  title: EcoMatch API - Auth
+  description: Authentication and Authorization API documentation
+  version: 1.0.0
+paths:
+  /v1/auth/register:
+    post:
+      summary: Register a new facility and its first user (facility_admin)
+      tags:
+        - Auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - taxId
+                - sector
+                - email
+                - password
+              properties:
+                name:
+                  type: string
+                  description: Tesis adı
+                taxId:
+                  type: string
+                  description: Vergi numarası
+                sector:
+                  type: string
+                  description: Sektör alanı
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 8
+                  maxLength: 128
+      responses:
+        '201':
+          description: Facility and first user created, verification email sent
+        '400':
+          description: Bad request (validation error, duplicate email/tax id)
+  /v1/auth/login:
+    post:
+      summary: Login user
+      tags:
+        - Auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+      responses:
+        '201':
+          description: Successful login
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                  refresh_token:
+                    type: string
+                  user:
+                    type: object
+        '401':
+          description: Unauthorized
+  /v1/auth/refresh:
+    post:
+      summary: Exchange a valid refresh token for a new access/refresh pair
+      description: Refresh tokens are rotated on every use -- the old one stops working immediately.
+      tags:
+        - Auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - refreshToken
+              properties:
+                refreshToken:
+                  type: string
+      responses:
+        '201':
+          description: New access_token and refresh_token issued
+        '401':
+          description: Refresh token invalid, expired, or revoked
+  /v1/auth/verify-email:
+    post:
+      summary: Verify an account's email address
+      tags:
+        - Auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - token
+              properties:
+                token:
+                  type: string
+                  description: Token from the verification email, valid 24h
+      responses:
+        '201':
+          description: Email marked as verified
+        '400':
+          description: Token invalid or expired
+  /v1/auth/me:
+    get:
+      summary: Get current logged-in user profile
+      tags:
+        - Auth
+      security:
+        - bearer: []
+      responses:
+        '200':
+          description: User profile retrieved successfully
+        '401':
+          description: Unauthorized
+  /v1/auth/update-profile:
+    put:
+      summary: Update user profile
+      tags:
+        - Auth
+      security:
+        - bearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 8
+      responses:
+        '200':
+          description: Profile updated successfully
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+  /v1/auth/logout:
+    post:
+      summary: Logout user (revokes the stored refresh token)
+      tags:
+        - Auth
+      security:
+        - bearer: []
+      responses:
+        '201':
+          description: User logged out successfully
+        '401':
+          description: Unauthorized
+  /v1/auth/delete-account:
+    delete:
+      summary: Delete user account
+      tags:
+        - Auth
+      security:
+        - bearer: []
+      responses:
+        '200':
+          description: Account deleted successfully
+        '401':
+          description: Unauthorized
