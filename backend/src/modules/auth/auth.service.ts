@@ -1,5 +1,5 @@
 import { Injectable, BadRequestException, UnauthorizedException, NotFoundException } from '@nestjs/common';
-import { RegisterDto, LoginDto, UpdateProfileDto } from './auth.dto';
+import { RegisterDto, LoginDto, UpdateProfileDto, ForgotPasswordDto, ResetPasswordDto } from './auth.dto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { EmailService } from './email.service';
 import * as bcrypt from 'bcrypt';
@@ -14,12 +14,7 @@ export class AuthService {
     private readonly emailService: EmailService,
   ) {}
 
-  // Refresh tokens are long, high-entropy JWTs, not low-entropy user
-  // passwords -- bcrypt truncates its input at 72 bytes, and every refresh
-  // JWT for a given user shares an identical header + {sub,email,role,type}
-  // prefix well past that point, so bcrypt would treat them as the same
-  // input and defeat rotation entirely. SHA-256 has no such limit; this is
-  // the same reasoning behind api_keys.key_hash (docs/03-veri-modeli.md).
+  // Hash token using SHA-256
   private hashToken(token: string): string {
     return createHash('sha256').update(token).digest('hex');
   }
@@ -30,8 +25,7 @@ export class AuthService {
     return candidate.length === stored.length && timingSafeEqual(candidate, stored);
   }
 
-  // Access: 1h. Refresh: 30d, carries `type: 'refresh'` so JwtAuthGuard rejects
-  // it if presented as an access token. See CLAUDE.md "Invariants" and H3.
+  // Generate access and refresh token pair
   private generateTokens(user: { id: string; email: string; role: string }) {
     const basePayload = { sub: user.id, email: user.email, role: user.role };
     const accessToken = this.jwtService.sign(basePayload, { expiresIn: '1h' });
@@ -39,8 +33,7 @@ export class AuthService {
     return { accessToken, refreshToken };
   }
 
-  // Generates a token pair and persists a hash of the refresh token so it can
-  // be validated on /refresh and revoked on /logout. Never store the raw token.
+  // Issue token pair and persist refresh token hash
   private async issueTokens(user: { id: string; email: string; role: string }) {
     const tokens = this.generateTokens(user);
     await this.prisma.user.update({
@@ -67,26 +60,45 @@ export class AuthService {
       throw new BadRequestException('Bu vergi numarası ile kayıtlı bir tesis zaten var.');
     }
 
+    if (dto.osbId) {
+      const osb = await this.prisma.osb.findUnique({ where: { id: dto.osbId } });
+      if (!osb) {
+        throw new BadRequestException('Belirtilen OSB bulunamadı.');
+      }
+    }
+
     const hashedPassword = await bcrypt.hash(dto.password, 10);
 
-    const facility = await this.prisma.facility.create({
-      data: {
-        name: dto.name.trim(),
-        taxId: dto.taxId,
-        sector: dto.sector,
-        users: {
-          create: {
-            email: dto.email.toLowerCase(),
-            passwordHash: hashedPassword,
-            // First user of a newly registered facility is that facility's
-            // own admin, not EcoMatch platform staff. See docs/09-kararlar.md K-02.
-            role: 'FACILITY_ADMIN',
+    const facility = await this.prisma.$transaction(async (tx) => {
+      const created = await tx.facility.create({
+        data: {
+          name: dto.name.trim(),
+          taxId: dto.taxId,
+          sector: dto.sector,
+          osbId: dto.osbId ?? null,
+          users: {
+            create: {
+              email: dto.email.toLowerCase(),
+              passwordHash: hashedPassword,
+              role: 'FACILITY_ADMIN',
+              contactName: dto.contactName.trim(),
+              phone: dto.phone.trim(),
+            },
           },
         },
-      },
-      include: {
-        users: true,
-      },
+        include: {
+          users: true,
+        },
+      });
+
+      // location is Unsupported() in Prisma (geography) — written via raw SQL, K-04
+      await tx.$executeRaw`
+        UPDATE facilities
+        SET location = ST_SetSRID(ST_MakePoint(${dto.location.lng}, ${dto.location.lat}), 4326)::geography
+        WHERE id = ${created.id}::uuid
+      `;
+
+      return created;
     });
 
     const user = facility.users[0];
@@ -169,7 +181,6 @@ export class AuthService {
       throw new UnauthorizedException('Geçersiz oturum jetonu.');
     }
 
-    // Rotate on every refresh: the old refresh token stops working immediately.
     const tokens = await this.issueTokens(user);
 
     return {
@@ -201,6 +212,47 @@ export class AuthService {
     }
 
     return { success: true, message: 'E-posta adresiniz doğrulandı.' };
+  }
+
+  async forgotPassword(dto: ForgotPasswordDto) {
+    const user = await this.prisma.user.findUnique({ where: { email: dto.email.toLowerCase() } });
+
+    if (user) {
+      const resetToken = this.jwtService.sign({ sub: user.id, type: 'password_reset' }, { expiresIn: '1h' });
+      await this.emailService.sendPasswordResetEmail(user.email, resetToken);
+    }
+
+    // Kullanıcı var mı yok mu bilgisini sızdırmamak için cevap her durumda aynı
+    return {
+      success: true,
+      message: 'E-posta adresiniz sistemde kayıtlıysa şifre sıfırlama bağlantısı gönderildi.',
+    };
+  }
+
+  async resetPassword(dto: ResetPasswordDto) {
+    let payload: { sub: string; type?: string };
+    try {
+      payload = this.jwtService.verify(dto.token);
+    } catch {
+      throw new BadRequestException('Sıfırlama bağlantısının süresi dolmuş veya geçersiz.');
+    }
+
+    if (payload.type !== 'password_reset') {
+      throw new BadRequestException('Geçersiz sıfırlama jetonu.');
+    }
+
+    const user = await this.prisma.user.findUnique({ where: { id: payload.sub } });
+    if (!user) {
+      throw new NotFoundException('Kullanıcı bulunamadı.');
+    }
+
+    const hashedPassword = await bcrypt.hash(dto.newPassword, 10);
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { passwordHash: hashedPassword, refreshToken: null },
+    });
+
+    return { success: true, message: 'Şifreniz güncellendi. Lütfen tekrar giriş yapın.' };
   }
 
   async getMe(userId: string) {

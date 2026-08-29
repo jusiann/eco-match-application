@@ -21,13 +21,16 @@ paths:
                 - sector
                 - email
                 - password
+                - contactName
+                - phone
+                - location
               properties:
                 name:
                   type: string
                   description: Tesis adı
                 taxId:
                   type: string
-                  description: Vergi numarası
+                  description: Vergi numarası (10 hane)
                 sector:
                   type: string
                   description: Sektör alanı
@@ -38,11 +41,39 @@ paths:
                   type: string
                   minLength: 8
                   maxLength: 128
+                contactName:
+                  type: string
+                  description: Yetkili kişi adı
+                phone:
+                  type: string
+                osbId:
+                  type: string
+                  format: uuid
+                  nullable: true
+                location:
+                  type: object
+                  required: [lat, lng]
+                  properties:
+                    lat:
+                      type: number
+                    lng:
+                      type: number
       responses:
         '201':
-          description: Facility and first user created, verification email sent
+          description: Facility and first user created, verification email sent, refresh token set as HttpOnly cookie
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                  user:
+                    type: object
+                  facility:
+                    type: object
         '400':
-          description: Bad request (validation error, duplicate email/tax id)
+          description: Bad request (validation error, duplicate email/tax id, unknown osbId)
   /v1/auth/login:
     post:
       summary: Login user
@@ -65,7 +96,7 @@ paths:
                   type: string
       responses:
         '201':
-          description: Successful login
+          description: Successful login, refresh token set as HttpOnly cookie (not in body)
           content:
             application/json:
               schema:
@@ -73,16 +104,25 @@ paths:
                 properties:
                   access_token:
                     type: string
-                  refresh_token:
-                    type: string
                   user:
                     type: object
         '401':
           description: Unauthorized
   /v1/auth/refresh:
     post:
-      summary: Exchange a valid refresh token for a new access/refresh pair
-      description: Refresh tokens are rotated on every use -- the old one stops working immediately.
+      summary: Exchange the HttpOnly refresh cookie for a new access/refresh pair
+      description: Refresh tokens are rotated on every use -- the old one stops working immediately. The refresh token is read from the `refresh_token` cookie, never from the body.
+      tags:
+        - Auth
+      responses:
+        '201':
+          description: New access_token returned, new refresh cookie set
+        '401':
+          description: Refresh cookie missing, invalid, expired, or revoked
+  /v1/auth/forgot-password:
+    post:
+      summary: Request a password reset email
+      description: Always returns success regardless of whether the email exists, to avoid leaking account existence.
       tags:
         - Auth
       requestBody:
@@ -92,15 +132,41 @@ paths:
             schema:
               type: object
               required:
-                - refreshToken
+                - email
               properties:
-                refreshToken:
+                email:
                   type: string
+                  format: email
       responses:
         '201':
-          description: New access_token and refresh_token issued
-        '401':
-          description: Refresh token invalid, expired, or revoked
+          description: Reset email sent if the account exists
+  /v1/auth/reset-password:
+    post:
+      summary: Reset password using the token from the reset email
+      tags:
+        - Auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - token
+                - newPassword
+              properties:
+                token:
+                  type: string
+                  description: Token from the reset email, valid 1h
+                newPassword:
+                  type: string
+                  minLength: 8
+                  maxLength: 128
+      responses:
+        '201':
+          description: Password updated, all sessions revoked
+        '400':
+          description: Token invalid or expired
   /v1/auth/verify-email:
     post:
       summary: Verify an account's email address

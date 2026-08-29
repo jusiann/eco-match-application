@@ -1,33 +1,73 @@
-import { Controller, Get, Post, Put, Delete, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, UseGuards, Res, Req, UnauthorizedException } from '@nestjs/common';
+import type { FastifyReply, FastifyRequest } from 'fastify';
 import { AuthService } from './auth.service';
-import { RegisterDto, LoginDto, UpdateProfileDto, RefreshDto, VerifyEmailDto } from './auth.dto';
+import { RegisterDto, LoginDto, UpdateProfileDto, VerifyEmailDto, ForgotPasswordDto, ResetPasswordDto } from './auth.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { GetUser } from '../../common/decorators/get-user.decorator';
 import { Audit } from '../../common/decorators/audit.decorator';
+
+const REFRESH_COOKIE_NAME = 'refresh_token';
+const REFRESH_COOKIE_PATH = '/v1/auth';
+const REFRESH_COOKIE_MAX_AGE_SECONDS = 30 * 24 * 60 * 60; // 30 gün — access/refresh token ömrüyle aynı, bkz. K-18
 
 @Controller('auth')
 export class AuthController {
     constructor(private readonly authService: AuthService) { }
 
+    private setRefreshCookie(reply: FastifyReply, refreshToken: string) {
+        reply.setCookie(REFRESH_COOKIE_NAME, refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            path: REFRESH_COOKIE_PATH,
+            maxAge: REFRESH_COOKIE_MAX_AGE_SECONDS,
+        });
+    }
+
+    private clearRefreshCookie(reply: FastifyReply) {
+        reply.clearCookie(REFRESH_COOKIE_NAME, { path: REFRESH_COOKIE_PATH });
+    }
+
     @Audit('create', 'facility')
     @Post('register')
-    register(@Body() dto: RegisterDto) {
-        return this.authService.register(dto);
+    async register(@Body() dto: RegisterDto, @Res({ passthrough: true }) reply: FastifyReply) {
+        const { refresh_token, ...body } = await this.authService.register(dto);
+        this.setRefreshCookie(reply, refresh_token);
+        return body;
     }
 
     @Post('login')
-    login(@Body() dto: LoginDto) {
-        return this.authService.login(dto);
+    async login(@Body() dto: LoginDto, @Res({ passthrough: true }) reply: FastifyReply) {
+        const { refresh_token, ...body } = await this.authService.login(dto);
+        this.setRefreshCookie(reply, refresh_token);
+        return body;
     }
 
     @Post('refresh')
-    refresh(@Body() dto: RefreshDto) {
-        return this.authService.refresh(dto.refreshToken);
+    async refresh(@Req() request: FastifyRequest, @Res({ passthrough: true }) reply: FastifyReply) {
+        const refreshToken = request.cookies?.[REFRESH_COOKIE_NAME];
+        if (!refreshToken) {
+            throw new UnauthorizedException('Oturum bulunamadı, tekrar giriş yapın.');
+        }
+
+        const { refresh_token, ...body } = await this.authService.refresh(refreshToken);
+        this.setRefreshCookie(reply, refresh_token);
+        return body;
     }
 
     @Post('verify-email')
     verifyEmail(@Body() dto: VerifyEmailDto) {
         return this.authService.verifyEmail(dto.token);
+    }
+
+    @Post('forgot-password')
+    forgotPassword(@Body() dto: ForgotPasswordDto) {
+        return this.authService.forgotPassword(dto);
+    }
+
+    @Post('reset-password')
+    resetPassword(@Body() dto: ResetPasswordDto) {
+        return this.authService.resetPassword(dto);
     }
 
     @UseGuards(JwtAuthGuard)
@@ -45,14 +85,18 @@ export class AuthController {
 
     @UseGuards(JwtAuthGuard)
     @Post('logout')
-    logout(@GetUser() user: { sub: string }) {
-        return this.authService.logout(user.sub);
+    async logout(@GetUser() user: { sub: string }, @Res({ passthrough: true }) reply: FastifyReply) {
+        const result = await this.authService.logout(user.sub);
+        this.clearRefreshCookie(reply);
+        return result;
     }
 
     @Audit('delete', 'facility')
     @UseGuards(JwtAuthGuard)
     @Delete('delete-account')
-    deleteAccount(@GetUser() user: { sub: string }) {
-        return this.authService.deleteAccount(user.sub);
+    async deleteAccount(@GetUser() user: { sub: string }, @Res({ passthrough: true }) reply: FastifyReply) {
+        const result = await this.authService.deleteAccount(user.sub);
+        this.clearRefreshCookie(reply);
+        return result;
     }
 }

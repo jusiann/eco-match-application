@@ -1,13 +1,22 @@
-import { IsEmail, IsNotEmpty, IsString, MinLength, MaxLength, Matches, IsOptional } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsString, MinLength, MaxLength, Matches, IsOptional, IsUUID, IsObject, ValidateNested, IsLatitude, IsLongitude } from 'class-validator';
+import { Type } from 'class-transformer';
+
+export class LocationDto {
+  @IsLatitude({ message: 'Geçersiz enlem (lat) değeri.' })
+  lat: number;
+
+  @IsLongitude({ message: 'Geçersiz boylam (lng) değeri.' })
+  lng: number;
+}
 
 export class RegisterDto {
   @IsString()
   @IsNotEmpty({ message: 'Tesis adı (name) zorunludur.' })
-  name: string; 
+  name: string;
 
   @IsString()
   @IsNotEmpty({ message: 'Vergi numarası (taxId) zorunludur.' })
-  taxId: string; 
+  taxId: string;
 
   @IsString()
   @IsNotEmpty({ message: 'Sektör alanı zorunludur.' })
@@ -23,6 +32,23 @@ export class RegisterDto {
   @Matches(/(?=.*[a-z])/, { message: 'Şifre en az bir küçük harf içermelidir.' })
   @Matches(/(?=.*[0-9])/, { message: 'Şifre en az bir rakam içermelidir.' })
   password: string;
+
+  @IsString()
+  @IsNotEmpty({ message: 'Yetkili adı (contactName) zorunludur.' })
+  contactName: string;
+
+  @IsString()
+  @IsNotEmpty({ message: 'Telefon numarası zorunludur.' })
+  phone: string;
+
+  @IsOptional()
+  @IsUUID('4', { message: 'Geçersiz OSB kimliği.' })
+  osbId?: string;
+
+  @IsObject()
+  @ValidateNested()
+  @Type(() => LocationDto)
+  location: LocationDto;
 }
 
 export class LoginDto {
@@ -49,14 +75,27 @@ export class UpdateProfileDto {
   password?: string;
 }
 
-export class RefreshDto {
-  @IsString()
-  @IsNotEmpty({ message: 'Oturum jetonu (refreshToken) zorunludur.' })
-  refreshToken: string;
-}
-
 export class VerifyEmailDto {
   @IsString()
   @IsNotEmpty({ message: 'Doğrulama jetonu (token) zorunludur.' })
   token: string;
+}
+
+export class ForgotPasswordDto {
+  @IsEmail({}, { message: 'Geçersiz e-posta formatı.' })
+  email: string;
+}
+
+export class ResetPasswordDto {
+  @IsString()
+  @IsNotEmpty({ message: 'Sıfırlama jetonu (token) zorunludur.' })
+  token: string;
+
+  @IsString()
+  @MinLength(8, { message: 'Şifre en az 8 karakter uzunluğunda olmalıdır.' })
+  @MaxLength(128, { message: 'Şifre en fazla 128 karakter olabilir.' })
+  @Matches(/(?=.*[A-Z])/, { message: 'Şifre en az bir büyük harf içermelidir.' })
+  @Matches(/(?=.*[a-z])/, { message: 'Şifre en az bir küçük harf içermelidir.' })
+  @Matches(/(?=.*[0-9])/, { message: 'Şifre en az bir rakam içermelidir.' })
+  newPassword: string;
 }
