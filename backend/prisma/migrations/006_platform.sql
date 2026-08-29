@@ -1,8 +1,4 @@
--- Platform tables. See docs/03-veri-modeli.md "Platform".
---
--- notifications.type is VARCHAR, not an enum (K-12): new notification types are
--- an application-level concern, not a schema-level one -- adding one should
--- never require a migration.
+-- Notification, user preferences, chat, sensor, and audit log tables
 
 CREATE TABLE IF NOT EXISTS notifications (
   id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -10,7 +6,7 @@ CREATE TABLE IF NOT EXISTS notifications (
   type       VARCHAR(50) NOT NULL,
   title      VARCHAR(255) NOT NULL,
   body       TEXT,
-  payload    JSONB, -- e.g. {match_id, route}
+  payload    JSONB,
   read_at    TIMESTAMP,
   created_at TIMESTAMP DEFAULT NOW()
 );
@@ -46,8 +42,8 @@ CREATE TABLE IF NOT EXISTS sensor_data (
 CREATE TABLE IF NOT EXISTS audit_log (
   id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   actor_id   UUID REFERENCES users(id) ON DELETE SET NULL,
-  action     VARCHAR(50) NOT NULL, -- create, update, delete, accept, reject, verify, activate
-  entity     VARCHAR(50) NOT NULL, -- output, match, facility, weights_config, ...
+  action     VARCHAR(50) NOT NULL,
+  entity     VARCHAR(50) NOT NULL,
   entity_id  UUID NOT NULL,
   before     JSONB,
   after      JSONB,

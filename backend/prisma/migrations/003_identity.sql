@@ -1,4 +1,4 @@
--- Identity and facility tables. See docs/03-veri-modeli.md "Kimlik ve tesis".
+-- Identity, OSB, facility, and API key tables
 
 CREATE TABLE IF NOT EXISTS osbs (
   id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS facilities (
   name       VARCHAR(255) NOT NULL,
   tax_id     VARCHAR(20) NOT NULL UNIQUE,
   sector     VARCHAR(150) NOT NULL,
-  location   GEOGRAPHY(POINT, 4326), -- nullable: legacy/incomplete registrations (E6)
+  location   GEOGRAPHY(POINT, 4326),
   osb_id     UUID REFERENCES osbs(id) ON DELETE SET NULL,
   verified   BOOLEAN NOT NULL DEFAULT FALSE,
   created_at TIMESTAMP DEFAULT NOW(),
@@ -49,7 +49,7 @@ CREATE TABLE IF NOT EXISTS api_keys (
 CREATE TABLE IF NOT EXISTS facility_verification (
   id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   facility_id       UUID NOT NULL REFERENCES facilities(id) ON DELETE CASCADE,
-  document_type     VARCHAR(50) NOT NULL, -- 'tax_certificate' | 'operating_permit'
+  document_type     VARCHAR(50) NOT NULL,
   document_url      VARCHAR(500) NOT NULL,
   status            review_status NOT NULL DEFAULT 'pending',
   reviewed_by       UUID REFERENCES users(id) ON DELETE SET NULL,

@@ -1,8 +1,4 @@
--- Enum types. Values are lowercase snake_case in the DB; the Prisma side maps
--- them to UPPERCASE members (see docs/03-veri-modeli.md, docs/09-kararlar.md K-09).
---
--- `api_key` is deliberately not a user_role value -- it is a separate
--- authentication method, tracked in the api_keys table (K-02).
+-- System enum types
 
 CREATE TYPE user_role AS ENUM (
   'user',

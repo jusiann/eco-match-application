@@ -1,6 +1,4 @@
-// Schema source of truth is backend/prisma/migrations/*.sql (see docs/09-kararlar.md K-04).
-// This file is the Prisma-side reflection of that SQL, kept in sync by hand.
-// Never run `prisma migrate dev` / `db push` -- see CLAUDE.md and docs/10-gelistirme-rehberi.md.
+// Prisma schema definition (synchronized with SQL migrations)
 
 generator client {
   provider = "prisma-client-js"
@@ -12,9 +10,7 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-// ---------------------------------------------------------------------------
-// Enums -- DB values are lowercase snake_case, Prisma members are UPPERCASE (K-09)
-// ---------------------------------------------------------------------------
+// Enum definitions
 
 enum UserRole {
   USER           @map("user")
@@ -79,9 +75,7 @@ enum ReviewStatus {
   @@map("review_status")
 }
 
-// ---------------------------------------------------------------------------
-// Identity and facility
-// ---------------------------------------------------------------------------
+// Identity and facility models
 
 model Osb {
   id        String                              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
@@ -175,9 +169,7 @@ model FacilityVerification {
   @@map("facility_verification")
 }
 
-// ---------------------------------------------------------------------------
-// Materials
-// ---------------------------------------------------------------------------
+// Material models
 
 model Input {
   id            String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
@@ -206,6 +198,7 @@ model Output {
   composition       Json?
   quantityKg        Decimal        @map("quantity_kg") @db.Decimal(12, 2)
   stock             Decimal        @default(0) @db.Decimal(12, 2)
+  frequency         String?        @db.VarChar(50)
   availability      Boolean        @default(true)
   pendingReview     Boolean        @default(false) @map("pending_review")
   embeddingPending  Boolean        @default(false) @map("embedding_pending")
@@ -246,9 +239,7 @@ model MaterialPassport {
   @@map("material_passports")
 }
 
-// ---------------------------------------------------------------------------
-// Matching
-// ---------------------------------------------------------------------------
+// Matchmaking models
 
 model Match {
   id                        String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
@@ -309,9 +300,7 @@ model Report {
   @@map("reports")
 }
 
-// ---------------------------------------------------------------------------
-// Platform
-// ---------------------------------------------------------------------------
+// Platform and notification models
 
 model Notification {
   id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
@@ -371,9 +360,7 @@ model SensorData {
   @@map("sensor_data")
 }
 
-// actorId is intentionally not a foreign key -- an audit trail must survive
-// the actor being deleted (e.g. a user deleting their own facility, which
-// cascades to delete that same user row). See docs/09-kararlar.md K-14.
+// Audit log model
 model AuditLog {
   id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   actorId   String?   @map("actor_id") @db.Uuid
@@ -388,9 +375,7 @@ model AuditLog {
   @@map("audit_log")
 }
 
-// ---------------------------------------------------------------------------
-// Configuration
-// ---------------------------------------------------------------------------
+// System and weights configuration models
 
 model SystemConfig {
   key         String    @id @db.VarChar(100)

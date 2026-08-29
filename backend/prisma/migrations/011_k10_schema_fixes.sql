@@ -1,12 +1,4 @@
--- K-10 schema fixes. See docs/09-kararlar.md K-10.
---
--- 1) inputs: add pending_review and embedding_pending columns (parity with outputs).
--- 2) messages: add session_id for chatbot session separation.
--- 3) messages: composite index on (user_id, session_id) for efficient session queries.
---
--- WeightsConfig partial unique index already exists in 007_config.sql line 31.
--- HumanReviewQueue.output_id FK already exists in 005_matching.sql line 30.
--- Both are Prisma-side-only fixes (adding the relation/index annotation).
+-- Schema improvements (input tracking columns, chatbot session separation, index)
 
 -- 1. Input embedding tracking columns
 ALTER TABLE inputs

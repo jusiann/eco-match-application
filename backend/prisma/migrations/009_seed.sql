@@ -1,21 +1,20 @@
--- Seed data. See docs/03-veri-modeli.md and docs/05-is-kurallari.md "Sabitler".
--- Idempotent: safe to re-run.
+-- Initial configuration and reference seed data
 
 INSERT INTO system_config (key, value, description) VALUES
-  ('match.threshold',      '0.60'::jsonb, 'Cosine benzerlik alt eşiği'),
-  ('match.top_k',          '20'::jsonb,   'Skorlama öncesi aday sayısı'),
-  ('match.top_n',          '10'::jsonb,   'Kullanıcıya dönen eşleşme sayısı'),
-  ('match.hitl_threshold', '0.80'::jsonb, 'Uzman onay tetik eşiği'),
-  ('match.expiry_days',    '30'::jsonb,   'Eşleşme geçerlilik süresi (gün)'),
-  ('chat.daily_limit',     '50'::jsonb,   'Kullanıcı başına günlük chatbot mesajı')
+  ('match.threshold',      '0.60'::jsonb, 'Cosine similarity lower threshold'),
+  ('match.top_k',          '20'::jsonb,   'Candidate count before scoring'),
+  ('match.top_n',          '10'::jsonb,   'Match count returned to user'),
+  ('match.hitl_threshold', '0.80'::jsonb, 'Human-in-the-loop review threshold'),
+  ('match.expiry_days',    '30'::jsonb,   'Match validity duration in days'),
+  ('chat.daily_limit',     '50'::jsonb,   'Daily chatbot message limit per user')
 ON CONFLICT (key) DO NOTHING;
 
--- v1 scoring weights: material .30 / quality .20 / environmental .20 / logistics .15 / economic .15
+-- Initial scoring weights (v1)
 INSERT INTO weights_config (version, material, quality, environmental, logistics, economic, active)
 SELECT 1, 0.30, 0.20, 0.20, 0.15, 0.15, TRUE
 WHERE NOT EXISTS (SELECT 1 FROM weights_config WHERE version = 1);
 
--- Reference carbon factors (Ecoinvent v3.10). Extend as new material classes are added (AD5).
+-- Reference carbon factors
 INSERT INTO carbon_factors (material_class, factor_type, co2_per_kg, source, valid_from)
 SELECT * FROM (VALUES
   ('organic'::material_class,  'virgin'::varchar,    1.8500::numeric, 'Ecoinvent v3.10'::varchar, DATE '2026-01-01'),

@@ -1,7 +1,4 @@
--- Indexes. See docs/03-veri-modeli.md "İndeksler".
---
--- HNSW parameters (m=16, ef_construction=64) were sized for the reference
--- dataset (105 materials). Revisit ef_search at query time as data grows.
+-- Performance and vector search indexes (HNSW, GiST, B-Tree)
 
 CREATE INDEX IF NOT EXISTS idx_embeddings_hnsw ON embeddings
   USING hnsw (vector vector_cosine_ops)
