@@ -1,0 +1,94 @@
+openapi: 3.0.0
+info:
+  title: EcoMatch API - Matches
+  description: Match state machine (accept/reject/contact). Candidate finding/scoring (GET /v1/matches/find/:outputId) is not wired yet -- needs embeddings (Faz 1.4-1.8).
+  version: 1.0.0
+paths:
+  /v1/matches:
+    get:
+      summary: List own matches (either side), paginated
+      tags: [Matches]
+      security: [{ bearer: [] }]
+      parameters:
+        - in: query
+          name: status
+          schema: { type: string, enum: [pending, accepted, completed, rejected, expired] }
+        - in: query
+          name: page
+          schema: { type: integer }
+        - in: query
+          name: limit
+          schema: { type: integer }
+      responses:
+        '200': { description: Paginated match list, counterparty details restricted until completed }
+  /v1/matches/{id}:
+    get:
+      summary: Match detail
+      tags: [Matches]
+      security: [{ bearer: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200': { description: Match detail }
+        '404': { description: Not found or not a party to this match }
+  /v1/matches/{id}/accept:
+    post:
+      summary: Accept a match (first side -> accepted, second side -> completed + stock decrement)
+      tags: [Matches]
+      security: [{ bearer: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+        - in: header
+          name: Idempotency-Key
+          schema: { type: string, format: uuid }
+      responses:
+        '201': { description: Accepted or completed }
+        '409': { description: INVALID_STATE_TRANSITION or INSUFFICIENT_STOCK }
+  /v1/matches/{id}/reject:
+    post:
+      summary: Reject a match
+      tags: [Matches]
+      security: [{ bearer: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+        - in: header
+          name: Idempotency-Key
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reasonCategory]
+              properties:
+                reasonCategory:
+                  type: string
+                  enum: [distance_too_far, quantity_mismatch, quality_insufficient, price_too_low, timing_unsuitable, other]
+                reasonText:
+                  type: string
+      responses:
+        '201': { description: Rejected }
+        '409': { description: INVALID_STATE_TRANSITION }
+  /v1/matches/{id}/contact:
+    get:
+      summary: Counterparty contact info -- only once status is completed
+      tags: [Matches]
+      security: [{ bearer: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200': { description: Contact info }
+        '403': { description: CONTACT_NOT_AVAILABLE }
