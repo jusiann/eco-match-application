@@ -157,6 +157,7 @@ Tesis doğrulama süreci (S1 adım 6-9).
 | `composition`       | `JSONB`                            | `{"selüloz": 60, "su": 30, "diğer": 10}` — toplam 100 olmalı (E8) |
 | `quantity_kg`       | `NUMERIC(12,2) NOT NULL`           | Periyodik üretim miktarı                                          |
 | `stock`             | `NUMERIC(12,2) NOT NULL DEFAULT 0` | Anlık mevcut. Kabul işleminde düşer (E7)                          |
+| `frequency`         | `VARCHAR(50)`                      | `daily` · `weekly` · `monthly` · `one_time` — `inputs` ile simetrik, migration 012 |
 | `availability`      | `BOOLEAN DEFAULT TRUE`             | Stok < 100 kg ise `false` (I1)                                    |
 | `pending_review`    | `BOOLEAN DEFAULT FALSE`            | `true` iken eşleştirmeye girmez (A2)                              |
 | `embedding_pending` | `BOOLEAN DEFAULT FALSE`            | AI servisi düştüğünde `true` (H1)                                 |
@@ -214,7 +215,7 @@ ama saklama kaydı ayrıdır (S2).
 | `co2_saved`                 | `NUMERIC(12,2)`                           | kg CO2e                                                                  |
 | `cost_saving`               | `NUMERIC(12,2)`                           |                                                                          |
 | `cbam_impact`               | `NUMERIC(12,2)`                           | EUR                                                                      |
-| `rejection_reason_category` | `VARCHAR(50)`                             | Red zorunlu alanı — karşı tarafa **bu** gösterilir (A1)                  |
+| `rejection_reason_category` | `VARCHAR(50)`                             | Red zorunlu alanı — karşı tarafa **bu** gösterilir (A1). `CHECK` ile altı sabit değere kısıtlı (migration 012) |
 | `rejection_reason_text`     | `TEXT`                                    | Serbest metin — karşı tarafa gösterilmez                                 |
 | `accepted_by_supplier_at`   | `TIMESTAMP`                               |                                                                          |
 | `accepted_by_consumer_at`   | `TIMESTAMP`                               | İkisi de doluysa `completed`                                             |
@@ -465,6 +466,7 @@ Sırayla uygulanır. Dosyalar `backend/prisma/migrations/` altında.
 | 009 | `009_seed.sql`               | Varsayılan ağırlıklar, karbon faktörleri, system_config                                               |
 | 010 | `010_audit_actor_fk_fix.sql` | `audit_log.actor_id` FK'sını kaldırır (K-14)                                                          |
 | 011 | `011_k10_schema_fixes.sql`   | `inputs`'e `pending_review` + `embedding_pending`, `messages`'a `session_id` + composite index (K-16) |
+| 012 | `012_pre_phase1_fixes.sql`   | `outputs`'a `frequency`, `matches.rejection_reason_category` için `CHECK` (K-17)                      |
 
 Uygulama (pooler değil, **doğrudan bağlantı**):
 

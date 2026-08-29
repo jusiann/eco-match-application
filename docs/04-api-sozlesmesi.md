@@ -62,6 +62,8 @@ kullanıcıya gösterilir. `details` opsiyoneldir; alan bazlı doğrulama hatala
 | `INVALID_STATE_TRANSITION` | 409 | S4, A1, A3 |
 | `INSUFFICIENT_STOCK` | 409 | E7 |
 | `CONTACT_NOT_AVAILABLE` | 403 | S4 |
+| `INVALID_SIGNATURE` | 403 | A5 — public DPP endpoint'lerinde `sig` yanlış/eksik |
+| `INSUFFICIENT_ROLE` | 403 | Rol yetersiz (`RolesGuard`) |
 | `PENDING_EXPERT_REVIEW` | 202 | A2 |
 | `RATE_LIMIT_EXCEEDED` | 429 | H4 |
 | `AI_SERVICE_UNAVAILABLE` | 503 | H1 |
@@ -124,8 +126,20 @@ VKN 10 hane. Aynı VKN → `409 TAX_ID_ALREADY_EXISTS`.
 Cevapta `facility.verified = false` ve `user.email_verified = false` döner — istemci
 "onay bekleniyor" banner'ını buna göre gösterir.
 
-> **Mevcut kodda düzeltilecek:** `register` şu an ilk kullanıcıya `ADMIN` rolü veriyor.
-> `FACILITY_ADMIN` olmalı. Bkz. [09-kararlar.md](09-kararlar.md) K-02.
+Auth artık bu sözleşmeyle birebir uyumlu — cookie'li refresh, kayıt alanları, şifre
+sıfırlama dahil. Bkz. [09-kararlar.md](09-kararlar.md) K-18.
+
+---
+
+## OSB Lookup
+
+| Metod | Yol | Rol | Açıklama |
+|---|---|---|---|
+| GET | `/v1/osbs` | **Public** | `[{id, name, city}]` — register formundaki dropdown için |
+
+Kimlik doğrulama gerektirmez (register akışında henüz token yok). Sayfalama yok — OSB
+sayısı < 500 varsayımıyla tüm liste tek seferde döner. `region` (polygon) dönmez, sadece
+ad ve şehir; hassas/ağır veri değil, istemci tarafında cache'lenebilir.
 
 ---
 
@@ -138,11 +152,33 @@ Cevapta `facility.verified = false` ve `user.email_verified = false` döner — 
 | POST | `/v1/facilities/me/documents` | `facility_admin` | Belge yükle (max 10 MB, PDF/JPG). 201 |
 | GET | `/v1/facilities/me/documents` | Auth | Doğrulama durumu |
 
+`documentType` yüklemede **zorunludur**: `tax_certificate` veya `operating_permit`
+(`multipart/form-data` alanı, `facility_verification.document_type NOT NULL` ile eşleşir).
+Dosyalar MVP için yerel diskte (`backend/uploads/facility-documents/`) saklanır — S3 gibi
+bir nesne deposu Faz 3'te değerlendirilebilir, `.gitignore`'da hariç tutulmuştur.
+
+---
+
+## Admin — Tesis Doğrulama
+
+| Metod | Yol | Rol | Açıklama |
+|---|---|---|---|
+| GET | `/v1/admin/verifications` | `admin` | Bekleyen (`pending`) doğrulama kayıtları |
+| POST | `/v1/admin/verifications/:id/approve` | `admin` | İlgili `facility.verified = true` yapar |
+| POST | `/v1/admin/verifications/:id/reject` | `admin` | `reason` zorunlu |
+
 ---
 
 ## Materials
 
-Tümü `facility.verified = true` gerektirir → aksi hâlde `403 FACILITY_NOT_VERIFIED`.
+`POST` (oluşturma) `facility.verified = true` gerektirir → aksi hâlde
+`403 FACILITY_NOT_VERIFIED` (CLAUDE.md domain kuralı: "unverified bir tesis materyal
+oluşturamaz"). GET/PATCH/DELETE bu kısıta tabi değil — zaten sahiplik kontrolünden geçiyor
+ve doğrulanmamış bir tesisin görüntüleyecek bir kaydı olamaz (bkz. K-20).
+
+CRUD ve DPP üretimi implemente edildi (Faz 1.3, 1.6, K-20/K-21). `Idempotency-Key`
+outputs/inputs create'te destekleniyor (K-22) — `embedding`/find/scoring hâlâ yok
+(Faz 1.4/1.5/1.7/1.8, AI servisine bağımlı).
 
 | Metod | Yol | Rol | Açıklama |
 |---|---|---|---|
@@ -177,6 +213,9 @@ Tümü `facility.verified = true` gerektirir → aksi hâlde `403 FACILITY_NOT_V
 
 Başarı — 201:
 
+`passportId`/`qrCode`/`pdfUrl` gerçek değerler döner (DPP senkron üretiliyor, K-21).
+`embeddingPending` hâlâ her zaman `true` — embedding üretimi (Faz 1.4/1.5) henüz yok.
+
 ```json
 {
   "outputId": "uuid",
@@ -192,7 +231,8 @@ Başarı — 201:
 `pendingReview: true` → sınıflandırma güveni < 0.80, uzman kuyruğunda (A2).
 Her iki durumda da **201 döner**; kayıt başarılıdır.
 
-Mükerrer şüphesi — 409:
+Mükerrer şüphesi — 409 (henüz implemente edilmedi, hedef davranış — Faz 1.11'in
+kalan kısmı, K-22):
 
 ```json
 {
@@ -211,14 +251,19 @@ QR kodun içindeki imza budur. Geçersiz imza → 403.
 
 ## Matches
 
+Durum makinesi implemente edildi (Faz 1.10, K-23): list/get/accept/reject/contact
+gerçek veriyle çalışıyor, `SELECT ... FOR UPDATE` ile stok kilitleniyor (E7).
+`find` (aday bulma + skorlama, satır 1) **henüz yok** — embedding'e bağımlı
+(Faz 1.7/1.8). `retry` de henüz yok (Faz 2.8, expired match cron'una bağlı).
+
 | Metod | Yol | Rol | Açıklama |
 |---|---|---|---|
-| GET | `/v1/matches/find/:outputId` | Sahip | Aday bul + skorla. 200 veya 202 |
+| GET | `/v1/matches/find/:outputId` | Sahip | Aday bul + skorla. 200 veya 202. **Bekliyor (1.7/1.8)** |
 | GET | `/v1/matches` | Auth | `?status=pending&page=1` |
 | GET | `/v1/matches/:id` | Taraflardan biri | Detay + kısıtlı karşı taraf bilgisi |
-| POST | `/v1/matches/:id/accept` | Taraflardan biri | 200 |
-| POST | `/v1/matches/:id/reject` | Taraflardan biri | `reason_category` **zorunlu** |
-| POST | `/v1/matches/:id/retry` | Taraflardan biri | Sadece `expired` için. 201 |
+| POST | `/v1/matches/:id/accept` | Taraflardan biri | 201. `Idempotency-Key` destekler |
+| POST | `/v1/matches/:id/reject` | Taraflardan biri | `reasonCategory` **zorunlu**. `Idempotency-Key` destekler |
+| POST | `/v1/matches/:id/retry` | Taraflardan biri | Sadece `expired` için. **Bekliyor (Faz 2.8)** |
 | GET | `/v1/matches/:id/contact` | Taraflardan biri | **Sadece `completed`** — aksi hâlde 403 |
 
 **`GET /v1/matches/find/:outputId`** — 200:
@@ -373,12 +418,11 @@ KPI formülleri [05-is-kurallari.md](05-is-kurallari.md)'de.
 ## Admin
 
 Rol: `admin`. `review-queue` endpoint'lerine `expert` de erişir.
+Tesis doğrulama endpoint'leri (`/v1/admin/verifications/*`) yukarıda,
+[Admin — Tesis Doğrulama](#admin--tesis-doğrulama) bölümünde — implemente edildi (Faz 1).
 
 | Metod | Yol | Rol | Açıklama |
 |---|---|---|---|
-| GET | `/v1/admin/verifications` | `admin` | Bekleyen tesis doğrulamaları |
-| POST | `/v1/admin/verifications/:id/approve` | `admin` | `facility.verified = true` |
-| POST | `/v1/admin/verifications/:id/reject` | `admin` | `reason` zorunlu |
 | GET | `/v1/admin/users` | `admin` | |
 | POST | `/v1/admin/users` | `admin` | |
 | PATCH | `/v1/admin/users/:id` | `admin` | Rol değiştirme dahil |

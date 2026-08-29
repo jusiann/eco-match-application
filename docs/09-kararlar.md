@@ -250,7 +250,7 @@ kullanılmalı, bcrypt değil. Genel kural: **bcrypt yalnızca insan tarafından
 
 ---
 
-## K-16 · Şema incelemesi: altı madde (migration 011)
+## K-16 · Şema incelemesi: dört madde (migration 011)
 
 **Bağlam.** Şemanın ilk kararlı hali (migration 001-010) kod incelemesinden geçti.
 Altı ayrı noktada tutarsızlık veya eksiklik tespit edildi.
@@ -290,3 +290,195 @@ Migration: `011_k10_schema_fixes.sql` (`ALTER TABLE inputs ADD COLUMN`).
 ```sql
 CREATE UNIQUE INDEX idx_weights_active ON weights_config(active) WHERE active = TRUE;
 ```
+
+---
+
+## K-17 · Faz 1 öncesi iki şema düzeltmesi (migration 012)
+
+**Bağlam.** Faz 1 modüllerinin altyapısı kurulurken [04-api-sozlesmesi.md](04-api-sozlesmesi.md)
+ile şema arasında iki tutarsızlık bulundu.
+
+1. `POST /v1/materials/outputs` gövdesinde `frequency` alanı belgeleniyordu
+   (`daily`/`weekly`/`monthly`/`one_time`, `inputs.frequency` ile simetrik) ama
+   `outputs` tablosunda bu kolon yoktu.
+2. `matches.rejection_reason_category` altı sabit değerden birini almalı
+   (`distance_too_far` · `quantity_mismatch` · `quality_insufficient` ·
+   `price_too_low` · `timing_unsuitable` · `other`), ama şemada düz `VARCHAR(50)`
+   olarak duruyordu — kod tarafında bir yazım hatası sessizce kabul edilirdi.
+
+**Karar.** `outputs.frequency VARCHAR(50)` eklendi. `matches` üzerine
+`CHECK (rejection_reason_category IS NULL OR rejection_reason_category IN (...))`
+eklendi — `ENUM` değil, çünkü K-07'nin gerekçesiyle aynı: yeni bir kategori eklemek
+`ALTER TABLE ADD CONSTRAINT` ile transaction içinde yapılabilir, `ALTER TYPE ADD VALUE`
+yapılamaz.
+
+**Sonuç.** `materials` ve `matches` modülleri şemaya güvenerek yazılabilir; geçersiz bir
+`rejectionCategory` artık `500` değil DB seviyesinde net bir hata verir (uygulama
+katmanı yine de `400 VALIDATION_ERROR` ile önce yakalamalı — DB kısıtı son savunma
+hattı).
+
+---
+
+## K-18 · Auth modülü tamamlanıyor: cookie'li refresh, şifre sıfırlama, kayıt alanları
+
+**Bağlam.** [04-api-sozlesmesi.md](04-api-sozlesmesi.md) auth sözleşmesi baştan beri şunu
+söylüyor: refresh token `HttpOnly cookie`'de taşınır, `register` gövdesi `contactName`,
+`phone`, `osbId`, `location` alanlarını içerir, ve `forgot-password`/`reset-password`
+Faz 0 kapsamındadır (K-13). Faz 0 kapanışında bunların hiçbiri koda yansımamıştı: refresh
+token hem response body'de hem `RefreshDto.refreshToken` ile request body'de taşınıyordu,
+`RegisterDto` sadece `name/taxId/sector/email/password` alıyordu, şifre sıfırlama hiç
+yoktu. Şema bu alanları zaten destekliyordu (`facilities.location`, `facilities.osb_id`,
+`users.contact_name`, `users.phone` — `003_identity.sql`), sadece auth kodu geride kalmıştı.
+
+**Karar.**
+- Refresh token artık `@fastify/cookie` ile `HttpOnly` + `Secure` (prod) + `SameSite=Lax`
+  cookie'de taşınıyor; response body'de **görünmüyor**. `POST /v1/auth/refresh` artık
+  body almıyor, cookie'yi okuyor. `RefreshDto` kaldırıldı.
+- `RegisterDto`'ya `contactName`, `phone`, `osbId?`, `location {lat,lng}` eklendi;
+  `location` `ST_MakePoint` ile `$executeRaw` üzerinden yazılıyor (Prisma `Unsupported`
+  tipini doğrudan yazamıyor — K-04'ün doğal sonucu).
+- `forgot-password` / `reset-password` eklendi. Sıfırlama token'ı, e-posta doğrulamayla
+  aynı desende, stateless bir JWT (`type: 'password_reset'`, 1 saat). Ayrı bir
+  `password_reset_tokens` tablosu **açılmadı** — email-verify ile simetri korunuyor ve
+  MVP için tek kullanımlık zorunluluğu (aynı token iki kez kullanılamasın) kritik değil;
+  bu bir bilinen açık olarak not düşülüyor (aşağıya bkz).
+
+**Sonuç.** Auth artık 04'teki sözleşmeyle birebir eşleşiyor. Bilinen açık: stateless
+reset/verify JWT'leri, süresi dolana kadar birden çok kez kullanılabilir (klasik
+tek-kullanımlık token invalidation'ı yok). Gerçek bir saldırı yüzeyi değil (token e-posta
+kutusuna gidiyor, çalınması ayrı bir sorun) ama Faz 2'de bir `used_at` kolonu ile
+sağlamlaştırılabilir.
+
+---
+
+## K-19 · Migration 011 "uygulandı" yazıyordu ama canlı DB'de hiç çalışmamıştı
+
+**Bağlam.** `materials` modülü yazılıp `POST /v1/materials/inputs` test edilirken sunucu
+`500` döndü: `The column "inputs.pending_review" does not exist`. Oysa
+`011_k10_schema_fixes.sql` dosyası diskte vardı, `schema.prisma` bu kolonları
+içeriyordu, K-16 bunu "tamamlandı" olarak belgeliyordu, ve
+[08-yol-haritasi.md](08-yol-haritasi.md)'nin migration tablosu 011'i "uygulandı" olarak
+listeliyordu. `information_schema.columns` ile canlı Supabase'e doğrudan bakıldığında
+gerçek: `inputs.pending_review`, `inputs.embedding_pending` ve `messages.session_id`
+**hiçbirinin DB'de karşılığı yoktu**. Migration dosyası muhtemelen bir önceki oturumda
+yazıldı, `schema.prisma`/dokümanlar buna göre güncellendi, ama `prisma db execute`
+komutu hiç çalıştırılmadı (veya sessizce başarısız oldu) ve bu fark edilmedi çünkü o an
+bu kolonları okuyan/yazan hiçbir kod yoktu.
+
+**Karar.** `011_k10_schema_fixes.sql` şimdi (idempotent olduğu için sorunsuzca) yeniden
+çalıştırıldı, `information_schema` ile doğrulandı. Kod değişikliği gerekmedi — sorun
+migration dosyasında değil, onu **uygulama adımının atlanmasındaydı**.
+
+**Sonuç.** "Migration dosyası var + dokümanlar 'tamamlandı' diyor" bunun canlı DB'ye
+gerçekten uygulandığının **kanıtı değil**. Bir migration'ı "tamamlandı" işaretlemeden
+önce ilgili tabloyu/kolonu `information_schema.columns` ile veya en azından o kolonu
+kullanan bir uçtan-uca istekle doğrulamak gerekiyor — bu, testin (materials modülü)
+sadece kod doğruluğunu değil, önceki "tamamlandı" işaretlerinin doğruluğunu da
+sınadığını gösteriyor.
+
+---
+
+## K-20 · `materials` modülü kapsamı: CRUD var, AI/DPP/embedding yok
+
+**Bağlam.** Faz 1.3 (`materials` modülü) yazılırken AI servisi (Faz 1.4-1.5) ve
+`DPPGenerator` (Faz 1.6) henüz yok. [06-senaryolar.md](06-senaryolar.md) S2'nin kabul
+kriterleri `outputs`, `embeddings`, `material_passports` tablolarına birer kayıt
+eklenmesini ve cevapta `qrCode`/`pdfUrl` bulunmasını istiyor — bunların hepsi tam
+olarak karşılanamaz durumda.
+
+**Karar.**
+- `POST /v1/materials/outputs|inputs` sadece CRUD yapıyor. `embeddingPending` her zaman
+  `true` (embedding hiç hesaplanmıyor). `passportId`/`qrCode`/`pdfUrl` `null` dönüyor —
+  `material_passports` satırı hiç açılmıyor; yarım/uydurma bir ESPR JSON'u üretip
+  1.6'da baştan yazmaktansa, alanları dürüstçe boş bırakmayı tercih ettik.
+- `materialClass` her iki modelde de **opsiyonel** — şemanın zaten desteklediği
+  (`material_class` nullable) HITL akışına uyumlu: boş geçilirse `pendingReview = true`.
+- `VerifiedFacilityGuard` sadece **create** (`POST`) endpoint'lerine kondu. 04'teki
+  "Tümü facility.verified=true gerektirir" ifadesi kelimenin tam anlamıyla okunursa
+  GET/PATCH/DELETE'i de kapsar, ama CLAUDE.md'nin domain kuralı daha kesin:
+  "unverified bir tesis materyal **oluşturamaz**". İkisi çeliştiğinde CLAUDE.md'nin
+  kesin ifadesi esas alındı; pratikte fark etmiyor çünkü doğrulanmamış bir tesisin zaten
+  görüntüleyecek bir kaydı olamaz (create engellendiği için).
+- `DELETE /v1/materials/outputs/:id`'de aktif eşleşme (`pending`/`accepted`) varsa `409`.
+  Aynı kısıt `inputs` için **eklenmedi** — 04 sadece outputs için belirtiyor, ve
+  `Match.input` FK'sı zaten `ON DELETE CASCADE` (bilinçli, `005_matching.sql`).
+
+**Sonuç.** Faz 1.3 tek başına "yarım" bir kayıt üretiyor — bu roadmap'in kendi
+sıralama notunda zaten kabul edilmiş bir durum ("1.4 ve 1.5, 1.3'ten hemen sonra
+gelmeli"). Frontend, `passportId: null` / `qrCode: null` durumunu "DPP henüz üretiliyor"
+olarak ele almalı.
+
+---
+
+## K-21 · DPP üretimi AI'sız tamamlandı: HMAC anahtarı, PDF/QR kütüphaneleri, eksik alanlar
+
+**Bağlam.** Faz 1.6 (DPPGenerator) AI servisine bağımlı değil — ESPR uyumu, PDF, QR hepsi
+yerel hesaplama/kütüphane işi. `POST /v1/materials/outputs` artık DPP'yi senkron üretiyor
+(S2'nin performans hedefi zaten PDF üretimini 2 saniyelik bütçeye dahil ediyor).
+
+**Kararlar.**
+- **İmza anahtarı:** Ayrı bir `DPP_SIGNING_SECRET` açılmadı, `JWT_SECRET_KEY` yeniden
+  kullanılıyor. Gerekçe: ikisi de "backend'in kendi ürettiğini kanıtlayan sır" — modest
+  deploy hedefi için ayrı bir zorunlu env değişkenine değmiyor. Prod'da segregasyon
+  isteniyorsa `PUBLIC_BASE_URL` yanına eklenebilir.
+- **Kütüphaneler:** `pdfkit` (PDF) ve `qrcode` (PNG) eklendi — ikisi de saf JS, native
+  bağımlılık yok, deploy'u ağırlaştırmıyor.
+- **Şemada karşılığı olmayan DPP alanları:** `05-is-kurallari.md`'deki örnek JSON
+  `physical_properties` (state/moisture/density) ve `origin.process`/`batch` içeriyor ama
+  `outputs` tablosunda bu veriler hiç yok. `physical_properties` bölümü tamamen atlandı,
+  `origin.process`/`batch` `null` bırakıldı — üretim tarihi (`origin.production_date`)
+  ise `output.createdAt`'ten türetiliyor (ayrı bir alan istemekten daha basit ve mevcut
+  API sözleşmesini bozmuyor). `environmental_impact` de atlandı — `CBAMCalculator`
+  (Faz 1.9) bir eşleşmeye bağlı çalışıyor, bağımsız bir çıktı için hesaplanamaz.
+- **PDF/QR tek seferlik:** DPP, PDF ve QR **sadece oluşturmada** üretiliyor. `PATCH`
+  bunları yeniden üretmiyor (docs/04 sadece "embedding yeniden hesaplanır" diyor, DPP'den
+  bahsetmiyor) — bilinçli bir basitleştirme, aksi hâlde eski PDF dosyasının temizlenmesi
+  gerekirdi.
+
+**Sonuç.** `material_passports.passport_data` dokümandaki tam ESPR şemasının bir alt
+kümesi — eksik alanlar `null`/atlanmış, ama `compliance.issues[]` her zaman doğru
+(gerçekten eksik olan tek kontrol edilebilir şey composition/material_class/location/
+production_date). Şema ileride `outputs`'a fiziksel özellik kolonları eklerse bu servis
+genişletilebilir.
+
+---
+
+## K-22 · Idempotency-Key: process-içi Map, Redis değil
+
+**Bağlam.** Faz 1.11, E3'ün üçüncü savunma katmanı. Roadmap Redis'i "pending_embeddings"
+kuyruğu için zaten öngörüyordu ama Redis hiç kurulmadı (docker-compose'da var, kodda yok).
+
+**Karar.** `IdempotencyInterceptor` tek process içi bir `Map` kullanıyor,
+`Idempotency-Key` + kullanıcı + method + path'i anahtarlıyor, 24 saat TTL, sadece 2xx
+cevapları cache'liyor (bir doğrulama hatasını kalıcı olarak cache'lemek istemiyoruz —
+kullanıcı düzeltip aynı anahtarla tekrar denerse yeniden denemeli).
+
+**Sonuç.** Tek instance'lı MVP deploy'u için doğru davranır. **Yatay ölçeklemeye
+geçilirse** (birden fazla backend process'i) bu cache Redis'e taşınmalı, aksi hâlde her
+instance kendi cache'ini tutar ve aynı istemci farklı instance'lara denk gelirse dedup
+bozulur. Şimdiden bu riski üstlenmek yerine not düşülüyor.
+
+---
+
+## K-23 · Matches state machine: enum case-mismatch bug (testte bulundu), gizlilik açığı
+
+**Bağlam.** Faz 1.10 (accept/reject/contact) yazılırken `find`/`ScoringEngine` henüz yok
+(Faz 1.7-1.8, embedding'e bağımlı) — bu yüzden testler `Match` satırlarını doğrudan
+Prisma ile fixture olarak açıyor, tıpkı gerçek bir eşleştirmenin göreceği şekilde.
+
+**Gerçek hata (testte bulundu).** `accept()` satır kilidi için `$queryRaw ... FOR UPDATE`
+kullanıyor. Raw SQL, DB'nin **lowercase** enum değerini olduğu gibi döner
+(`'pending'`), ama kod bunu Prisma Client'ın **UPPERCASE** enum değeriyle
+(`MatchStatus.PENDING === 'PENDING'`) karşılaştırıyordu — K-09'un tam olarak uyardığı
+sınır. Karşılaştırma sessizce hep `false` dönüyordu, yani her `accept()` çağrısı yanlışlıkla
+"tamamlama" dalına düşüyordu: ilk taraf kabul ettiğinde eşleşme hemen `completed`
+oluyor, stok İKİ KEZ düşüyor, hatta **reddedilmiş bir eşleşme bile `accept` ile tekrar
+`completed`'e dönebiliyordu**. 8 e2e testi bunu yakaladı (durum geçişleri, stok miktarı,
+reddedilmiş eşleşmenin kilitli kalması). **Karar:** raw sorgudan dönen `status` artık
+`.toUpperCase()` ile normalize ediliyor, karşılaştırmalar ondan sonra yapılıyor.
+
+**Bilinen açık (düzeltilmedi, bilinçli).** Eşleşme listesi/detayında `approximateLocation`
+(S3'ün örnek yanıtındaki yaklaşık konum) döndürülmüyor — "yaklaşık" olmanın ne kadar
+yuvarlama demek olduğu hiçbir yerde tanımlı değil. `osbName` + `sectorLabel` ile gizlilik
+kuralı zaten sağlanıyor (gerçek isim/adres/iletişim hiçbir zaman `completed` öncesi
+görünmüyor); konum sadece bir "yakınlık hissi" veriyor, eksikliği S3'ün özünü bozmuyor.
