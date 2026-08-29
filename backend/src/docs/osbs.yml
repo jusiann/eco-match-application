@@ -1,0 +1,28 @@
+openapi: 3.0.0
+info:
+  title: EcoMatch API - OSBs
+  description: Public OSB lookup for the register form dropdown
+  version: 1.0.0
+paths:
+  /v1/osbs:
+    get:
+      summary: List all OSBs (id, name, city)
+      tags:
+        - OSBs
+      responses:
+        '200':
+          description: OSB list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    name:
+                      type: string
+                    city:
+                      type: string
