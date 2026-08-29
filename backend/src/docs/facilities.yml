@@ -1,0 +1,86 @@
+openapi: 3.0.0
+info:
+  title: EcoMatch API - Facilities
+  description: Own-facility profile and verification document management
+  version: 1.0.0
+paths:
+  /v1/facilities/me:
+    get:
+      summary: Get own facility
+      tags:
+        - Facilities
+      security:
+        - bearer: []
+      responses:
+        '200':
+          description: Facility details
+        '401':
+          description: Unauthorized
+    patch:
+      summary: Update own facility (facility_admin only)
+      tags:
+        - Facilities
+      security:
+        - bearer: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                sector:
+                  type: string
+                location:
+                  type: object
+                  properties:
+                    lat:
+                      type: number
+                    lng:
+                      type: number
+      responses:
+        '200':
+          description: Facility updated
+        '403':
+          description: Insufficient role
+  /v1/facilities/me/documents:
+    post:
+      summary: Upload a verification document (facility_admin only)
+      tags:
+        - Facilities
+      security:
+        - bearer: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+                - documentType
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: PDF or JPG, max 10 MB
+                documentType:
+                  type: string
+                  enum: [tax_certificate, operating_permit]
+      responses:
+        '201':
+          description: Document uploaded, pending review
+        '400':
+          description: Missing/invalid file, documentType, or size limit exceeded
+        '403':
+          description: Insufficient role
+    get:
+      summary: List own verification documents and status
+      tags:
+        - Facilities
+      security:
+        - bearer: []
+      responses:
+        '200':
+          description: Verification status and document list
