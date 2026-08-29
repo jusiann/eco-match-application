@@ -1,0 +1,180 @@
+openapi: 3.0.0
+info:
+  title: EcoMatch API - Materials
+  description: Output (supply) and input (demand) CRUD. DPP/QR/embedding generation is not wired yet (Faz 1.4-1.6).
+  version: 1.0.0
+paths:
+  /v1/materials/outputs:
+    post:
+      summary: Create an output (facility_admin, verified facility only)
+      tags: [Materials]
+      security: [{ bearer: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [description, quantityKg]
+              properties:
+                description: { type: string }
+                materialClass: { type: string, enum: [metal, plastic, organic, chemical, textile, glass, paper, other] }
+                composition: { type: object, additionalProperties: { type: number } }
+                quantityKg: { type: number }
+                stock: { type: number }
+                frequency: { type: string, enum: [daily, weekly, monthly, one_time] }
+                confirmDuplicate: { type: boolean, description: "Reserved for Faz 1.11, currently ignored" }
+      responses:
+        '201':
+          description: Output created. passportId/qrCode/pdfUrl are null until Faz 1.6 (DPPGenerator) lands.
+        '403':
+          description: Facility not verified
+    get:
+      summary: List own outputs (paginated)
+      tags: [Materials]
+      security: [{ bearer: [] }]
+      parameters:
+        - in: query
+          name: page
+          schema: { type: integer }
+        - in: query
+          name: limit
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Paginated output list
+  /v1/materials/outputs/{id}:
+    get:
+      summary: Get own output by id
+      tags: [Materials]
+      security: [{ bearer: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200': { description: Output detail }
+        '404': { description: Not found or not owned }
+    patch:
+      summary: Update own output (recomputes embeddingPending)
+      tags: [Materials]
+      security: [{ bearer: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200': { description: Output updated }
+        '404': { description: Not found or not owned }
+    delete:
+      summary: Delete own output
+      tags: [Materials]
+      security: [{ bearer: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200': { description: Output deleted }
+        '409': { description: Blocked — an active (pending/accepted) match references this output }
+  /v1/materials/inputs:
+    post:
+      summary: Create an input (facility_admin, verified facility only)
+      tags: [Materials]
+      security: [{ bearer: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [description, quantityKg]
+              properties:
+                description: { type: string }
+                materialClass: { type: string, enum: [metal, plastic, organic, chemical, textile, glass, paper, other] }
+                specs: { type: object }
+                quantityKg: { type: number }
+                frequency: { type: string, enum: [daily, weekly, monthly, one_time] }
+      responses:
+        '201': { description: Input created }
+        '403': { description: Facility not verified }
+    get:
+      summary: List own inputs (paginated)
+      tags: [Materials]
+      security: [{ bearer: [] }]
+      responses:
+        '200': { description: Paginated input list }
+  /v1/materials/passport/{id}/json:
+    get:
+      summary: Public DPP JSON (ESPR format), HMAC-signed
+      tags: [Materials]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+        - in: query
+          name: sig
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: DPP JSON }
+        '403': { description: Invalid or missing signature }
+        '404': { description: Passport not found }
+  /v1/materials/passport/{id}/pdf:
+    get:
+      summary: Public DPP PDF binary, HMAC-signed
+      tags: [Materials]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+        - in: query
+          name: sig
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: PDF binary, application/pdf }
+        '403': { description: Invalid or missing signature }
+        '404': { description: Passport not found }
+  /v1/materials/passport/{id}/qr:
+    get:
+      summary: QR code PNG for the passport's signed URL (owner only)
+      tags: [Materials]
+      security: [{ bearer: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200': { description: QR PNG image, image/png }
+        '404': { description: Not found or not owned }
+  /v1/materials/inputs/{id}:
+    patch:
+      summary: Update own input
+      tags: [Materials]
+      security: [{ bearer: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200': { description: Input updated }
+        '404': { description: Not found or not owned }
+    delete:
+      summary: Delete own input
+      tags: [Materials]
+      security: [{ bearer: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200': { description: Input deleted }
