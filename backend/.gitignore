@@ -10,6 +10,9 @@
 .env.production
 .env.local
 
+# Yüklenen dosyalar (yerel disk depolama, MVP)
+/uploads/
+
 # Loglar
 logs/
 *.log

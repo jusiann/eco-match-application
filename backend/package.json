@@ -13,8 +13,7 @@
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\"",
-    "test": "jest",
-    "prisma:generate": "prisma generate",
+    "test": "node test/index.js",
     "prisma:migrate": "prisma migrate dev",
     "prisma:deploy": "prisma migrate deploy",
     "prisma:seed": "prisma db seed",
@@ -24,6 +23,8 @@
     "seed": "ts-node prisma/seed.ts"
   },
   "dependencies": {
+    "@fastify/cookie": "^9.4.0",
+    "@fastify/multipart": "^8.3.1",
     "@fastify/static": "^7.0.4",
     "@nestjs/common": "^10.0.0",
     "@nestjs/config": "^4.0.4",
@@ -36,6 +37,8 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
     "js-yaml": "^4.1.1",
+    "pdfkit": "^0.20.1",
+    "qrcode": "^1.5.4",
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.1"
   },
@@ -45,6 +48,8 @@
     "@nestjs/testing": "^10.0.0",
     "@types/bcrypt": "^5.0.2",
     "@types/node": "20.3.1",
+    "@types/pdfkit": "^0.17.6",
+    "@types/qrcode": "^1.5.6",
     "prisma": "^5.10.0",
     "ts-node": "^10.9.1",
     "tsconfig-paths": "^4.2.0",
