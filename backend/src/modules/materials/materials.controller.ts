@@ -1,4 +1,5 @@
 import { Controller, Get, Post, Patch, Delete, Body, Param, Query, Res, UseGuards } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import type { FastifyReply } from 'fastify';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { VerifiedFacilityGuard } from '../../common/guards/verified-facility.guard';
@@ -16,6 +17,7 @@ export class MaterialsController {
 
   @Audit('create', 'output')
   @Idempotent()
+  @Throttle({ default: { limit: 100, ttl: 60 * 60 * 1000 } }) // docs/04: 100/saat, kullanıcı
   @UseGuards(VerifiedFacilityGuard)
   @Post('outputs')
   createOutput(@GetUser() user: { sub: string }, @Body() dto: CreateOutputDto) {
@@ -70,12 +72,14 @@ export class MaterialsController {
   }
 
   @Public()
+  @Throttle({ default: { limit: 100, ttl: 60 * 1000 } }) // docs/04: public (DPP), 100/dk, IP
   @Get('passport/:id/json')
   getPassportJson(@Param('id') id: string, @Query('sig') sig?: string) {
     return this.materialsService.getPassportJson(id, sig);
   }
 
   @Public()
+  @Throttle({ default: { limit: 100, ttl: 60 * 1000 } })
   @Get('passport/:id/pdf')
   async getPassportPdf(@Param('id') id: string, @Query('sig') sig: string | undefined, @Res() reply: FastifyReply) {
     const buffer = await this.materialsService.getPassportPdf(id, sig);

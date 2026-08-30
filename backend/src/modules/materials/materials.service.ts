@@ -3,6 +3,9 @@ import { randomUUID } from 'crypto';
 import { MaterialClass, MatchStatus, Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { DppService } from './dpp.service';
+import { EmbeddingsService } from './embeddings.service';
+import { AiClientService } from '../ai/ai-client.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { CreateOutputDto, UpdateOutputDto, CreateInputDto, UpdateInputDto, ListQueryDto } from './materials.dto';
 
 @Injectable()
@@ -10,6 +13,9 @@ export class MaterialsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly dppService: DppService,
+    private readonly embeddingsService: EmbeddingsService,
+    private readonly aiClient: AiClientService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   private async getFacilityWithLocation(facilityId: string) {
@@ -76,9 +82,42 @@ export class MaterialsService {
       },
     });
 
-    // Embedding üretimi Faz 1.4-1.5'te eklenecek (AiClient/EmbeddingsService henüz yok) --
-    // embeddingPending bu yüzden her zaman true. DPP ise (Faz 1.6) burada senkron üretiliyor,
-    // S2 akışının performans hedefi de (form submit -> 201, PDF üretimi dahil) bunu varsayıyor.
+    // materialClass yoksa (pendingReview) HITL kuyruğuna girer (A2). AI'ın kendi tahminini
+    // hâlâ kaydediyoruz -- kullanıcı otomatik uygulanmasını istemedi ama uzmanın "AI ne
+    // düşünmüştü" diye görmesi gerekiyor (docs/06 A2 adım 6). human_review_queue şemada
+    // sadece output'u destekliyor, input'u değil (K-26) -- girdi tarafı henüz kapsam dışı.
+    if (output.pendingReview) {
+      const suggestion = await this.aiClient.classify(output.description);
+      await this.prisma.humanReviewQueue.create({
+        data: {
+          outputId: output.id,
+          confidence: suggestion.confidence,
+          reason: 'low_confidence_classification',
+          aiSuggestion: suggestion.top3 as unknown as Prisma.InputJsonValue,
+        },
+      });
+
+      const experts = await this.prisma.user.findMany({ where: { role: 'EXPERT' }, select: { id: true } });
+      await Promise.all(
+        experts.map((expert) =>
+          this.notificationsService.create(
+            expert.id,
+            'review_required',
+            'Yeni sınıflandırma incelemesi bekliyor',
+            `AI önerisi: ${suggestion.materialClass} (%${Math.round(suggestion.confidence * 100)})`,
+            { output_id: output.id, route: `/admin/review-queue` },
+          ),
+        ),
+      );
+    }
+
+    // materialClass yoksa (pendingReview) embedding için anlamlı bir metin de yok --
+    // HITL sınıfı atayınca embedding tetiklenecek, o zamana kadar pending kalır.
+    // AiClient şu an dummy (K-24) -- gerçek servis gelince bu satır değişmeyecek.
+    const embeddingPending = output.pendingReview ? true : !(await this.embeddingsService.embedOutput(output));
+
+    // DPP (Faz 1.6) burada senkron üretiliyor, S2'nin performans hedefi zaten PDF
+    // üretimini 2 saniyelik bütçeye dahil ediyor.
     const facility = await this.getFacilityWithLocation(facilityId);
     const compliance = this.dppService.checkCompliance(output, facility);
     const passportData: any = this.dppService.buildPassportData(output, facility, compliance);
@@ -109,7 +148,7 @@ export class MaterialsService {
       passportId,
       qrCode,
       pdfUrl,
-      embeddingPending: output.embeddingPending,
+      embeddingPending,
       pendingReview: output.pendingReview,
     };
   }
@@ -147,8 +186,11 @@ export class MaterialsService {
     if (dto.frequency !== undefined) data.frequency = dto.frequency;
 
     if (Object.keys(data).length > 0) {
-      data.embeddingPending = true; // metin değişmiş olabilir, embedding yeniden hesaplanmalı (Faz 1.5)
-      await this.prisma.output.update({ where: { id }, data });
+      data.embeddingPending = true; // metin değişmiş olabilir, embedding yeniden hesaplanmalı
+      const updated = await this.prisma.output.update({ where: { id }, data });
+      if (!updated.pendingReview) {
+        await this.embeddingsService.embedOutput(updated);
+      }
     }
 
     return { success: true, message: 'Çıktı güncellendi.' };
@@ -169,6 +211,11 @@ export class MaterialsService {
     }
 
     await this.prisma.output.delete({ where: { id } });
+    // embeddings polimorfik FK'sız (K-04/K-25) -- silme burada uygulama tarafında yapılıyor.
+    // Not: bu sadece bu doğrudan silme yolunu kapsıyor; hesap/tesis silme cascade'i
+    // (auth.service.ts) bu satırı çağırmadan outputs'u doğrudan siler, orada embedding
+    // artık kalır (bilinen açık, K-25).
+    await this.prisma.embedding.deleteMany({ where: { recordId: id, recordType: 'OUTPUT' } });
     return { success: true, message: 'Çıktı silindi.' };
   }
 
@@ -198,9 +245,11 @@ export class MaterialsService {
       },
     });
 
+    const embeddingPending = input.pendingReview ? true : !(await this.embeddingsService.embedInput(input));
+
     return {
       inputId: input.id,
-      embeddingPending: input.embeddingPending,
+      embeddingPending,
       pendingReview: input.pendingReview,
     };
   }
@@ -233,7 +282,10 @@ export class MaterialsService {
 
     if (Object.keys(data).length > 0) {
       data.embeddingPending = true;
-      await this.prisma.input.update({ where: { id }, data });
+      const updated = await this.prisma.input.update({ where: { id }, data });
+      if (!updated.pendingReview) {
+        await this.embeddingsService.embedInput(updated);
+      }
     }
 
     return { success: true, message: 'Girdi güncellendi.' };
@@ -246,6 +298,7 @@ export class MaterialsService {
     // Not: outputs'un aksine, docs/04'te inputs silmede aktif eşleşme kısıtı belgelenmedi.
     // Match.input FK'sı ON DELETE CASCADE (005_matching.sql) — bilinçli tasarım, burada tekrar edilmiyor.
     await this.prisma.input.delete({ where: { id } });
+    await this.prisma.embedding.deleteMany({ where: { recordId: id, recordType: 'INPUT' } });
     return { success: true, message: 'Girdi silindi.' };
   }
 

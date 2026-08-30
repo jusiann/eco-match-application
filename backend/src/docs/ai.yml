@@ -1,0 +1,41 @@
+openapi: 3.0.0
+info:
+  title: EcoMatch API - AI Proxy
+  description: Proxies the classification model. Currently backed by a DUMMY AiClientService -- see K-24. Contract shape matches docs/07-ai-entegrasyonu.md exactly so swapping in the real AI service later is a one-file change.
+  version: 1.0.0
+paths:
+  /v1/ai/classify:
+    post:
+      summary: Classify free-text material description (DUMMY backing, real contract shape)
+      tags: [AI]
+      security: [{ bearer: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [description]
+              properties:
+                description:
+                  type: string
+                  maxLength: 5000
+      responses:
+        '201':
+          description: Classification result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  materialClass:
+                    type: string
+                    enum: [metal, plastic, organic, chemical, textile, glass, paper, other]
+                  confidence:
+                    type: number
+                  top3:
+                    type: array
+                    items:
+                      type: array
+                  requiresHumanReview:
+                    type: boolean
