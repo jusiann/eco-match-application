@@ -22,8 +22,12 @@ export const testMaterials = async () => {
 
     assert(createOutputRes.status === 201, `POST /v1/materials/outputs 201 döndürdü (alınan: ${createOutputRes.status})`, createOutputRes);
     assert(!!createOutputRes.outputId, 'Çıktı oluşturma outputId döndürdü');
-    assert(createOutputRes.embeddingPending === true, 'embeddingPending değeri true (henüz AI servisi bağlanmadı, Faz 1.4-1.5)');
+    assert(createOutputRes.embeddingPending === false, 'embeddingPending değeri false (dummy AiClient senkron embed etti, K-24)');
     assert(createOutputRes.pendingReview === false, 'materialClass sağlandığında pendingReview false olur');
+
+    const dbOutputEmbedding = await prisma.embedding.findFirst({ where: { recordId: createOutputRes.outputId, recordType: 'OUTPUT' } });
+    assert(!!dbOutputEmbedding, 'embeddings tablosuna gerçek bir satır yazıldı');
+    assert(dbOutputEmbedding?.modelVersion === 'dummy-stub-v0', 'model_version dummy istemcinin adını taşıyor (gerçek servis gelince değişecek)');
     assert(!!createOutputRes.passportId, 'Çıktı oluşturma gerçek bir passportId döndürdü (DPP senkron üretildi, Faz 1.6)');
     assert(typeof createOutputRes.qrCode === 'string' && createOutputRes.qrCode.includes('/dpp/'), 'qrCode bir /dpp/:id imzalı URL\'sidir');
     assert(typeof createOutputRes.pdfUrl === 'string' && createOutputRes.pdfUrl.includes('/passport/'), 'pdfUrl imzalı pasaport PDF URL\'sidir');
@@ -40,12 +44,16 @@ export const testMaterials = async () => {
 
     assert(createUnclassifiedRes.status === 201, `materialClass olmadan çıktı oluşturma 201 döndürdü (alınan: ${createUnclassifiedRes.status})`);
     assert(createUnclassifiedRes.pendingReview === true, 'materialClass belirtilmediğinde pendingReview true olur');
+    assert(createUnclassifiedRes.embeddingPending === true, 'pendingReview true iken embedding hiç denenmez, embeddingPending true kalır (HITL Faz 2\'yi bekliyor)');
 
     state.unclassifiedOutputId = createUnclassifiedRes.outputId;
 
     const dbUnclassified = await prisma.output.findUnique({ where: { id: state.unclassifiedOutputId } });
     assert(dbUnclassified?.materialClass === null, 'materialClass belirtilmediğinde DB\'de NULL olarak saklanır');
     assert(Number(dbUnclassified?.stock) === 250, 'stock belirtilmediğinde varsayılan olarak quantityKg değerini alır');
+
+    const noEmbeddingForUnclassified = await prisma.embedding.findFirst({ where: { recordId: state.unclassifiedOutputId, recordType: 'OUTPUT' } });
+    assert(noEmbeddingForUnclassified === null, 'Sınıfsız çıktı için embeddings tablosunda hiç satır açılmadı');
 
     // ── GET /v1/materials/outputs (listeleme, sayfalanmış) ──
     const listOutputsRes = await api('GET', '/materials/outputs', null, state.accessToken);
@@ -66,7 +74,7 @@ export const testMaterials = async () => {
 
     const dbAfterPatch = await prisma.output.findUnique({ where: { id: state.outputId } });
     assert(Number(dbAfterPatch?.quantityKg) === 950, 'DB\'de çıktı quantityKg güncellendi');
-    assert(dbAfterPatch?.embeddingPending === true, 'PATCH sonrasında embeddingPending tekrar true olarak işaretlendi ("Embedding yeniden hesaplanır")');
+    assert(dbAfterPatch?.embeddingPending === false, 'PATCH embedding\'i senkron yeniden hesapladı, embeddingPending false\'a döndü ("Embedding yeniden hesaplanır")');
 
     // ── DPP ÜRETİMİ (Faz 1.6) ──
     section('5.0 DPP ÜRETİMİ');
@@ -151,7 +159,11 @@ export const testMaterials = async () => {
     assert(idem1.status === 201 && idem2.status === 201, 'Idempotency-Key ile iki istek de 201 döner');
     assert(idem1.outputId === idem2.outputId, 'Aynı Idempotency-Key ile ikinci istek AYNI outputId\'yi döner (yeni kayıt açılmadı)');
 
-    const outputCountForIdemDesc = await prisma.output.count({ where: { description: idemPayload.description } });
+    // facilityId ile de sınırlandırıyoruz -- description tek başına global bir filtre, önceki
+    // bir çalıştırmadan kalan (temizlenmemiş) bir satır varsa yanlış pozitif üretebilir.
+    const outputCountForIdemDesc = await prisma.output.count({
+        where: { description: idemPayload.description, facilityId: state.facilityId },
+    });
     assert(outputCountForIdemDesc === 1, 'DB\'de sadece TEK bir output satırı var (tekilleştirme gerçekten çalışıyor)');
 
     const idem3 = await api('POST', '/materials/outputs', idemPayload, state.accessToken, {
@@ -169,7 +181,10 @@ export const testMaterials = async () => {
 
     assert(createInputRes.status === 201, `POST /v1/materials/inputs 201 döndürdü (alınan: ${createInputRes.status})`, createInputRes);
     assert(!!createInputRes.inputId, 'Girdi oluşturma inputId döndürdü');
-    assert(createInputRes.embeddingPending === true, 'Girdi embeddingPending değeri true (henüz AI servisi bağlanmadı)');
+    assert(createInputRes.embeddingPending === false, 'Girdi embeddingPending değeri false (dummy AiClient senkron embed etti, K-24)');
+
+    const dbInputEmbedding = await prisma.embedding.findFirst({ where: { recordId: createInputRes.inputId, recordType: 'INPUT' } });
+    assert(!!dbInputEmbedding, 'Girdi için de embeddings tablosuna gerçek bir satır yazıldı');
 
     state.inputId = createInputRes.inputId;
 

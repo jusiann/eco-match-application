@@ -3,7 +3,7 @@
 //  ve Veritabanı Temizliği
 // ═══════════════════════════════════════════════════════════════
 
-import { state, assert, api, section, prisma, TEST_DATA } from './helpers.js';
+import { state, assert, api, section, prisma, TEST_DATA, BACKEND_DIR } from './helpers.js';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -40,6 +40,47 @@ export const testCleanup = async () => {
         } catch {}
     }
 
+    // ── Uzman (expert) test kayıtlarını temizle ──
+    if (state.expertFacilityId) {
+        try {
+            await prisma.facility.delete({ where: { id: state.expertFacilityId } }).catch(() => {});
+            console.log('  [Temizlik] Uzman test tesisi silindi');
+        } catch {}
+    }
+
+    // ── Rate limit test kayıtlarını temizle ──
+    if (state.rateLimitFacilityId) {
+        try {
+            await prisma.facility.delete({ where: { id: state.rateLimitFacilityId } }).catch(() => {});
+            console.log('  [Temizlik] Rate limit test tesisi silindi');
+        } catch {}
+    }
+
+    // ── Test carbon_factors satırlarını temizle ve kapattıkları gerçek satırları geri aç ──
+    // admin-extra.test.js "eskinin valid_to'sunu kapatır" davranışını test ederken GERÇEK
+    // seed satırını (Ecoinvent v3.10) kapatıyor -- silmek yetmez, hangi satırın şimdi aktif
+    // olması gerektiğini yeniden hesaplayıp açmak lazım, yoksa canlı CBAM hesapları bozulur.
+    try {
+        await prisma.carbonFactor.deleteMany({ where: { source: { contains: 'E2E Test' } } });
+
+        const pairs = await prisma.carbonFactor.groupBy({ by: ['materialClass', 'factorType'] });
+        for (const pair of pairs) {
+            const activeCount = await prisma.carbonFactor.count({
+                where: { materialClass: pair.materialClass, factorType: pair.factorType, validTo: null },
+            });
+            if (activeCount === 0) {
+                const mostRecent = await prisma.carbonFactor.findFirst({
+                    where: { materialClass: pair.materialClass, factorType: pair.factorType },
+                    orderBy: { validFrom: 'desc' },
+                });
+                if (mostRecent) {
+                    await prisma.carbonFactor.update({ where: { id: mostRecent.id }, data: { validTo: null } });
+                }
+            }
+        }
+        console.log('  [Temizlik] Test carbon_factor satırları temizlendi, kapatılan gerçek satırlar geri açıldı');
+    } catch {}
+
     // ── Bu test çalıştırması tarafından oluşturulan test OSB'sini temizle ──
     try {
         const testOsb = await prisma.osb.findFirst({ where: { name: TEST_DATA.osb.name } });
@@ -49,20 +90,36 @@ export const testCleanup = async () => {
         }
     } catch {}
 
-    // ── Diske yüklenen geçici test dosyalarını temizle ──
-    for (const subdir of ['facility-documents', 'dpp-pdfs']) {
-        const uploadDir = path.join(process.cwd(), 'uploads', subdir);
-        if (!fs.existsSync(uploadDir)) continue;
+    // ── Yetim (orphan) embedding satırlarını temizle ──
+    // embeddings polimorfik FK'sız (K-04/K-25): output/input hesap silme cascade'iyle
+    // gittiğinde embedding satırı DB seviyesinde OTOMATİK silinmiyor, uygulama da bu
+    // cascade yolunu bilmiyor (sadece doğrudan DELETE /outputs|inputs/:id temizliyor).
+    // Test ortamında bu yüzden elle süpürüyoruz.
+    try {
+        const orphaned = await prisma.$executeRaw`
+            DELETE FROM embeddings e
+             WHERE (e.record_type = 'output' AND NOT EXISTS (SELECT 1 FROM outputs o WHERE o.id = e.record_id))
+                OR (e.record_type = 'input'  AND NOT EXISTS (SELECT 1 FROM inputs i WHERE i.id = e.record_id))
+        `;
+        console.log(`  [Temizlik] ${orphaned} yetim embedding satırı temizlendi (K-25)`);
+    } catch {}
+
+    // ── Diske yazılan geçici test dosyalarını temizle (yüklenen belgeler + AI export'u) ──
+    // process.cwd() DEĞİL BACKEND_DIR: sunucu her zaman backend/ kökünden yazıyor, bu
+    // testin kendi process.cwd()'i npm'in nereden tetiklendiğine göre kayabilir (K-30).
+    for (const dir of ['uploads/facility-documents', 'uploads/dpp-pdfs', 'training', 'training/feedback']) {
+        const fullDir = path.join(BACKEND_DIR, dir);
+        if (!fs.existsSync(fullDir)) continue;
         try {
-            const files = await fs.promises.readdir(uploadDir);
+            const files = await fs.promises.readdir(fullDir);
             for (const file of files) {
-                const filePath = path.join(uploadDir, file);
+                const filePath = path.join(fullDir, file);
                 const stat = await fs.promises.stat(filePath);
-                if (Date.now() - stat.mtimeMs < 10 * 60 * 1000) {
+                if (stat.isFile() && Date.now() - stat.mtimeMs < 10 * 60 * 1000) {
                     await fs.promises.unlink(filePath).catch(() => {});
                 }
             }
-            console.log(`  [Temizlik] uploads/${subdir}/ dizinindeki geçici test dosyaları temizlendi`);
+            console.log(`  [Temizlik] ${dir}/ dizinindeki geçici test dosyaları temizlendi`);
         } catch {}
     }
 

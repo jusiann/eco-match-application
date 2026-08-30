@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import { fileURLToPath } from 'url';
 
 // The test process is a separate `node test/index.js` invocation — it never goes through
 // Nest's ConfigModule, so .env is not loaded automatically the way it is for the server.
@@ -11,6 +12,13 @@ try {
 } catch {
   // .env missing is fine if the shell already exported the vars (e.g. CI secrets)
 }
+
+// Sunucu her zaman process.cwd()=backend/ varsayımıyla diske yazıyor (uploads/, training/,
+// bkz. cron.service.ts, facilities.service.ts, dpp.service.ts). Testin KENDİ process.cwd()'i
+// ise `npm test` hangi dizinden tetiklendiğine bağlı olarak farklılaşabilir -- .env
+// yüklemesinde yukarıda aynı sorun yaşandığı için import.meta.url'e sabitlendi, aynı
+// yaklaşımı dosya sistemi kontrolleri yapan testler için de kullan (K-30).
+export const BACKEND_DIR = fileURLToPath(new URL('..', import.meta.url));
 
 if (!process.env.JWT_SECRET_KEY) {
   console.error('\x1b[31m✖ JWT_SECRET_KEY ayarlanmamış ve backend/.env yüklenemedi.\x1b[0m');
@@ -88,6 +96,10 @@ export const state = {
     inputId: null,
     consumerToken: null,
     consumerFacilityId: null,
+    expertUserId: null,
+    expertFacilityId: null,
+    expertToken: null,
+    rateLimitFacilityId: null,
 };
 
 export const stats = {

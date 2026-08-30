@@ -11,7 +11,13 @@ import { testAuth } from './auth.test.js';
 import { testFacilities } from './facilities.test.js';
 import { testAdmin } from './admin.test.js';
 import { testMaterials } from './materials.test.js';
+import { testAi } from './ai.test.js';
 import { testMatches } from './matches.test.js';
+import { testFind } from './find.test.js';
+import { testReviewQueue } from './review-queue.test.js';
+import { testNotifications } from './notifications.test.js';
+import { testReports } from './reports.test.js';
+import { testAdminExtra } from './admin-extra.test.js';
 import { testCleanup } from './cleanup.test.js';
 
 const run = async () => {
@@ -45,7 +51,13 @@ const run = async () => {
         await testFacilities();
         await testAdmin();
         await testMaterials();
+        await testAi();
         await testMatches();
+        await testFind();
+        await testReviewQueue();
+        await testNotifications();
+        await testReports();
+        await testAdminExtra();
     } catch (error) {
         console.error(`\n${colors.red}${colors.bright}✖ Kritik Test Hatası:${colors.reset}`, error.message);
         console.error(error.stack);
