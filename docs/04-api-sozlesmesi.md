@@ -252,13 +252,14 @@ QR kodun içindeki imza budur. Geçersiz imza → 403.
 ## Matches
 
 Durum makinesi implemente edildi (Faz 1.10, K-23): list/get/accept/reject/contact
-gerçek veriyle çalışıyor, `SELECT ... FOR UPDATE` ile stok kilitleniyor (E7).
-`find` (aday bulma + skorlama, satır 1) **henüz yok** — embedding'e bağımlı
-(Faz 1.7/1.8). `retry` de henüz yok (Faz 2.8, expired match cron'una bağlı).
+gerçek veriyle çalışıyor, `SELECT ... FOR UPDATE` ile stok kilitleniyor (E7). `find`
+(aday bulma + skorlama) implemente edildi (Faz 1.7/1.8/1.9, K-24) — pgvector benzerlik
+araması, 5 faktörlü skor, CBAM hesabı gerçek; sadece embedding'lerin kaynağı olan
+`AiClientService` dummy. `retry` henüz yok (Faz 2.8, expired match cron'una bağlı).
 
 | Metod | Yol | Rol | Açıklama |
 |---|---|---|---|
-| GET | `/v1/matches/find/:outputId` | Sahip | Aday bul + skorla. 200 veya 202. **Bekliyor (1.7/1.8)** |
+| GET | `/v1/matches/find/:outputId` | Sahip | Aday bul + skorla. 200 veya 202 |
 | GET | `/v1/matches` | Auth | `?status=pending&page=1` |
 | GET | `/v1/matches/:id` | Taraflardan biri | Detay + kısıtlı karşı taraf bilgisi |
 | POST | `/v1/matches/:id/accept` | Taraflardan biri | 201. `Idempotency-Key` destekler |
@@ -455,12 +456,17 @@ Tesis doğrulama endpoint'leri (`/v1/admin/verifications/*`) yukarıda,
 
 ## AI Proxy ve Chatbot
 
+`POST /v1/ai/classify` implemente edildi ama **dummy** bir `AiClientService` tarafından
+besleniyor (Faz 1.4, K-24) — ekip arkadaşının gerçek AI servisi hazır olduğunda tek
+değişecek dosya `ai-client.service.ts`, sözleşme şekli zaten `docs/07` ile birebir.
+`confidence`/`materialClass` değerleri şu an anlamlı değil, sadece şekli doğru.
+
 | Metod | Yol | Rol | Açıklama |
 |---|---|---|---|
-| POST | `/v1/ai/classify` | Auth | Canlı sınıflandırma önizlemesi (S2 adım 4) |
-| POST | `/v1/internal/ai/embed` | Internal | Sadece servis içi |
-| POST | `/v1/chat` | Auth | Claude proxy, SSE streaming |
-| GET | `/v1/chat/history` | Auth | Son mesajlar |
+| POST | `/v1/ai/classify` | Auth | Canlı sınıflandırma önizlemesi (S2 adım 4). **Dummy backing (K-24)** |
+| POST | `/v1/internal/ai/embed` | Internal | `EmbeddingsService` içinde dahili sarmalayıcı — dışa açık route değil, ayrı bir HTTP endpoint'i yok |
+| POST | `/v1/chat` | Auth | Claude proxy, SSE streaming. **Bekliyor (Faz 3.3)** |
+| GET | `/v1/chat/history` | Auth | Son mesajlar. **Bekliyor (Faz 3.3)** |
 
 **`POST /v1/ai/classify`** — istemci form yazarken 500 ms debounce ile çağırır:
 

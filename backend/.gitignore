@@ -13,6 +13,9 @@
 # Yüklenen dosyalar (yerel disk depolama, MVP)
 /uploads/
 
+# Haftalık AI geri besleme export'u (docs/07)
+/training/
+
 # Loglar
 logs/
 *.log

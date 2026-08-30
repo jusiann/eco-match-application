@@ -482,3 +482,67 @@ reddedilmiş eşleşmenin kilitli kalması). **Karar:** raw sorgudan dönen `sta
 yuvarlama demek olduğu hiçbir yerde tanımlı değil. `osbName` + `sectorLabel` ile gizlilik
 kuralı zaten sağlanıyor (gerçek isim/adres/iletişim hiçbir zaman `completed` öncesi
 görünmüyor); konum sadece bir "yakınlık hissi" veriyor, eksikliği S3'ün özünü bozmuyor.
+
+---
+
+## K-24 · `AiClientService` dummy: sözleşme gerçek, içerik değil
+
+**Bağlam.** Ekip arkadaşının AI servisi (ayrı repo, MIT'nin bir eşleştirme modelini
+kullanacak) henüz hazır değil. Faz 1'in geri kalanı (`ai/classify`, embedding üretimi,
+`matches/find` + skorlama) bu servise bağımlıydı. Roadmap'in kendi önerisi ("Sahte bir
+`/embed` ile 1.7 ve 1.8 geliştirilebilir") buradaki yaklaşımı zaten öngörüyordu.
+
+**Karar.** `AiClientService` docs/07'deki sözleşmeyi (`classify`/`embed` girdi-çıktı
+şekli) birebir uyguluyor ama içi dummy:
+- `classify()`: metnin hash'inden deterministik bir `materialClass` + `confidence`
+  (0.45-0.90 aralığı) + `top3` üretir. Aynı metin her zaman aynı sonucu verir (test
+  edilebilirlik için), farklı metin farklı sonuç verir (sabit/hardcoded cevap değil).
+- `embed()`: rastgele 768 boyutlu, L2-normalize edilmiş bir vektör üretir
+  (`normalized: true` iddiası gerçek — pgvector'ün cosine mesafesi bunu gerektiriyor).
+- Retry/circuit breaker (docs/07: 3 deneme, 500ms→1s→2s, %50 hata eşiği) **eklenmedi** —
+  sahte bir çağrının başarısız olması diye bir şey yok. Gerçek HTTP istemcisi yazılırken
+  eklenmesi gereken yer `ai-client.service.ts` içinde açıkça yorumlandı.
+
+Bunun üzerine inşa edilen her şey **gerçek**: `POST /v1/ai/classify` backend'in kendi
+HITL eşiğini (`system_config['match.hitl_threshold']`) kontrol ediyor (docs/07: "tek
+kaynağa güvenmiyoruz"); `EmbeddingsService` gerçek `buildEmbeddingText()` + pgvector
+yazımı yapıyor; `GET /v1/matches/find/:outputId` gerçek pgvector benzerlik araması,
+gerçek 5 faktörlü skor (docs/05 formülleri), gerçek CBAM hesabı çalıştırıyor — sadece
+girdi vektörleri anlamsız.
+
+**Sonuç.** Gerçek AI servisi geldiğinde tek değişen dosya `ai-client.service.ts` olacak
+(HTTP istemcisiyle değişecek, retry/CB o zaman eklenecek); `AiService`, `EmbeddingsService`,
+`ScoringService`, `MatchesService` hiç dokunulmadan çalışmaya devam edecek. Eşleşme
+kalitesi şu an anlamsız (rastgele vektörler arası benzerlik ~0) — test edilirken
+`embeddings` tablosuna doğrudan bilinen bir vektör yazılarak (bkz. `find.test.js`)
+deterministik hâle getirildi. Ekonomik skor için gereken malzeme fiyatları da (`virgin`/
+`secondary` EUR/kg) hiçbir dokümanda yoktu; `scoring.service.ts` içinde açıkça
+yer tutucu olarak işaretlenmiş sabit bir tabloyla dolduruldu (AD2 kalibrasyonu bekliyor).
+
+---
+
+## K-25 · `embeddings` yetim satırları: doğrudan silmede temizleniyor, cascade'de değil
+
+**Bağlam.** [03-veri-modeli.md](03-veri-modeli.md) "embeddings polimorfik FK kullanıyor...
+input/output silindiğinde embedding'i uygulama temizler" diyordu — ama embedding üretimi
+bu oturuma kadar hiç yoktu, yani bu iddia hiç test edilmemişti. `materials`/`matches`/
+`find` testleri art arda koşulduğunda 21 yetim `embeddings` satırı biriktiği fark edildi.
+
+**Kök sebep.** `deleteOutput`/`deleteInput` (materials.service.ts) embedding satırını
+gerçekten silmiyordu — sadece `outputs`/`inputs` satırı gidiyordu. Daha da önemlisi,
+`DELETE /v1/auth/delete-account` tesisi silince `outputs`/`inputs` DB seviyesinde
+`ON DELETE CASCADE` ile gidiyor — bu yol `materials.service.ts`'in hiçbir metodundan
+geçmiyor, dolayısıyla oradaki temizlik kodu bile bu senaryoda hiç çalışmıyor.
+
+**Karar.** `deleteOutput`/`deleteInput` artık kendi embedding satırını da siliyor —
+bu, **doğrudan** `DELETE /v1/materials/outputs|inputs/:id` çağrısı yolunu düzeltiyor.
+Hesap/tesis silme cascade'i için bir düzeltme **yapılmadı** — auth modülünün materials
+tablolarını bilmesi gerekirdi, bu sınırı bulanıklaştırırdı. Bunun yerine test paketinin
+`cleanup.test.js`'i artık her koşuda yetim embedding'leri süpürüyor (`record_id`'si
+`outputs`/`inputs`'ta artık olmayan satırlar).
+
+**Sonuç.** Prod'da hesap silme sonrası birkaç KB'lık yetim `embeddings` satırı kalabilir
+— zararsız (hiçbir sorgu onlara join ile ulaşamaz, referans verdiği kayıt yok) ama disk
+kullanımı zamanla birikir. Gerçek çözüm ya bir Postgres trigger'ı ya da
+`deleteAccount`'a (auth.service.ts) açık bir `embeddings` temizliği eklemek olurdu;
+ikisi de bu oturumun kapsamı dışında bırakıldı, ileride ele alınmalı.

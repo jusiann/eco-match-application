@@ -566,7 +566,9 @@ await this.prisma.$executeRaw`
 Bunlar bilinçli borç, bug değil:
 
 - `embeddings` polimorfik FK kullanıyor — referans bütünlüğü DB'de zorlanmıyor.
-  `input`/`output` silindiğinde embedding'i uygulama temizler.
+  `DELETE /v1/materials/outputs|inputs/:id` embedding'i uygulama tarafında temizliyor,
+  ama hesap/tesis silme cascade'i (`ON DELETE CASCADE`) temizlemiyor — yetim satır
+  kalabilir, zararsız ama birikir (bkz. K-25).
 - Dosya depolama (belge, PDF, QR) MVP'de yerel disk; S3/MinIO'ya geçiş Faz 3.
 - `notification_prefs` Faz 2'de devreye giriyor; o zamana kadar tüm bildirimler
   varsayılan davranışla gider.

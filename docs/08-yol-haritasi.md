@@ -11,18 +11,20 @@ ilerler; buradaki tahminlere dahil değildir.
 | Faz | Kapsam | Tahmin | Durum |
 |---|---|---|---|
 | **Faz 0** | Temel — şema, guard'lar, auth tamamlama | ~8 gün | **Tamamlandı** |
-| **Faz 1** | MVP — kayıt → çıktı → eşleşme → kabul | ~18 gün | **Devam ediyor** |
-| **Faz 2** | HITL, bildirim, raporlama | ~14 gün | Bekliyor |
+| **Faz 1** | MVP — kayıt → çıktı → eşleşme → kabul | ~18 gün | **Tamamlandı*** |
+| **Faz 2** | HITL, bildirim, raporlama | ~14 gün | Sıradaki |
 | **Faz 3** | Chatbot, OSB dashboard, IoT, kalibrasyon | ~12 gün | Bekliyor |
 
-Bugün çalışan: auth modülü uçtan uca (K-18) · `GET /v1/osbs` · `facilities` modülü +
-tesis doğrulama akışı (S1 baştan sona) · `materials` modülü — output/input CRUD + DPP
-üretimi (JSON/PDF/QR, HMAC imzalı, K-20/K-21) · `matches` modülü — kabul/red/iletişim
-durum makinesi, stok kilitleme (K-23) · Idempotency-Key (K-22). Kalan Faz 1 işi
-(1.4/1.5/1.7/1.8/1.9) embedding'e bağımlı — AI servisi hazır olunca sırayla açılabilir.
-Ortak altyapı hazır: `HttpExceptionFilter`, `RolesGuard`, `AuditInterceptor`,
-`VerifiedFacilityGuard`, `IdempotencyInterceptor`, `@Public()` — sıradaki modüller
-bunları doğrudan kullanabilir.
+`*` 1.11'in sunucu taraflı 5-dk benzerlik tespiti hariç — bkz. görev tablosu.
+
+Bugün çalışan: auth (K-18) · `GET /v1/osbs` · `facilities` + tesis doğrulama (S1 baştan
+sona) · `materials` — output/input CRUD + DPP üretimi (K-20/K-21) · `matches` — durum
+makinesi + stok kilitleme (K-23) · Idempotency-Key (K-22) · `AiClientService` **dummy**
+(K-24) üzerine kurulu ama tamamen **gerçek** aday bulma + 5 faktörlü skorlama + CBAM
+hesabı (`GET /v1/matches/find/:outputId`) · `POST /v1/ai/classify`. Faz 1'in tamamı
+bitti. Ortak altyapı: `HttpExceptionFilter`, `RolesGuard`, `AuditInterceptor`,
+`VerifiedFacilityGuard`, `IdempotencyInterceptor`, `@Public()`, `SystemConfigService` —
+Faz 2 modülleri bunları doğrudan kullanabilir.
 
 ---
 
@@ -98,22 +100,45 @@ demo yapılabilir.
 | 1.1 | `facilities` modülü — profil, belge yükleme | **K** | 2 | S1 | Tamamlandı |
 | 1.2 | Admin doğrulama endpoint'leri | **K** | 1 | S1 | Tamamlandı |
 | 1.3 | `materials` modülü — output/input CRUD | **K** | 2.5 | S2 | Tamamlandı (CRUD) — K-20 |
-| 1.4 | `AiClient` — retry + circuit breaker | **K** | 2 | H1 | Sıradaki — AI servisi hazır olmalı |
-| 1.5 | `EmbeddingsService` — pgvector yazma | **K** | 1.5 | S2 | Bekliyor — 1.4'e bağlı |
+| 1.4 | `AiClient` — retry + circuit breaker | **K** | 2 | H1 | Tamamlandı (dummy) — K-24, retry/CB yok |
+| 1.5 | `EmbeddingsService` — pgvector yazma | **K** | 1.5 | S2 | Tamamlandı — K-24 |
 | 1.6 | `DPPGenerator` — JSON + PDF + QR + ESPR kontrolü | **K** | 2.5 | S2, E8 | Tamamlandı — K-21 |
-| 1.7 | Aday bulma sorgusu — pgvector + PostGIS + self-match filtresi | **K** | 2 | S3, E1 | Bekliyor — embedding'e bağlı |
-| 1.8 | `ScoringEngine` — 5 faktör, `weights_config`'ten okuma | **K** | 2.5 | S3, E2, E6 | Bekliyor — 1.7'ye bağlı |
-| 1.9 | `CBAMCalculator` | **K** | 1.5 | S3, S5 | Bekliyor |
+| 1.7 | Aday bulma sorgusu — pgvector + PostGIS + self-match filtresi | **K** | 2 | S3, E1 | Tamamlandı — K-24 |
+| 1.8 | `ScoringEngine` — 5 faktör, `weights_config`'ten okuma | **K** | 2.5 | S3, E2, E6 | Tamamlandı — K-24 |
+| 1.9 | `CBAMCalculator` | **K** | 1.5 | S3, S5 | Tamamlandı |
 | 1.10 | Match kabul/red + durum makinesi + kilitleme | **K** | 2 | S4, A1, E7 | Tamamlandı — K-23 |
 | 1.11 | Idempotency + duplicate tespiti | Y | 1 | E3 | Kısmen — Idempotency-Key tamam (K-22), sunucu taraflı 5-dk benzerlik tespiti hâlâ yok |
 | 1.12 | Public DPP endpoint'leri + HMAC imza | Y | 1 | A5 | Tamamlandı (1.6 ile birlikte) |
 
 **Alt toplam: ~21.5 gün** (paralel çalışmayla ~18)
 
-### Bu oturumda tamamlanan (1.0 – 1.3, 1.6, 1.10, 1.11-kısmen, 1.12)
+### Faz 1 tamamlandı: AI-bağımlı kısımlar dummy (1.4, 1.5, 1.7, 1.8, 1.9)
 
-**AI gerektirmeyen Faz 1 endpoint'lerinin tamamı** bilinçli bir sıralamayla bitirildi —
-1.7/1.8/1.9 (find, scoring, CBAM) hâlâ embedding'e bağlı oldukları için bekliyor.
+Ekip arkadaşının AI servisi henüz yok. `AiClientService` dummy (K-24) — sözleşme şekli
+`docs/07`'yle birebir, içerik anlamsız. Üzerine kurulu her şey **gerçek**:
+
+- **`POST /v1/ai/classify`:** dummy `classify()`'ı sarmalıyor, backend kendi HITL eşiğini
+  (`system_config['match.hitl_threshold']`) kontrol ediyor.
+- **`EmbeddingsService`:** `buildEmbeddingText()` (docs/07 ile birebir) + pgvector yazımı
+  gerçek. `materials.service.ts`'e bağlandı — çıktı/girdi oluşturulduğunda (materialClass
+  varsa) otomatik embed ediliyor, `embeddingPending` artık gerçekten `false` olabiliyor.
+- **`GET /v1/matches/find/:outputId`:** gerçek pgvector cosine benzerlik araması
+  (docs/03'teki referans sorguyla birebir), self-match/eşik/aktiflik filtreleri, gerçek
+  5 faktörlü skor (docs/05 formülleri, `scoring.service.ts`), gerçek CBAM hesabı
+  (`carbon_factors` tablosundan). Sadece girdi vektörleri rastgele olduğu için eşleşme
+  kalitesi anlamsız — test ederken `embeddings`'e doğrudan bilinen vektör yazılarak
+  (`find.test.js`) deterministik hâle getirildi.
+- **Ekonomik skor için malzeme fiyatları:** hiçbir dokümanda yoktu, `scoring.service.ts`
+  içinde açıkça yer tutucu olarak işaretlenmiş sabit bir tabloyla dolduruldu.
+- **Gerçek hata (testte bulundu, K-25):** `embeddings` tablosu polimorfik FK'sız;
+  `deleteOutput`/`deleteInput` embedding satırını hiç silmiyordu, hesap silme cascade'i
+  de zaten silemez (auth modülü materials tablolarını bilmiyor). 21 yetim satır birikti.
+  Doğrudan silme yolu düzeltildi, test paketine bir "yetim süpürme" adımı eklendi.
+
+**Faz 1 artık tamamen bitti** (1.11'in sunucu taraflı duplicate tespiti hariç).
+**276/276 test assertion'ı geçiyor** (`ai.test.js`, `find.test.js` eklendi).
+
+### Önceki: Faz 1'in AI gerektirmeyen kısmı (1.0 – 1.3, 1.6, 1.10, 1.11-kısmen, 1.12)
 
 - **`materials` modülü — CRUD (K-20):** `POST/GET /v1/materials/outputs`, `GET/PATCH/DELETE
   /v1/materials/outputs/:id`, `POST/GET /v1/materials/inputs`, `PATCH/DELETE
