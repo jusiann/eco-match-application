@@ -1,9 +1,24 @@
 import { Injectable, NotFoundException, ForbiddenException, ConflictException } from '@nestjs/common';
-import { MatchStatus } from '@prisma/client';
+import { MatchStatus, MaterialClass, Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
+import { SystemConfigService } from '../../common/services/system-config.service';
+import { ScoringService, CarbonFactors } from './scoring.service';
 import { RejectMatchDto, MatchListQueryDto } from './matches.dto';
 
 const TERMINAL_STATUSES: MatchStatus[] = [MatchStatus.COMPLETED, MatchStatus.REJECTED, MatchStatus.EXPIRED];
+
+interface CandidateRow {
+  id: string;
+  facility_id: string;
+  quantity_kg: string;
+  specs: Record<string, unknown> | null;
+  similarity: number;
+  distance_km: number | null;
+  sector: string;
+  osb_name: string | null;
+  lat: number | null;
+  lng: number | null;
+}
 
 type MatchWithParties = {
   id: string;
@@ -23,7 +38,11 @@ type MatchWithParties = {
 
 @Injectable()
 export class MatchesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly scoringService: ScoringService,
+    private readonly systemConfig: SystemConfigService,
+  ) {}
 
   private async getFacilityIdForUser(userId: string): Promise<string> {
     const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { facilityId: true } });
@@ -241,5 +260,199 @@ export class MatchesService {
       email: contactUser?.email ?? null,
       phone: contactUser?.phone ?? null,
     };
+  }
+
+  // Faz 2.8 (A3): sadece expired eşleşmeler yeniden denenebilir. Eski satır expired
+  // olarak kalır (audit izi), skor/CBAM yeniden hesaplanmaz -- aynı veriyle yeni bir
+  // 30 günlük şans açılır. Yeniden skorlama isteniyorsa kullanıcı find'ı tekrar çağırmalı.
+  async retry(userId: string, id: string) {
+    const facilityId = await this.getFacilityIdForUser(userId);
+    const match = await this.prisma.match.findUnique({
+      where: { id },
+      include: { output: { select: { facilityId: true } }, input: { select: { facilityId: true } } },
+    });
+    if (!match) {
+      throw new NotFoundException('Eşleşme bulunamadı.');
+    }
+    this.assertParty(match, facilityId);
+
+    if (match.status !== MatchStatus.EXPIRED) {
+      throw new ConflictException({ error: 'INVALID_STATE_TRANSITION', message: 'Sadece süresi dolmuş eşleşmeler yeniden denenebilir.' });
+    }
+
+    const expiryDays = await this.systemConfig.getNumber('match.expiry_days', 30);
+    const newMatch = await this.prisma.match.create({
+      data: {
+        outputId: match.outputId,
+        inputId: match.inputId,
+        totalScore: match.totalScore,
+        breakdown: match.breakdown as Prisma.InputJsonValue,
+        demandQty: match.demandQty,
+        co2Saved: match.co2Saved,
+        costSaving: match.costSaving,
+        cbamImpact: match.cbamImpact,
+        status: MatchStatus.PENDING,
+        expiresAt: new Date(Date.now() + expiryDays * 24 * 60 * 60 * 1000),
+      },
+    });
+
+    return { success: true, matchId: newMatch.id, message: 'Eşleşme yeniden başlatıldı.' };
+  }
+
+  // ── Aday bulma + skorlama (Faz 1.7/1.8/1.9) ──
+  // AiClient dummy olsa da (K-24) bu metodun tamamı gerçek: pgvector benzerlik araması,
+  // eşik/self-match filtreleri, 5 faktörlü skor, CBAM -- hepsi docs/05'teki formüllerle.
+
+  private async getCarbonFactors(materialClass: MaterialClass | null): Promise<CarbonFactors> {
+    if (!materialClass) {
+      return { virgin: 0, secondary: 0 };
+    }
+    const now = new Date();
+    const rows = await this.prisma.carbonFactor.findMany({
+      where: {
+        materialClass,
+        validFrom: { lte: now },
+        OR: [{ validTo: null }, { validTo: { gt: now } }],
+      },
+    });
+    const virgin = rows.find((r) => r.factorType === 'virgin')?.co2PerKg;
+    const secondary = rows.find((r) => r.factorType === 'secondary')?.co2PerKg;
+    return { virgin: Number(virgin ?? 0), secondary: Number(secondary ?? 0) };
+  }
+
+  async findCandidates(userId: string, outputId: string) {
+    const facilityId = await this.getFacilityIdForUser(userId);
+    const output = await this.prisma.output.findUnique({ where: { id: outputId } });
+    if (!output || output.facilityId !== facilityId) {
+      throw new NotFoundException('Çıktı bulunamadı.');
+    }
+
+    // docs/05 filtreleri: sınıfı belirsiz veya vektörü olmayan çıktı aranamaz (A2, H1)
+    if (output.pendingReview || output.embeddingPending) {
+      return { error: 'PENDING_EXPERT_REVIEW', message: 'Eşleştirme uzman onayı sonrası hazır olacak.' };
+    }
+    if (!output.availability) {
+      return { matches: [], message: 'Şu an uygun eşleşme yok. Yeni tesisler eklendiğinde bildirim alacaksınız.' };
+    }
+
+    const threshold = await this.systemConfig.getNumber('match.threshold', 0.6);
+    const topK = await this.systemConfig.getNumber('match.top_k', 20);
+    const topN = await this.systemConfig.getNumber('match.top_n', 10);
+    const expiryDays = await this.systemConfig.getNumber('match.expiry_days', 30);
+
+    const weights = await this.prisma.weightsConfig.findFirst({ where: { active: true } });
+    if (!weights) {
+      // seed'de her zaman bir aktif satır var (009_seed.sql) -- pratikte tetiklenmemeli
+      throw new NotFoundException('Aktif ağırlık konfigürasyonu bulunamadı.');
+    }
+
+    const carbonFactors = await this.getCarbonFactors(output.materialClass);
+    const carbonPrice = await this.systemConfig.getNumber('cbam.carbon_price_eur_per_ton', 85);
+
+    // docs/03 "Vektör ve coğrafya sorguları" referans sorgusuyla birebir aynı desende
+    const rows = await this.prisma.$queryRaw<CandidateRow[]>`
+      SELECT i.id, i.facility_id, i.quantity_kg, i.specs,
+             1 - (e_out.vector <=> e_in.vector) AS similarity,
+             ST_Distance(f_out.location, f_in.location) / 1000 AS distance_km,
+             f_in.sector AS sector,
+             osb_in.name AS osb_name,
+             ST_Y(f_in.location::geometry) AS lat,
+             ST_X(f_in.location::geometry) AS lng
+        FROM inputs i
+        JOIN embeddings e_in ON e_in.record_id = i.id AND e_in.record_type = 'input'
+        JOIN facilities f_in ON f_in.id = i.facility_id
+        LEFT JOIN osbs osb_in ON osb_in.id = f_in.osb_id
+        JOIN outputs o ON o.id = ${outputId}::uuid
+        JOIN facilities f_out ON f_out.id = o.facility_id
+        JOIN embeddings e_out ON e_out.record_id = o.id AND e_out.record_type = 'output'
+       WHERE i.facility_id <> o.facility_id
+         AND i.active = TRUE
+         AND i.pending_review = FALSE
+         AND f_in.verified = TRUE
+         AND 1 - (e_out.vector <=> e_in.vector) >= ${threshold}
+       ORDER BY similarity DESC
+       LIMIT ${topK}
+    `;
+
+    if (rows.length === 0) {
+      return { matches: [], message: 'Şu an uygun eşleşme yok. Yeni tesisler eklendiğinde bildirim alacaksınız.' };
+    }
+
+    const supplyKg = Number(output.stock);
+    const scored = rows.map((row) => {
+      const demandKg = Number(row.quantity_kg);
+      const matchedQty = Math.min(supplyKg, demandKg);
+      const distanceKm = row.distance_km !== null ? Number(row.distance_km) : null;
+
+      const { score: materialRaw, quantityRatio } = this.scoringService.materialScore(row.similarity, supplyKg, demandKg);
+      const quality = this.scoringService.qualityScore(row.specs, output.composition as Record<string, number> | null);
+      const environmental = this.scoringService.environmentalScore(carbonFactors);
+      const logistics = this.scoringService.logisticsScore(distanceKm);
+      const economic = this.scoringService.economicScore(output.materialClass ?? 'OTHER', matchedQty, distanceKm);
+      const material = Math.max(0, Math.min(100, materialRaw));
+
+      const totalScore = this.scoringService.totalScore(
+        { material, quality, environmental, logistics, economic },
+        { material: Number(weights.material), quality: Number(weights.quality), environmental: Number(weights.environmental), logistics: Number(weights.logistics), economic: Number(weights.economic) },
+      );
+
+      const { co2SavedKg, cbamSavingEur } = this.scoringService.cbam(carbonFactors, matchedQty, carbonPrice);
+      const costSavingEur = this.scoringService.costSaving(output.materialClass ?? 'OTHER', matchedQty, distanceKm);
+
+      return {
+        inputId: row.id,
+        totalScore,
+        breakdown: { material: Math.round(material), quality: Math.round(quality), environmental: Math.round(environmental), logistics: Math.round(logistics), economic: Math.round(economic) },
+        distanceKm,
+        co2SavedKg,
+        costSavingEur,
+        cbamSavingEur,
+        quantityRatio,
+        matchedQty,
+        counterparty: {
+          osbName: row.osb_name,
+          sectorLabel: row.sector,
+          approximateLocation: row.lat !== null && row.lng !== null ? { lat: Math.round(row.lat * 10) / 10, lng: Math.round(row.lng * 10) / 10 } : null,
+        },
+      };
+    });
+
+    scored.sort((a, b) => b.totalScore - a.totalScore);
+    const top = scored.slice(0, topN);
+    const expiresAt = new Date(Date.now() + expiryDays * 24 * 60 * 60 * 1000);
+
+    const matches = [];
+    for (const candidate of top) {
+      const match = await this.prisma.match.create({
+        data: {
+          outputId: output.id,
+          inputId: candidate.inputId,
+          totalScore: candidate.totalScore,
+          breakdown: candidate.breakdown,
+          demandQty: candidate.matchedQty,
+          co2Saved: candidate.co2SavedKg,
+          costSaving: candidate.costSavingEur,
+          cbamImpact: candidate.cbamSavingEur,
+          status: MatchStatus.PENDING,
+          expiresAt,
+        },
+      });
+
+      matches.push({
+        matchId: match.id,
+        totalScore: candidate.totalScore,
+        breakdown: candidate.breakdown,
+        distanceKm: candidate.distanceKm,
+        co2Saved: candidate.co2SavedKg,
+        costSaving: candidate.costSavingEur,
+        cbamImpact: candidate.cbamSavingEur,
+        quantityRatio: candidate.quantityRatio,
+        partialMatch: candidate.quantityRatio < 0.2,
+        counterparty: candidate.counterparty,
+        expiresAt: match.expiresAt,
+      });
+    }
+
+    return { matches, message: null };
   }
 }

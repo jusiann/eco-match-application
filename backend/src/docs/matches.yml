@@ -1,9 +1,23 @@
 openapi: 3.0.0
 info:
   title: EcoMatch API - Matches
-  description: Match state machine (accept/reject/contact). Candidate finding/scoring (GET /v1/matches/find/:outputId) is not wired yet -- needs embeddings (Faz 1.4-1.8).
+  description: Match state machine (accept/reject/contact) + candidate finding/scoring. Real pgvector search, weighted scoring, and CBAM math -- running on embeddings produced by a DUMMY AiClientService (K-24) until the real AI service lands.
   version: 1.0.0
 paths:
+  /v1/matches/find/{outputId}:
+    get:
+      summary: Find and score candidate matches for an output (writes top-N to matches as pending)
+      tags: [Matches]
+      security: [{ bearer: [] }]
+      parameters:
+        - in: path
+          name: outputId
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200': { description: "{matches: [...]} or {matches: [], message} if none found" }
+        '202': { description: "{error: PENDING_EXPERT_REVIEW} -- output not classified/embedded yet" }
+        '404': { description: Output not found or not owned }
   /v1/matches:
     get:
       summary: List own matches (either side), paginated

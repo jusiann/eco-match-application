@@ -1,4 +1,6 @@
-import { Controller, Get, Post, Body, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Query, Res, UseGuards } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
+import type { FastifyReply } from 'fastify';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { GetUser } from '../../common/decorators/get-user.decorator';
 import { Audit } from '../../common/decorators/audit.decorator';
@@ -10,6 +12,16 @@ import { RejectMatchDto, MatchListQueryDto } from './matches.dto';
 @Controller('matches')
 export class MatchesController {
   constructor(private readonly matchesService: MatchesService) {}
+
+  @Throttle({ default: { limit: 30, ttl: 60 * 1000 } }) // docs/04: 30/dk, kullanıcı
+  @Get('find/:outputId')
+  async find(@GetUser() user: { sub: string }, @Param('outputId') outputId: string, @Res({ passthrough: true }) reply: FastifyReply) {
+    const result = await this.matchesService.findCandidates(user.sub, outputId);
+    if ('error' in result && result.error === 'PENDING_EXPERT_REVIEW') {
+      reply.status(202);
+    }
+    return result;
+  }
 
   @Get()
   list(@GetUser() user: { sub: string }, @Query() query: MatchListQueryDto) {
@@ -38,5 +50,12 @@ export class MatchesController {
   @Get(':id/contact')
   contact(@GetUser() user: { sub: string }, @Param('id') id: string) {
     return this.matchesService.getContact(user.sub, id);
+  }
+
+  @Audit('create', 'match')
+  @Idempotent()
+  @Post(':id/retry')
+  retry(@GetUser() user: { sub: string }, @Param('id') id: string) {
+    return this.matchesService.retry(user.sub, id);
   }
 }
