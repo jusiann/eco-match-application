@@ -29,7 +29,19 @@ export class AuditInterceptor implements NestInterceptor {
   }
 
   private async write(meta: AuditMetadata, request: any, result: any): Promise<void> {
-    const entityId: string | undefined = result?.facility?.id ?? result?.id ?? request.params?.id;
+    // Farklı endpoint'ler farklı kaynak-özel id alan adı döner (outputId, inputId,
+    // matchId, userId...) -- create endpoint'lerinde :id route param'ı da olmuyor.
+    // Bilinen tüm örüntüleri sırayla dene (K-29).
+    const entityId: string | undefined =
+      request.params?.id ??
+      result?.facility?.id ??
+      result?.id ??
+      result?.outputId ??
+      result?.inputId ??
+      result?.matchId ??
+      result?.userId ??
+      result?.passportId ??
+      result?.documentId;
     if (!entityId) {
       return;
     }

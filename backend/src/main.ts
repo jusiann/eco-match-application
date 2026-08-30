@@ -4,6 +4,7 @@ import { ValidationPipe, Logger } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule, OpenAPIObject } from '@nestjs/swagger';
 import fastifyCookie from '@fastify/cookie';
 import fastifyMultipart from '@fastify/multipart';
+import { IoAdapter } from '@nestjs/platform-socket.io';
 import * as yaml from 'js-yaml';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -61,6 +62,7 @@ async function bootstrap() {
   );
 
   app.enableCors();
+  app.useWebSocketAdapter(new IoAdapter(app)); // Faz 2.5: /v1/notifications/stream (Socket.IO)
 
   const config = new DocumentBuilder()
     .setTitle('EcoMatch API')

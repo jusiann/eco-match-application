@@ -1,4 +1,5 @@
 import { Controller, Get, Post, Put, Delete, Body, UseGuards, Res, Req, UnauthorizedException } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { AuthService } from './auth.service';
 import { RegisterDto, LoginDto, UpdateProfileDto, VerifyEmailDto, ForgotPasswordDto, ResetPasswordDto } from './auth.dto';
@@ -9,6 +10,13 @@ import { Audit } from '../../common/decorators/audit.decorator';
 const REFRESH_COOKIE_NAME = 'refresh_token';
 const REFRESH_COOKIE_PATH = '/v1/auth';
 const REFRESH_COOKIE_MAX_AGE_SECONDS = 30 * 24 * 60 * 60; // 30 gün — access/refresh token ömrüyle aynı, bkz. K-18
+
+// docs/04'ün 3/saat ve 5/15dk limitleri IP bazlı -- tüm e2e paketi TEK bir IP'den (localhost)
+// onlarca facility register/login çağrısı yapıyor, prod limitiyle kendi kendini kilitlerdi.
+// K-18'deki secure-cookie kontrolüyle aynı "sadece production'da katı davran" deseni (K-28).
+const IS_PRODUCTION = process.env.NODE_ENV === 'production';
+const REGISTER_LIMIT = IS_PRODUCTION ? 3 : 1000;
+const LOGIN_LIMIT = IS_PRODUCTION ? 5 : 1000;
 
 @Controller('auth')
 export class AuthController {
@@ -29,6 +37,7 @@ export class AuthController {
     }
 
     @Audit('create', 'facility')
+    @Throttle({ default: { limit: REGISTER_LIMIT, ttl: 60 * 60 * 1000 } }) // docs/04: 3/saat, IP (spam) -- K-28
     @Post('register')
     async register(@Body() dto: RegisterDto, @Res({ passthrough: true }) reply: FastifyReply) {
         const { refresh_token, ...body } = await this.authService.register(dto);
@@ -36,6 +45,7 @@ export class AuthController {
         return body;
     }
 
+    @Throttle({ default: { limit: LOGIN_LIMIT, ttl: 15 * 60 * 1000 } }) // docs/04: 5/15dk, IP (brute force) -- K-28
     @Post('login')
     async login(@Body() dto: LoginDto, @Res({ passthrough: true }) reply: FastifyReply) {
         const { refresh_token, ...body } = await this.authService.login(dto);
