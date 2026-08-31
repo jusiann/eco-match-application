@@ -6,6 +6,7 @@ import { MatchStatus, ReviewStatus } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { ReviewQueueService } from '../admin/review-queue.service';
+import { IotService } from '../iot/iot.service';
 
 // @Cron ile işaretli metotlar sadece zamanlamayı tetikler; asıl mantık ayrı, argümansız
 // public metotlarda -- testler (ve manuel tetikleme) 72 saat/gece yarısı beklemeden
@@ -18,6 +19,7 @@ export class CronService {
     private readonly prisma: PrismaService,
     private readonly notificationsService: NotificationsService,
     private readonly reviewQueueService: ReviewQueueService,
+    private readonly iotService: IotService,
   ) {}
 
   @Cron('0 3 * * *') // A3: her gece 03:00
@@ -106,5 +108,14 @@ export class CronService {
     );
 
     return { rejections: rejectedMatches.length, humanReviewed: reviewed.length };
+  }
+
+  @Cron(CronExpression.EVERY_5_MINUTES) // I2: "Backend 5 dakikada bir sensor_data.timestamp kontrol eder"
+  async iotHeartbeatJob() {
+    const result = await this.iotService.checkHeartbeats();
+    if (result.offline > 0 || result.online > 0) {
+      this.logger.log(`IoT heartbeat: ${result.offline} tesis offline, ${result.online} tesis online oldu.`);
+    }
+    return result;
   }
 }

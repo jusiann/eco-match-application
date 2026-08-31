@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Body, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
 import { UserRole } from '@prisma/client';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
@@ -14,6 +14,8 @@ import {
   ListQueryDto,
   AuditLogQueryDto,
   UpdateConfigBody,
+  CreateWeightsDto,
+  CreateApiKeyDto,
 } from './admin.dto';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -81,5 +83,43 @@ export class AdminController {
   @Get('audit-log')
   listAuditLog(@Query() query: AuditLogQueryDto) {
     return this.adminService.listAuditLog(query);
+  }
+
+  // ── AHP Ağırlıkları (Faz 3.5, AD2) ──
+
+  @Get('weights')
+  listWeights() {
+    return this.adminService.listWeights();
+  }
+
+  @Audit('create', 'weights_config')
+  @Post('weights')
+  createWeights(@Body() dto: CreateWeightsDto) {
+    return this.adminService.createWeights(dto);
+  }
+
+  @Audit('activate', 'weights_config')
+  @Post('weights/:id/activate')
+  activateWeights(@Param('id') id: string) {
+    return this.adminService.activateWeights(id);
+  }
+
+  // ── API Keys (Faz 3.6) ──
+
+  @Get('api-keys')
+  listApiKeys() {
+    return this.adminService.listApiKeys();
+  }
+
+  @Audit('create', 'api_key')
+  @Post('api-keys')
+  createApiKey(@Body() dto: CreateApiKeyDto) {
+    return this.adminService.createApiKey(dto);
+  }
+
+  @Audit('revoke', 'api_key')
+  @Delete('api-keys/:id')
+  revokeApiKey(@Param('id') id: string) {
+    return this.adminService.revokeApiKey(id);
   }
 }

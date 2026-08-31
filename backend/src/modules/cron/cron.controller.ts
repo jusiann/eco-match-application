@@ -5,7 +5,7 @@ import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { CronService } from './cron.service';
 
-const JOBS = ['expire-matches', 'hitl-sla-fallback', 'weekly-feedback-export'] as const;
+const JOBS = ['expire-matches', 'hitl-sla-fallback', 'weekly-feedback-export', 'iot-heartbeat'] as const;
 type Job = (typeof JOBS)[number];
 
 // Zamanlanmış işleri (2.3/2.7/2.12) beklemeden elle tetiklemek için -- hem operasyonel bir
@@ -34,6 +34,10 @@ export class CronController {
       }
       case 'weekly-feedback-export': {
         const result = await this.cronService.exportWeeklyFeedback();
+        return { success: true, ...result };
+      }
+      case 'iot-heartbeat': {
+        const result = await this.cronService.iotHeartbeatJob();
         return { success: true, ...result };
       }
     }

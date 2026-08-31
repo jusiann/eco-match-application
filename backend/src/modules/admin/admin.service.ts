@@ -1,8 +1,18 @@
-import { Injectable, NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ConflictException, UnprocessableEntityException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
+import { randomBytes, createHash } from 'crypto';
 import { ReviewStatus, UserRole, MaterialClass, Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
-import { CreateCarbonFactorDto, CreateUserDto, UpdateUserDto, ListQueryDto, AuditLogQueryDto, UpdateConfigBody } from './admin.dto';
+import {
+  CreateCarbonFactorDto,
+  CreateUserDto,
+  UpdateUserDto,
+  ListQueryDto,
+  AuditLogQueryDto,
+  UpdateConfigBody,
+  CreateWeightsDto,
+  CreateApiKeyDto,
+} from './admin.dto';
 
 @Injectable()
 export class AdminService {
@@ -179,6 +189,115 @@ export class AdminService {
     );
 
     return { success: true, message: 'Yapılandırma güncellendi.' };
+  }
+
+  // ── AHP Ağırlıkları (Faz 3.5, AD2) ──
+
+  listWeights() {
+    return this.prisma.weightsConfig.findMany({ orderBy: { version: 'desc' } });
+  }
+
+  async createWeights(dto: CreateWeightsDto) {
+    const sum = dto.material + dto.quality + dto.environmental + dto.logistics + dto.economic;
+    const rounded = Number(sum.toFixed(3));
+    if (rounded !== 1) {
+      throw new UnprocessableEntityException({
+        error: 'WEIGHTS_SUM_INVALID',
+        message: `Toplam ağırlık 1.000 olmalı (şu an ${rounded.toFixed(3)})`,
+      });
+    }
+
+    const last = await this.prisma.weightsConfig.findFirst({ orderBy: { version: 'desc' }, select: { version: true } });
+    const version = (last?.version ?? 0) + 1;
+
+    // Yeni versiyon oluşturulduğunda OTOMATİK aktifleşmiyor (docs/04) -- ayrı bir
+    // POST .../activate çağrısı gerekiyor.
+    const created = await this.prisma.weightsConfig.create({
+      data: {
+        version,
+        material: dto.material,
+        quality: dto.quality,
+        environmental: dto.environmental,
+        logistics: dto.logistics,
+        economic: dto.economic,
+        active: false,
+      },
+    });
+
+    return { success: true, weightsId: created.id, version, message: 'Yeni ağırlık versiyonu oluşturuldu.' };
+  }
+
+  async activateWeights(id: string) {
+    const target = await this.prisma.weightsConfig.findUnique({ where: { id } });
+    if (!target) {
+      throw new NotFoundException('Ağırlık versiyonu bulunamadı.');
+    }
+    if (target.active) {
+      return { success: true, message: 'Bu versiyon zaten aktif.' };
+    }
+
+    const previousActive = await this.prisma.weightsConfig.findFirst({ where: { active: true } });
+
+    // idx_weights_active kısmi unique indeksi (007_config.sql) aynı anda sadece bir aktif
+    // satıra izin veriyor -- önce eskisini kapatmadan yeniyi açmak unique ihlali verir.
+    await this.prisma.$transaction([
+      this.prisma.weightsConfig.updateMany({ where: { active: true }, data: { active: false } }),
+      this.prisma.weightsConfig.update({ where: { id }, data: { active: true } }),
+    ]);
+
+    return {
+      success: true,
+      message: 'Ağırlık versiyonu aktifleştirildi.',
+      _audit: { before: previousActive ? { version: previousActive.version, id: previousActive.id } : null, after: { version: target.version, id: target.id } },
+    };
+  }
+
+  // ── API Keys (Faz 3.6) ──
+
+  async listApiKeys() {
+    const rows = await this.prisma.apiKey.findMany({
+      orderBy: { createdAt: 'desc' },
+      select: { id: true, userId: true, name: true, scopes: true, lastUsed: true, expiresAt: true, createdAt: true, revokedAt: true },
+    });
+    return { data: rows };
+  }
+
+  // Anahtar sadece BU YANITTA bir kez görünür, sonrasında sadece hash'i saklanıyor (docs/04) --
+  // refresh token/K-15 ile aynı kural: uzun, sistem üretimi bir token asla bcrypt ile
+  // hash'lenmez (72 bayt kırpması + ortak önek çakışması riski), SHA-256 kullanılıyor.
+  async createApiKey(dto: CreateApiKeyDto) {
+    const targetUser = await this.prisma.user.findUnique({ where: { id: dto.userId } });
+    if (!targetUser) {
+      throw new BadRequestException('Belirtilen kullanıcı bulunamadı.');
+    }
+
+    const rawKey = `eco_${randomBytes(32).toString('hex')}`;
+    const keyHash = createHash('sha256').update(rawKey).digest('hex');
+
+    const created = await this.prisma.apiKey.create({
+      data: {
+        userId: dto.userId,
+        keyHash,
+        name: dto.name,
+        scopes: dto.scopes?.length ? dto.scopes : undefined,
+        expiresAt: dto.expiresAt ? new Date(dto.expiresAt) : undefined,
+      },
+    });
+
+    return { success: true, apiKeyId: created.id, key: rawKey, message: 'API anahtarı oluşturuldu. Bu anahtarı şimdi kaydedin, bir daha gösterilmeyecek.' };
+  }
+
+  async revokeApiKey(id: string) {
+    const key = await this.prisma.apiKey.findUnique({ where: { id } });
+    if (!key) {
+      throw new NotFoundException('API anahtarı bulunamadı.');
+    }
+    if (key.revokedAt) {
+      return { success: true, message: 'Bu anahtar zaten iptal edilmiş.' };
+    }
+
+    await this.prisma.apiKey.update({ where: { id }, data: { revokedAt: new Date() } });
+    return { success: true, message: 'API anahtarı iptal edildi.' };
   }
 
   // ── Audit Log (numarasız) ──
