@@ -171,6 +171,40 @@ export const testMaterials = async () => {
     });
     assert(idem3.outputId !== idem1.outputId, 'FARKLI bir Idempotency-Key ile yeni bir kayıt açılır');
 
+    // ── Sunucu tarafı benzerlik tespiti (E3 katman 3, Faz 1.11) ──
+    section('5.0c SUNUCU TARAFI BENZERLİK TESPİTİ (E3)');
+
+    const dupDesc = `E3 benzerlik testi çıktısı ${randomUUID()}`;
+    const dup1 = await api('POST', '/materials/outputs', { description: dupDesc, materialClass: 'metal', quantityKg: 10 }, state.accessToken);
+    assert(dup1.status === 201, `İlk kayıt 201 döner (alınan: ${dup1.status})`);
+
+    const dup2 = await api('POST', '/materials/outputs', { description: dupDesc, materialClass: 'metal', quantityKg: 10 }, state.accessToken);
+    assert(dup2.status === 409, `Aynı açıklamayla 5 dk içindeki ikinci istek 409 döner (alınan: ${dup2.status})`, dup2);
+    assert(dup2.error === 'POSSIBLE_DUPLICATE', 'Hata kodu POSSIBLE_DUPLICATE');
+    assert(dup2.details?.duplicateId === dup1.outputId, 'details.duplicateId ilk kaydın id\'sini gösteriyor');
+
+    const dupCountBeforeConfirm = await prisma.output.count({ where: { description: dupDesc } });
+    assert(dupCountBeforeConfirm === 1, '409 dönünce DB\'de İKİNCİ bir satır AÇILMADI');
+
+    const dup3 = await api('POST', '/materials/outputs', { description: dupDesc, materialClass: 'metal', quantityKg: 10, confirmDuplicate: true }, state.accessToken);
+    assert(dup3.status === 201, `confirmDuplicate:true ile aynı açıklama yine de 201 döner (alınan: ${dup3.status})`);
+    assert(dup3.outputId !== dup1.outputId, 'confirmDuplicate ile GERÇEKTEN yeni bir kayıt açıldı');
+
+    // 5 dakikalık pencerenin dışına çıkınca aynı açıklama artık işaretlenmemeli
+    const oldDesc = `E3 eski kayıt testi ${randomUUID()}`;
+    const oldOutput = await api('POST', '/materials/outputs', { description: oldDesc, materialClass: 'metal', quantityKg: 10 }, state.accessToken);
+    await prisma.output.update({ where: { id: oldOutput.outputId }, data: { createdAt: new Date(Date.now() - 6 * 60 * 1000) } });
+    const afterWindow = await api('POST', '/materials/outputs', { description: oldDesc, materialClass: 'metal', quantityKg: 10 }, state.accessToken);
+    assert(afterWindow.status === 201, `5 dakika penceresi dışındaki aynı açıklama artık 409 değil 201 döner (alınan: ${afterWindow.status})`);
+
+    // Girdiler (inputs) için de aynı kural geçerli
+    const dupInputDesc = `E3 benzerlik testi girdisi ${randomUUID()}`;
+    const dupInput1 = await api('POST', '/materials/inputs', { description: dupInputDesc, materialClass: 'metal', quantityKg: 10 }, state.accessToken);
+    assert(dupInput1.status === 201, 'Girdi: ilk kayıt 201 döner');
+    const dupInput2 = await api('POST', '/materials/inputs', { description: dupInputDesc, materialClass: 'metal', quantityKg: 10 }, state.accessToken);
+    assert(dupInput2.status === 409, `Girdi: aynı açıklamayla ikinci istek 409 döner (alınan: ${dupInput2.status})`);
+    assert(dupInput2.details?.duplicateId === dupInput1.inputId, 'Girdi: details.duplicateId ilk kaydın id\'sini gösteriyor');
+
     // ── POST /v1/materials/inputs ──
     const createInputRes = await api('POST', '/materials/inputs', {
         description: 'Selüloz bazlı hammadde ihtiyacı, yapı malzemesi üretimi için',

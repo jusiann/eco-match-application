@@ -5,7 +5,7 @@
 //  Gereksinim: API Sunucusu & PostgreSQL çalışıyor olmalıdır (npm run dev)
 // ═══════════════════════════════════════════════════════════════
 
-import { BASE_URL, TEST_DATA, colors, api, printSummary, stats } from './helpers.js';
+import { BASE_URL, TEST_DATA, colors, api, assert, printSummary, stats } from './helpers.js';
 import { testOsbs } from './osbs.test.js';
 import { testAuth } from './auth.test.js';
 import { testFacilities } from './facilities.test.js';
@@ -18,6 +18,10 @@ import { testReviewQueue } from './review-queue.test.js';
 import { testNotifications } from './notifications.test.js';
 import { testReports } from './reports.test.js';
 import { testAdminExtra } from './admin-extra.test.js';
+import { testChat } from './chat.test.js';
+import { testOsbDashboard } from './osb-dashboard.test.js';
+import { testAdminFaz3 } from './admin-faz3.test.js';
+import { testIot } from './iot.test.js';
 import { testCleanup } from './cleanup.test.js';
 
 const run = async () => {
@@ -58,9 +62,18 @@ const run = async () => {
         await testNotifications();
         await testReports();
         await testAdminExtra();
+        await testChat();
+        await testOsbDashboard();
+        await testAdminFaz3();
+        await testIot();
     } catch (error) {
         console.error(`\n${colors.red}${colors.bright}✖ Kritik Test Hatası:${colors.reset}`, error.message);
         console.error(error.stack);
+        // Bu noktaya kadar hiçbir assert() başarısız olmamışsa stats.failed hâlâ 0 olabilir --
+        // yakalanmamış bir istisna (ör. bir sonraki adımın varsaymadığı bir ön koşul boş
+        // çıktığında) assert() hiç çalışmadan test dosyasını yarıda kesebilir. Böyle bir
+        // çökme sessizce "100% başarılı" özetine dönüşmesin diye burada da sayaca yazılıyor.
+        assert(false, `Kritik hata nedeniyle test paketi yarıda kesildi: ${error.message}`);
     } finally {
         await testCleanup();
     }

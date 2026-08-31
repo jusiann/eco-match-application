@@ -100,6 +100,20 @@ export const state = {
     expertFacilityId: null,
     expertToken: null,
     rateLimitFacilityId: null,
+    // Faz 3
+    chatRateLimitFacilityId: null,
+    osbManagerUserId: null,
+    osbManagerFacilityId: null,
+    osbManagerToken: null,
+    osbBuyerFacilityId: null,
+    originalActiveWeightsId: null,
+    testWeightsVersionId: null,
+    testApiKeyId: null,
+    testApiKeyRaw: null,
+    iotFacilityId: null,
+    iotOutputId: null,
+    iotApiKeyId: null,
+    iotApiKeyRaw: null,
 };
 
 export const stats = {

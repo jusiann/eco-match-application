@@ -56,6 +56,32 @@ export const testCleanup = async () => {
         } catch {}
     }
 
+    // ── Faz 3 test tesislerini temizle (facility cascade: users/outputs/inputs/matches/
+    // sensor_data/api_keys/messages/notifications hepsi peşinden gidiyor) ──
+    for (const [label, id] of [
+        ['Chat rate limit', state.chatRateLimitFacilityId],
+        ['OSB yöneticisi', state.osbManagerFacilityId],
+        ['OSB alıcı', state.osbBuyerFacilityId],
+        ['IoT', state.iotFacilityId],
+    ]) {
+        if (!id) continue;
+        try {
+            await prisma.facility.delete({ where: { id } }).catch(() => {});
+            console.log(`  [Temizlik] ${label} test tesisi silindi`);
+        } catch {}
+    }
+
+    // ── Test AHP ağırlık versiyonunu temizle, orijinal aktif versiyonu geri aç ──
+    if (state.testWeightsVersionId) {
+        try {
+            await prisma.weightsConfig.delete({ where: { id: state.testWeightsVersionId } }).catch(() => {});
+            if (state.originalActiveWeightsId) {
+                await prisma.weightsConfig.update({ where: { id: state.originalActiveWeightsId }, data: { active: true } });
+            }
+            console.log('  [Temizlik] Test AHP ağırlık versiyonu silindi, orijinal aktif versiyon geri açıldı');
+        } catch {}
+    }
+
     // ── Test carbon_factors satırlarını temizle ve kapattıkları gerçek satırları geri aç ──
     // admin-extra.test.js "eskinin valid_to'sunu kapatır" davranışını test ederken GERÇEK
     // seed satırını (Ecoinvent v3.10) kapatıyor -- silmek yetmez, hangi satırın şimdi aktif
