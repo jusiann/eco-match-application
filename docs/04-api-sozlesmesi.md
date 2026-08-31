@@ -87,6 +87,18 @@ Liste endpoint'leri `?page=1&limit=20` alır, zarf ile döner:
 Kayıt oluşturan POST'lar `Idempotency-Key` header'ı kabul eder (UUID). Aynı anahtarla
 gelen ikinci istek, ilkinin cevabını döner. Cache süresi 24 saat (E3).
 
+**İmplemente edildi (Faz 1.11, K-33).** Üçüncü savunma katmanı: `materials/outputs` ve
+`materials/inputs`, aynı `facility_id` + birebir aynı `description` ile son 5 dakika
+içinde bir kayıt varsa `409` döner:
+
+```json
+{ "error": "POSSIBLE_DUPLICATE",
+  "message": "Bu açıklamayla son 5 dakika içinde bir kayıt zaten oluşturulmuş...",
+  "details": { "duplicateId": "uuid" } }
+```
+
+İstemci `confirmDuplicate: true` ile bu kontrolü bilerek atlayıp devam edebilir.
+
 ---
 
 ## Auth
@@ -404,6 +416,7 @@ Rapor üretildiği andaki faktörlerle donar; sonradan mevzuat değişse bile de
 ## OSB Dashboard
 
 Rol: `osb_manager`. Kullanıcı sadece kendi OSB'sinin verisini görür.
+**İmplemente edildi (Faz 3.1/3.2)** — AI bağımlılığı yok, tamamen gerçek hesap.
 
 | Metod | Yol | Açıklama |
 |---|---|---|
@@ -412,7 +425,8 @@ Rol: `osb_manager`. Kullanıcı sadece kendi OSB'sinin verisini görür.
 | GET | `/v1/osb/map` | Harita verisi — tesis pinleri + tamamlanmış eşleşme çizgileri |
 | GET | `/v1/osb/reports/monthly` | `?period=2026-08&format=pdf\|xlsx` |
 
-KPI formülleri [05-is-kurallari.md](05-is-kurallari.md)'de.
+KPI formülleri [05-is-kurallari.md](05-is-kurallari.md)'de. `xlsx` formatı `exceljs`
+paketiyle üretiliyor (yeni bağımlılık, sadece bu endpoint için).
 
 ---
 
@@ -421,6 +435,8 @@ KPI formülleri [05-is-kurallari.md](05-is-kurallari.md)'de.
 Rol: `admin`. `review-queue` endpoint'lerine `expert` de erişir.
 Tesis doğrulama endpoint'leri (`/v1/admin/verifications/*`) yukarıda,
 [Admin — Tesis Doğrulama](#admin--tesis-doğrulama) bölümünde — implemente edildi (Faz 1).
+`users`/`review-queue`/`carbon-factors`/`config`/`audit-log` implemente edildi (Faz 2).
+`weights`/`api-keys` implemente edildi (Faz 3.5/3.6) — ikisi de AI bağımsız, tamamen gerçek.
 
 | Metod | Yol | Rol | Açıklama |
 |---|---|---|---|
@@ -460,13 +476,16 @@ Tesis doğrulama endpoint'leri (`/v1/admin/verifications/*`) yukarıda,
 besleniyor (Faz 1.4, K-24) — ekip arkadaşının gerçek AI servisi hazır olduğunda tek
 değişecek dosya `ai-client.service.ts`, sözleşme şekli zaten `docs/07` ile birebir.
 `confidence`/`materialClass` değerleri şu an anlamlı değil, sadece şekli doğru.
+`/v1/chat*` de implemente edildi (Faz 3.3/3.4) ama aynı şekilde **dummy** bir
+`ClaudeClientService` tarafından besleniyor (K-31) — SSE akışı, mesaj kaydı, context,
+rate limit gerçek; yanıt içeriği sabit/kanned.
 
 | Metod | Yol | Rol | Açıklama |
 |---|---|---|---|
 | POST | `/v1/ai/classify` | Auth | Canlı sınıflandırma önizlemesi (S2 adım 4). **Dummy backing (K-24)** |
 | POST | `/v1/internal/ai/embed` | Internal | `EmbeddingsService` içinde dahili sarmalayıcı — dışa açık route değil, ayrı bir HTTP endpoint'i yok |
-| POST | `/v1/chat` | Auth | Claude proxy, SSE streaming. **Bekliyor (Faz 3.3)** |
-| GET | `/v1/chat/history` | Auth | Son mesajlar. **Bekliyor (Faz 3.3)** |
+| POST | `/v1/chat` | Auth | Claude proxy, SSE streaming. **İmplemente edildi, dummy backing (Faz 3.3, K-31)** |
+| GET | `/v1/chat/history` | Auth | Son mesajlar. **İmplemente edildi (Faz 3.3)** |
 
 **`POST /v1/ai/classify`** — istemci form yazarken 500 ms debounce ile çağırır:
 
@@ -481,6 +500,24 @@ kullanıcı elle seçer (H1).
 
 **Claude API anahtarı asla frontend'e verilmez.** `/v1/chat` backend proxy'sidir; sistem
 promptu sabittir, kullanıcı mesajı max 2000 karakter (S6).
+
+---
+
+## IoT
+
+**İmplemente edildi (Faz 3.7/3.8, K-32)** — MQTT taşıması hariç. Kimlik doğrulama JWT
+değil, `X-Api-Key` header'ı (`/v1/admin/api-keys` ile üretilir). AI bağımlılığı yok.
+
+| Metod | Yol | Rol | Açıklama |
+|---|---|---|---|
+| POST | `/v1/iot/sensor-data` | API key | `{outputId, levelKg, sensorType?, timestamp?}` (I1) |
+
+`outputs.stock` günceller; seviye orijinal `quantityKg`'nin %20'sinin altına düşerse
+`low_stock`, tam 0'a düşerse aktif eşleşmedeki karşı tarafa `output_depleted` bildirimi
+gider. Sensörden 30 dakika veri gelmezse (`iot-heartbeat` cron'u, 5 dk'da bir) tesise
+`sensor_offline`, veri geri gelince `sensor_online` bildirimi gider (I2). Gerçek MQTT
+broker'ı (Mosquitto) bağlanmadı — bu endpoint bir MQTT<->HTTP köprüsünün çağıracağı
+gerçek alım mantığını taşıyor.
 
 ---
 

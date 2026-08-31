@@ -546,3 +546,202 @@ tablolarını bilmesi gerekirdi, bu sınırı bulanıklaştırırdı. Bunun yeri
 kullanımı zamanla birikir. Gerçek çözüm ya bir Postgres trigger'ı ya da
 `deleteAccount`'a (auth.service.ts) açık bir `embeddings` temizliği eklemek olurdu;
 ikisi de bu oturumun kapsamı dışında bırakıldı, ileride ele alınmalı.
+
+---
+
+## K-26 · `human_review_queue` sadece output'u kapsıyor, input'u değil
+
+**Bağlam.** Şema (`human_review_queue.output_id`/`match_id`, ikisi de nullable) hem çıktı
+sınıflandırma incelemesini hem de eşleşme itirazını aynı tabloda taşıyacak şekilde
+tasarlanmıştı (K-08). Faz 2'de sadece HITL sınıflandırma akışı (A2) uygulandı.
+
+**Karar.** `materials.service.ts`'in `createOutput()`'u sınıfsız kalan **çıktılar** için
+kuyruk satırı açıyor; **girdiler** (`inputs`) için eşdeğer bir akış hiç yazılmadı — girdi
+oluşturmada `materialClass` opsiyonel olsa da sınıfsız kalması HITL'i tetiklemiyor,
+sessizce `pendingReview` benzeri bir durumda kalmıyor bile (zaten `inputs` tablosunda böyle
+bir alan var ama hiç set edilmiyor).
+
+**Sonuç.** Girdi tarafının HITL kapsamına alınması ayrı bir görev olarak roadmap'e
+eklenmeli (docs/08). `match_id` üzerinden eşleşme itirazı akışı da (şemada yer var) henüz
+hiç kullanılmıyor — ikisi de bilinçli olarak bu oturumun kapsamı dışında bırakıldı.
+
+---
+
+## K-27 · DPP raporu kendi `reports` satırını açamıyor
+
+**Bağlam.** `reports` tablosu `match_id NOT NULL` ile tasarlandı — her rapor bir eşleşmeye
+bağlı varsayıldı (environmental/CBAM raporları için doğru). Ama DPP pasaportu bir
+**çıktıya** bağlı, bir eşleşmeye değil; `GET /v1/reports/dpp/:passportId` bir eşleşme
+olmadan da (henüz hiç eşleşmemiş bir çıktı için bile) çağrılabilmeli.
+
+**Karar.** `getDppReport()` `reports` tablosuna hiç yazmıyor — doğrudan
+`material_passports`'u sahip-tesis kimlik doğrulamasıyla okuyup döndürüyor. Bu, diğer
+rapor tiplerinden farklı bir yol (onlar `reports` satırı açıp donmuş bir kopya tutuyor,
+AD3) ama DPP zaten kendi imzalı/donmuş `passport_data`'sını `material_passports`'ta
+saklıyor (K-21), ayrıca donacak bir şey yok.
+
+**Sonuç.** `GET /v1/reports` (geçmiş rapor listesi) DPP görüntülemelerini hiç
+göstermiyor — sadece environmental/CBAM. Şema `reports.match_id`'yi nullable yapacak
+şekilde değiştirilirse (yeni bir migration) bu tutarsızlık giderilebilir; şimdilik
+bilinçli bir sınır olarak bırakıldı.
+
+---
+
+## K-28 · Register/login rate limiti prod dışında gevşetildi
+
+**Bağlam.** docs/04'ün rate limit tablosu `POST /v1/auth/register`'ı 3/saat/IP,
+`POST /v1/auth/login`'i 5/15dk/IP olarak sabitliyor. E2E test paketi tek bir çalıştırmada
+aynı IP'den (localhost) 5'ten fazla facility kaydediyor ve defalarca giriş yapıyor —
+bu limitler olduğu gibi uygulansaydı test paketi kendi kendini kilitlerdi.
+
+**Karar.** K-18'in `NODE_ENV==='production'` deseniyle (refresh cookie'nin `secure`
+bayrağı için kullanılan) aynı yaklaşım: `auth.controller.ts`'te
+`IS_PRODUCTION ? gerçek_limit : 1000` üzerinden limitler prod dışında gevşetiliyor.
+`app-throttler.guard.ts`'in kullanıcı bazlı izleme mantığı (JWT `sub`'ı decode etme)
+değişmedi, sadece bu iki endpoint'in limit değerleri ortam bazlı.
+
+**Sonuç.** Prod limitleri docs/04 ile birebir korunuyor; sadece geliştirme/test ortamında
+gevşetildi. `/v1/ai/classify`'ın 60/dk limiti gevşetilmedi çünkü kullanıcı bazlı izleniyor
+(her test dosyası kendi kullanıcısını açıyor, IP gibi paylaşılan bir kova değil) ve zaten
+`ai.test.js`'in kendi burst testi bunu bilerek aşıyor.
+
+---
+
+## K-29 · `AuditInterceptor` entity id çözümü output/input'u tanımıyordu
+
+**Bağlam.** `admin-extra.test.js`'in "bu paketin oluşturduğu çıktı kayıtları audit_log'da
+görünüyor" testi başarısız oldu. `AuditInterceptor.write()`'ın entity id çözüm zinciri
+sadece `request.params.id`, `result.facility.id` ve `result.id`'yi deniyordu —
+`createOutput`/`createInput`'un döndürdüğü `{outputId, ...}`/`{inputId, ...}` şekli hiç
+eşleşmiyordu, audit_log yazımı sessizce atlanıyordu (interceptor hatayı yutmuyor,
+sadece `entityId` bulunamadığında early-return yapıyor).
+
+**Karar.** Çözüm zinciri genişletildi:
+`outputId ?? inputId ?? matchId ?? userId ?? passportId ?? documentId`. Genel bir çözüm
+(ör. tüm olası alan adlarını bir yapılandırmadan okumak) yerine bilinen tüm örüntülerin
+sırayla denenmesi tercih edildi — mevcut endpoint sayısı için yeterli, aşırı mühendislik
+gerekmiyor.
+
+**Sonuç.** Yeni bir endpoint `@Audit()` ile işaretlenip yanıtında bu listede olmayan bir
+id alanı döndürürse aynı sessiz atlama tekrar yaşanır — yeni bir alan adı eklemek yeterli,
+ama bu sınıf hatanın code review ile değil sadece e2e testle yakalanabildiği unutulmamalı.
+
+---
+
+## K-30 · Idempotency-Key eşzamanlı istek koruması + test dosyalarının cwd bağımlılığı
+
+**Bağlam.** İki ayrı ama aynı oturumda bulunan gerçek hata:
+
+1. `IdempotencyInterceptor`'ın cache'i sadece **tamamlanmış** bir isteğin sonucunu
+   tutuyordu. Aynı anahtarla eşzamanlı gelen ikinci istek (ör. istemci ağ gecikmesi
+   yüzünden gerçekten aynı anda iki bağlantı açarsa) cache'i boş bulup handler'ı BİR DAHA
+   çalıştırabiliyordu — aynı kaydı iki kez oluşturarak (yanıt gövdesinde tek bir sonuç
+   görünse bile, ikincisi cache'e yazılmadan önce).
+2. `admin-extra.test.js`/`cleanup.test.js` diskteki `training/` dosyalarını
+   `process.cwd()` ile arıyordu. Sunucu her zaman `backend/` kökünden çalıştığı için
+   aynı varsayımla yazıyor, ama testin kendi `process.cwd()`'i `npm test`'in nereden
+   tetiklendiğine bağlı olarak farklılaşabiliyor — tam da `helpers.js`'in `.env`
+   yüklemesinde daha önce çözdüğü sorunun aynısı.
+
+**Karar.**
+1. `IdempotencyInterceptor`'a `inFlight` adlı ikinci bir `Map` eklendi: bir istek
+   `next.handle()`'ı çağırmadan ÖNCE, paylaşılan (RxJS `shareReplay`) bir Observable'ı bu
+   map'e senkron olarak (await olmadan) yazıyor. Aynı anahtarla gelen ikinci istek
+   (gerçekten eşzamanlı olsa bile, Node'un tek thread'li olay döngüsünde araya girecek bir
+   pencere kalmadığı için) handler'ı tekrar çağırmak yerine BİRİNCİNİN sonucuna abone
+   oluyor.
+2. `helpers.js`'e `BACKEND_DIR` (`fileURLToPath(new URL('..', import.meta.url))`) eklendi;
+   dosya sistemi kontrolü yapan tüm test dosyaları `process.cwd()` yerine bunu kullanıyor.
+
+**Sonuç.** Idempotency artık hem "aynı anahtarla art arda" hem "aynı anahtarla eşzamanlı"
+durumlarda tek bir gerçek kayıt garantiliyor. Test dosyalarının disk yolu artık `npm
+test`'in hangi dizinden çalıştırıldığından bağımsız.
+
+---
+
+## K-31 · `ClaudeClientService` dummy: chatbot sözleşmesi gerçek, içeriği değil
+
+**Bağlam.** Faz 3.3 (`ChatbotProxy`) gerçek bir Claude API entegrasyonu istiyor
+(docs/06 S6). `AiClientService`'in aksine (K-24) bu servis EcoMatch'in kendi backend'inin
+sorumluluğunda — ayrı bir ekip/repo bağımlılığı yok — ama gerçek bir Anthropic API
+anahtarı gerektiriyor ve gerçek bir çağrı e2e test paketinde her koşuda gerçek paraya
+mal olurdu.
+
+**Karar.** `AiClientService` ile aynı dummy felsefesi uygulandı: `ClaudeClientService`
+anahtar kelime eşleştirmeli kanned yanıtlar üretiyor (`dpp`, `cbam`, `eşleş` gibi
+terimlere göre), 12 karakterlik parçalar hâlinde `async generator` ile "streaming"
+taklit ediyor. Üzerine kurulu her şey gerçek: SSE ile parça parça teslim
+(`chat.controller.ts`, Fastify `reply.raw`), `messages` tablosuna user+assistant kaydı,
+son 10 mesajlık context okuma, session devamlılığı ve sahiplik kontrolü, 10/dk + 50/gün
+rate limit. "Claude API down" senaryosunu (S6) gerçekten kanıtlayabilmek için dummy
+istemci özel bir sentinel mesajda (`__SIMULATE_CLAUDE_DOWN__`) bilinçli olarak
+`ServiceUnavailableException` fırlatıyor — `AiClientService`'te olmayan, sadece bu
+senaryoyu test edebilmek için eklenmiş bir test kancası.
+
+**Sonuç.** Gerçek Anthropic SDK entegrasyonu geldiğinde tek değişecek dosya
+`claude-client.service.ts` olacak (`stream()` metodunun içi bir SDK streaming çağrısıyla
+değişecek); `ChatService`/`ChatController` hiç dokunulmadan çalışmaya devam edecek.
+Yanıtların içeriği şu an anlamsız (sabit kanned metin) — semantik olarak gerçek bir LLM
+değil, sadece akış/kayıt/rate-limit mekaniği gerçek.
+
+---
+
+## K-32 · IoT sensör alımı: MQTT yerine HTTP + API key
+
+**Bağlam.** Faz 3.7 roadmap'te `MQTTSubscriber` + `IoTHandler` olarak tanımlıydı
+(docs/06 I1: sensör `facility/xyz/tank/A` topic'ine MQTT ile yayınlıyor). IoT modülü
+docs'ta zaten "opsiyonel" olarak işaretli ve roadmap'te en düşük öncelik (D). Bu ortamda
+test edilebilir bir MQTT broker'ı (Mosquitto) yok, ve `mqtt` paketini eklemek "deploy
+hedefi mütevazı, gerekçesiz bağımlılık eklenmez" ilkesiyle çelişirdi -- özellikle
+gerçek bir broker'a bağlanmadan test edilemeyecek bir bağımlılık için.
+
+**Karar.** Gerçek MQTT alt yapısı kurulmadı. Bunun yerine `POST /v1/iot/sensor-data`
+(yeni bir `ApiKeyGuard`, JWT değil `X-Api-Key` header'ı — docs/03: "api_key ayrı bir
+kimlik doğrulama yöntemi") gerçek bir MQTT mesaj işleyicisinin yapacağı işi birebir
+yapıyor: `sensor_data` yazımı, `outputs.stock` güncelleme, %20 eşiğinde `low_stock`
+bildirimi, stok tam 0'a düştüğünde aktif eşleşmedeki karşı tarafa `output_depleted`
+bildirimi (docs/06 I1). API anahtarı SHA-256 hash'leniyor (K-15 ile aynı kural).
+Bağlantı kaybı izleme (I2) gerçek bir `@Cron(EVERY_5_MINUTES)` job'u: son bildirim tipini
+(`sensor_offline`/`sensor_online`) "bilinen durum" olarak kullanıyor, süreç içi bir
+değişken değil, sunucu yeniden başlasa bile kaybolmuyor.
+
+**Sonuç.** Sadece TAŞIMA katmanı (MQTT wire protokolü) eksik — alım mantığının kendisi
+tamamen gerçek ve test edilmiş (`iot.test.js`). Gerçek bir MQTT broker'ı devreye
+alındığında yapılması gereken tek şey bir MQTT abone servisinin gelen mesajı bu
+endpoint'in çağırdığı aynı `IotService.ingest()` metoduna iletmesi — iş mantığı hiç
+değişmeyecek.
+
+**Not.** Gerçek bir `mqtt` istemcisi + Mosquitto (Docker Compose) + paylaşılan bir
+`ApiKeyService` ile bu wire-up bir kez denendi; kod derleniyordu ama yerel Docker Desktop
+kurulumu (bu depoyla ilgisiz, önceden var olan bir `sailor-ingest.sock` hatası) canlı bir
+broker'a karşı uçtan uca doğrulamayı engelledi. Doğrulanamayan bir özelliği depoda
+bırakmamak için geri alındı. Docker sorunu çözülürse aynı tasarım (yukarıdaki paragraf)
+tekrar uygulanabilir.
+
+---
+
+## K-33 · Sunucu tarafı benzerlik tespiti: aynı facility + aynı description + 5 dakika
+
+**Bağlam.** Faz 1.11'in ikinci katmanı (Idempotency-Key, K-22) zaten gerçekti; üçüncü
+katman (docs/06 E3: "Sunucu tarafı benzerlik") hiç yazılmamıştı. `CreateOutputDto`'da
+`confirmDuplicate` alanı önceden "rezerve" olarak eklenmişti ama hiçbir mantık ona
+bakmıyordu.
+
+**Karar.** `MaterialsService.checkPossibleDuplicate()`: aynı `facility_id` + **birebir
+aynı** `description` (embedding benzerliği değil, tam string eşleşmesi) + son 5 dakika
+içinde bir kayıt varsa `409 POSSIBLE_DUPLICATE` döner. İstemci `confirmDuplicate: true`
+ile kontrolü bilerek atlayıp devam edebilir (gerçekten aynı malzemeden iki ayrı parti
+olabilir). Hem `createOutput` hem `createInput` için uygulandı — E3'ün başlığı "duplicate
+**malzeme** kaydı", ikisine de eşit derecede uygulanabilir bir kural.
+
+**Gerçek hata (testte bulundu).** İlk yazımda `duplicateId` yanıt gövdesinin KÖKÜNE
+konmuştu (`{error, message, duplicateId}`). `HttpExceptionFilter.buildBody()` yalnızca
+`error`/`message`/`details` alanlarını geçiriyor — `duplicateId` sessizce düşüyordu,
+istemci hiçbir zaman göremiyordu. `RATE_LIMIT_EXCEEDED`'in `details.retryAfterSeconds`
+örüntüsüyle aynı şekilde `details: { duplicateId }` içine taşındı.
+
+**Sonuç.** İdempotency-Key (katman 2, tam olarak aynı anahtar → tam olarak aynı yanıt) ile
+bu katmanın (katman 3, içerik benzer ama anahtar farklı/yok) birbirini tamamladığı
+doğrulandı: aynı Idempotency-Key'le gelen bir tekrar bu kontrole hiç uğramıyor (interceptor
+zaten handler'ı çalıştırmıyor), sadece YENİ bir anahtarla (veya hiç anahtarsız) gelen ama
+içerik olarak şüpheli istekler bu katmana takılıyor.

@@ -11,20 +11,25 @@ ilerler; buradaki tahminlere dahil değildir.
 | Faz | Kapsam | Tahmin | Durum |
 |---|---|---|---|
 | **Faz 0** | Temel — şema, guard'lar, auth tamamlama | ~8 gün | **Tamamlandı** |
-| **Faz 1** | MVP — kayıt → çıktı → eşleşme → kabul | ~18 gün | **Tamamlandı*** |
-| **Faz 2** | HITL, bildirim, raporlama | ~14 gün | Sıradaki |
-| **Faz 3** | Chatbot, OSB dashboard, IoT, kalibrasyon | ~12 gün | Bekliyor |
+| **Faz 1** | MVP — kayıt → çıktı → eşleşme → kabul | ~18 gün | **Tamamlandı** |
+| **Faz 2** | HITL, bildirim, raporlama | ~14 gün | **Tamamlandı** |
+| **Faz 3** | Chatbot, OSB dashboard, IoT, kalibrasyon | ~12 gün | **Tamamlandı*** |
 
-`*` 1.11'in sunucu taraflı 5-dk benzerlik tespiti hariç — bkz. görev tablosu.
+`*` IoT'nin MQTT taşıması hariç (HTTP+API key ile ikame edildi) — bkz. Faz 3 bölümü.
 
 Bugün çalışan: auth (K-18) · `GET /v1/osbs` · `facilities` + tesis doğrulama (S1 baştan
 sona) · `materials` — output/input CRUD + DPP üretimi (K-20/K-21) · `matches` — durum
 makinesi + stok kilitleme (K-23) · Idempotency-Key (K-22) · `AiClientService` **dummy**
 (K-24) üzerine kurulu ama tamamen **gerçek** aday bulma + 5 faktörlü skorlama + CBAM
-hesabı (`GET /v1/matches/find/:outputId`) · `POST /v1/ai/classify`. Faz 1'in tamamı
-bitti. Ortak altyapı: `HttpExceptionFilter`, `RolesGuard`, `AuditInterceptor`,
-`VerifiedFacilityGuard`, `IdempotencyInterceptor`, `@Public()`, `SystemConfigService` —
-Faz 2 modülleri bunları doğrudan kullanabilir.
+hesabı (`GET /v1/matches/find/:outputId`) · `POST /v1/ai/classify`. HITL kuyruğu +
+SLA fallback · bildirimler (DB + WebSocket) · çevresel/CBAM/DPP raporları · carbon-factors/
+users/config/audit-log admin yüzeyi · expired-match cron'u + retry · haftalık geri besleme
+export'u. Faz 3: chatbot (`ClaudeClientService` **dummy**, SSE) · OSB dashboard (KPI/harita/
+aylık rapor PDF+XLSX) · AHP ağırlık versiyonlama · API key yönetimi · IoT sensör alımı +
+bağlantı kaybı izleme. Faz 0-3'ün tamamı bitti. Ortak altyapı: `HttpExceptionFilter`,
+`RolesGuard`, `AuditInterceptor` (before/after destekli), `VerifiedFacilityGuard`,
+`IdempotencyInterceptor` (eşzamanlı istek güvenli), `ApiKeyGuard`, `@Public()`,
+`SystemConfigService`.
 
 ---
 
@@ -107,7 +112,7 @@ demo yapılabilir.
 | 1.8 | `ScoringEngine` — 5 faktör, `weights_config`'ten okuma | **K** | 2.5 | S3, E2, E6 | Tamamlandı — K-24 |
 | 1.9 | `CBAMCalculator` | **K** | 1.5 | S3, S5 | Tamamlandı |
 | 1.10 | Match kabul/red + durum makinesi + kilitleme | **K** | 2 | S4, A1, E7 | Tamamlandı — K-23 |
-| 1.11 | Idempotency + duplicate tespiti | Y | 1 | E3 | Kısmen — Idempotency-Key tamam (K-22), sunucu taraflı 5-dk benzerlik tespiti hâlâ yok |
+| 1.11 | Idempotency + duplicate tespiti | Y | 1 | E3 | Tamamlandı — Idempotency-Key (K-22) + sunucu taraflı 5-dk benzerlik tespiti (K-33) |
 | 1.12 | Public DPP endpoint'leri + HMAC imza | Y | 1 | A5 | Tamamlandı (1.6 ile birlikte) |
 
 **Alt toplam: ~21.5 gün** (paralel çalışmayla ~18)
@@ -135,7 +140,8 @@ Ekip arkadaşının AI servisi henüz yok. `AiClientService` dummy (K-24) — s�
   de zaten silemez (auth modülü materials tablolarını bilmiyor). 21 yetim satır birikti.
   Doğrudan silme yolu düzeltildi, test paketine bir "yetim süpürme" adımı eklendi.
 
-**Faz 1 artık tamamen bitti** (1.11'in sunucu taraflı duplicate tespiti hariç).
+**Faz 1 artık tamamen bitti** (1.11'in sunucu taraflı duplicate tespiti hariç — bu da
+daha sonra kapatıldı, bkz. K-33).
 **276/276 test assertion'ı geçiyor** (`ai.test.js`, `find.test.js` eklendi).
 
 ### Önceki: Faz 1'in AI gerektirmeyen kısmı (1.0 – 1.3, 1.6, 1.10, 1.11-kısmen, 1.12)
@@ -164,7 +170,7 @@ Ekip arkadaşının AI servisi henüz yok. `AiClientService` dummy (K-24) — s�
   process-içi `Map` (Redis yok, tek instance için yeterli), 24 saat TTL, sadece 2xx
   cache'leniyor. `materials/outputs`, `materials/inputs`, `matches/:id/accept`,
   `matches/:id/reject` üzerinde aktif. Sunucu taraflı 5-dakika benzerlik tespiti
-  (`POSSIBLE_DUPLICATE`) hâlâ yok.
+  (`POSSIBLE_DUPLICATE`) o sırada yoktu — sonradan eklendi, bkz. K-33.
 - **Migration 011 gerçekte hiç uygulanmamıştı (K-19):** dosya diskte, dokümanlarda
   "tamamlandı" yazıyordu, canlı DB'de kolon yoktu. `materials` testinde `500` ile ortaya
   çıktı, uygulanıp doğrulandı.
@@ -222,22 +228,49 @@ CBAM ve çevresel rapor PDF üretiliyor · A3 cron'u çalışıyor.
 
 ### Görevler
 
-| # | Görev | Öncelik | Süre | Senaryo |
-|---|---|---|---|---|
-| 2.1 | `ReviewQueueService` — HITL kuyruğu | **K** | 2 | A2 |
-| 2.2 | Uzman endpoint'leri — liste, detay, onay/red | **K** | 1.5 | AD1 |
-| 2.3 | HITL SLA takibi + 72 saat fallback | Y | 1 | A2 |
-| 2.4 | `NotificationService` — DB + tercihler | **K** | 1.5 | A4 |
-| 2.5 | WebSocket sunucusu (Socket.IO) | **K** | 1.5 | A4 |
-| 2.6 | `ReportEngine` — çevresel + CBAM PDF | **K** | 2.5 | S5 |
-| 2.7 | Expired match cron job | Y | 0.5 | A3 |
-| 2.8 | Match retry endpoint'i | O | 0.5 | A3 |
-| 2.9 | `carbon_factors` admin CRUD + retroaktiflik | Y | 1 | AD3 |
-| 2.10 | Rate limit katmanı | Y | 1 | H4 |
-| 2.11 | `/health/ready` — DB + AI + Redis | Y | 0.5 | H2 |
-| 2.12 | Haftalık geri besleme export job'ı | O | 1 | A1, A2 |
+| # | Görev | Öncelik | Süre | Senaryo | Durum |
+|---|---|---|---|---|---|
+| 2.1 | `ReviewQueueService` — HITL kuyruğu | **K** | 2 | A2 | Tamamlandı |
+| 2.2 | Uzman endpoint'leri — liste, detay, onay/red | **K** | 1.5 | AD1 | Tamamlandı |
+| 2.3 | HITL SLA takibi + 72 saat fallback | Y | 1 | A2 | Tamamlandı |
+| 2.4 | `NotificationService` — DB + tercihler | **K** | 1.5 | A4 | Tamamlandı |
+| 2.5 | WebSocket sunucusu (Socket.IO) | **K** | 1.5 | A4 | Tamamlandı |
+| 2.6 | `ReportEngine` — çevresel + CBAM PDF | **K** | 2.5 | S5 | Tamamlandı |
+| 2.7 | Expired match cron job | Y | 0.5 | A3 | Tamamlandı |
+| 2.8 | Match retry endpoint'i | O | 0.5 | A3 | Tamamlandı |
+| 2.9 | `carbon_factors` admin CRUD + retroaktiflik | Y | 1 | AD3 | Tamamlandı |
+| 2.10 | Rate limit katmanı | Y | 1 | H4 | Tamamlandı — K-28: prod dışında register/login limitleri gevşetildi |
+| 2.11 | `/health/ready` — DB + AI + Redis | Y | 0.5 | H2 | Tamamlandı — Redis henüz yok, `not_configured` döner |
+| 2.12 | Haftalık geri besleme export job'ı | O | 1 | A1, A2 | Tamamlandı |
 
 **Alt toplam: ~14.5 gün**
+
+### Faz 2 tamamlandı: AI-bağımlı kısım dummy, gerisi gerçek
+
+Uzman (expert) onayı, bildirimler, raporlama ve admin ek yüzeyi (carbon-factors CRUD,
+kullanıcı yönetimi, sistem config, audit-log) uçtan uca test edildi
+(`review-queue.test.js`, `notifications.test.js`, `reports.test.js`, `admin-extra.test.js`).
+
+- **HITL kuyruğu:** sınıfsız bir çıktı oluşturulduğunda dummy `AiClientService.classify()`
+  çağrılıyor (K-24), `human_review_queue` satırı + `EXPERT` rolündeki tüm kullanıcılara
+  `review_required` bildirimi gerçek. Onay/red gerçek iş kuralı; onayda embedding yeniden
+  hesaplanıyor (dummy). 72 saatlik SLA fallback cron'u `ai_suggestion.top3[0]`'ı otomatik
+  uyguluyor (gerçek mantık, dummy veri üzerine).
+- **Bildirimler:** DB yazımı + tercih kontrolü + WebSocket (`/v1/notifications/stream`)
+  teslimatı tamamen gerçek. E-posta/push tercihleri **saklanıyor** ama gerçek gönderim
+  kanalı yok — sadece in-app + WS teslim ediliyor.
+- **Raporlar:** çevresel/CBAM/DPP raporları gerçek `carbon_factors` verisiyle hesaplanıyor,
+  üretim anındaki değerlerle donuyor (AD3). K-27: `reports.match_id` NOT NULL olduğu için
+  DPP raporu kendi `reports` satırını açamıyor, sahip-auth ile doğrudan `material_passports`'a
+  geçiyor.
+- **Gerçek hata (testte bulundu, K-29):** `AuditInterceptor`'ın entity id çözümü
+  `outputId`/`inputId` gibi kaynak-özel alan adlarını tanımıyordu, output/input oluşturma
+  audit_log'a hiç yazılmıyordu. Çözümleme zinciri genişletildi.
+- **Test paketi:** 8 yeni test dosyası, idempotency race koşulu (K-30, eşzamanlı aynı
+  anahtarlı istek artık handler'ı iki kez çalıştırmıyor) ve test dosyalarının `process.cwd()`
+  yerine `BACKEND_DIR` (K-30) kullanması dahil iki gerçek hata daha bu süreçte bulundu.
+
+**449/449 test assertion'ı geçiyor** (Faz 3 testleriyle birlikte).
 
 ---
 
@@ -249,18 +282,50 @@ CBAM ve çevresel rapor PDF üretiliyor · A3 cron'u çalışıyor.
 
 ### Görevler
 
-| # | Görev | Öncelik | Süre | Senaryo |
-|---|---|---|---|---|
-| 3.1 | OSB agregasyon endpoint'leri + KPI'lar | Y | 2 | AD4 |
-| 3.2 | OSB aylık rapor (PDF/Excel) | Y | 1.5 | AD4 |
-| 3.3 | `ChatbotProxy` — Claude API + SSE streaming | O | 2 | S6 |
-| 3.4 | Chatbot maliyet/limit takibi | O | 1 | S6 |
-| 3.5 | AHP ağırlık yönetimi — versiyon + aktivasyon | O | 1.5 | AD2 |
-| 3.6 | `api_keys` yönetimi | O | 1 | — |
-| 3.7 | `MQTTSubscriber` + `IoTHandler` | D | 2 | I1 |
-| 3.8 | Sensör heartbeat izleme | D | 1 | I2 |
+| # | Görev | Öncelik | Süre | Senaryo | Durum |
+|---|---|---|---|---|---|
+| 3.1 | OSB agregasyon endpoint'leri + KPI'lar | Y | 2 | AD4 | Tamamlandı |
+| 3.2 | OSB aylık rapor (PDF/Excel) | Y | 1.5 | AD4 | Tamamlandı — Excel için `exceljs` eklendi |
+| 3.3 | `ChatbotProxy` — Claude API + SSE streaming | O | 2 | S6 | Tamamlandı (dummy) — K-31 |
+| 3.4 | Chatbot maliyet/limit takibi | O | 1 | S6 | Tamamlandı — 10/dk + 50/gün, `token_cost` tahmini |
+| 3.5 | AHP ağırlık yönetimi — versiyon + aktivasyon | O | 1.5 | AD2 | Tamamlandı |
+| 3.6 | `api_keys` yönetimi | O | 1 | — | Tamamlandı |
+| 3.7 | `MQTTSubscriber` + `IoTHandler` | D | 2 | I1 | Kısmen — K-32: MQTT yerine HTTP+API key, alım mantığı gerçek |
+| 3.8 | Sensör heartbeat izleme | D | 1 | I2 | Tamamlandı |
 
 **Alt toplam: ~12 gün**
+
+### Faz 3 tamamlandı: chatbot dummy, IoT'nin MQTT taşıması hariç gerisi gerçek
+
+- **Chatbot (K-31):** `ClaudeClientService` dummy — anahtar kelime eşleştirmeli kanned
+  yanıtlar, gerçek Anthropic SDK çağrısı yok (`ANTHROPIC_API_KEY` henüz okunmuyor). Üzerine
+  kurulu her şey gerçek: SSE ile parça parça akış (Fastify `reply.raw`), `messages`
+  tablosuna user+assistant kaydı, son 10 mesajlık context okuma, session devamlılığı,
+  10/dk + 50/gün rate limit (`chat-daily` adlı ikinci throttler bucket'ı), 2000 karakter
+  sınırı. "Claude API down" senaryosu (S6) gerçek bir hata değil — testte kanıtlamak için
+  dummy istemci özel bir sentinel mesajda (`__SIMULATE_CLAUDE_DOWN__`) bilinçli olarak 503
+  fırlatıyor; bu durumda assistant mesajı DB'ye hiç yazılmıyor (doğrulandı).
+- **OSB Dashboard:** KPI'lar (docs/05 formülleri), harita (PostGIS lat/lng), aylık rapor
+  (JSON/PDF/XLSX) tamamen gerçek hesap — hiçbir AI bağımlılığı yok.
+- **AHP ağırlıkları:** toplam≠1 → 422 `WEIGHTS_SUM_INVALID`, aktivasyon `idx_weights_active`
+  kısmi unique indeksiyle tutarlı (eskisi otomatik deaktive). `AuditInterceptor` bu endpoint
+  için ilk kez before/after taşıyor (opsiyonel `result._audit` alanı, geriye dönük uyumlu).
+- **API Keys:** SHA-256 hash (K-15 ile aynı kural, bcrypt değil), ham anahtar sadece
+  oluşturma yanıtında bir kez dönüyor.
+- **IoT (K-32):** Gerçek Mosquitto/MQTT bağlantısı kurulmadı — "deploy hedefi mütevazı"
+  ilkesi ve bu ortamda test edilebilir bir broker olmaması nedeniyle. Bunun yerine
+  `POST /v1/iot/sensor-data` (X-Api-Key auth) gerçek MQTT mesaj işleyicisinin yapacağı işi
+  birebir yapıyor: `sensor_data` yazımı, `outputs.stock` güncelleme, %20 eşiğinde
+  `low_stock`, stok 0'da aktif eşleşmedeki karşı tarafa `output_depleted` bildirimi. 5
+  dakikalık heartbeat cron'u (I2) son bildirim tipini "bilinen durum" olarak kullanıyor,
+  sunucu yeniden başlasa bile kaybolmuyor (K-22'nin process-içi Map'inin aksine).
+- **Gerçek hata (testte bulundu):** `pdfkit`/`exceljs`'in TypeScript import şekli
+  (`import PDFDocument from 'pdfkit'` yerine `import * as PDFDocument`, `ExcelJS.Workbook`
+  yerine adlandırılmış `{ Workbook }`) yanlış yazılmıştı, ikisi de derleniyor ama
+  çalışma zamanında "is not a constructor" ile patlıyordu — sadece gerçek bir istekle
+  ortaya çıktı, `tsc`/`nest build` yakalamadı.
+
+**537/537 test assertion'ı geçiyor** (Faz 0-3'ün tamamı).
 
 ---
 
