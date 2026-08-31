@@ -32,9 +32,12 @@ export class CreateOutputDto {
   @IsIn(FREQUENCIES, { message: `frequency şunlardan biri olmalıdır: ${FREQUENCIES.join(', ')}` })
   frequency?: string;
 
-  // Rezerve — sunucu taraflı duplicate tespiti Faz 1.11'de eklenecek, şimdilik yok sayılır
+  // E3 katman 3: aynı facility + aynı description son 5 dakika içinde varsa 409
+  // POSSIBLE_DUPLICATE döner (checkPossibleDuplicate, materials.service.ts). İstemci
+  // kullanıcıya "emin misin" diyip true ile tekrar gönderir -- gerçekten aynı malzemeden
+  // iki farklı parti olabilir (Faz 1.11, K-33).
   @IsOptional()
-  @IsBoolean()
+  @IsBoolean({ message: 'confirmDuplicate boolean olmalıdır.' })
   confirmDuplicate?: boolean;
 }
 
@@ -87,6 +90,11 @@ export class CreateInputDto {
   @IsOptional()
   @IsIn(FREQUENCIES, { message: `frequency şunlardan biri olmalıdır: ${FREQUENCIES.join(', ')}` })
   frequency?: string;
+
+  // bkz. CreateOutputDto.confirmDuplicate (Faz 1.11, K-33)
+  @IsOptional()
+  @IsBoolean({ message: 'confirmDuplicate boolean olmalıdır.' })
+  confirmDuplicate?: boolean;
 }
 
 export class UpdateInputDto {

@@ -55,6 +55,38 @@ export class MaterialsService {
     return { skip, take: limit, page, limit };
   }
 
+  // E3 katman 3 (docs/06): aynı facility + aynı description son 5 dakika içinde varsa
+  // 409 POSSIBLE_DUPLICATE. Idempotency-Key'den (katman 2) farklı -- istemci YENİ bir
+  // istek gönderiyor (farklı/eksik anahtar) ama içerik son dakikalarda görülmüş gibi
+  // duruyor (ör. çift sekme, "geri" tuşuyla tekrar submit). confirmDuplicate:true bu
+  // kontrolü bilerek atlar -- gerçekten aynı malzemeden iki ayrı parti olabilir.
+  private async checkPossibleDuplicate(
+    model: { findFirst: (args: unknown) => Promise<{ id: string } | null> },
+    facilityId: string,
+    description: string,
+    confirmDuplicate: boolean | undefined,
+  ): Promise<void> {
+    if (confirmDuplicate) {
+      return;
+    }
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+    const existing = await model.findFirst({
+      where: { facilityId, description, createdAt: { gte: fiveMinutesAgo } },
+      orderBy: { createdAt: 'desc' },
+      select: { id: true },
+    });
+    if (existing) {
+      // HttpExceptionFilter yalnızca error/message/details'i geçiriyor -- duplicateId
+      // details içinde olmalı, aksi halde yanıttan sessizce düşer (RATE_LIMIT_EXCEEDED'in
+      // details.retryAfterSeconds'ıyla aynı örüntü).
+      throw new ConflictException({
+        error: 'POSSIBLE_DUPLICATE',
+        message: 'Bu açıklamayla son 5 dakika içinde bir kayıt zaten oluşturulmuş. Yine de devam etmek için confirmDuplicate:true gönderin.',
+        details: { duplicateId: existing.id },
+      });
+    }
+  }
+
   // ── Outputs ──
 
   private async getOwnedOutput(id: string, facilityId: string) {
@@ -67,6 +99,7 @@ export class MaterialsService {
 
   async createOutput(userId: string, dto: CreateOutputDto) {
     const facilityId = await this.getFacilityIdForUser(userId);
+    await this.checkPossibleDuplicate(this.prisma.output, facilityId, dto.description.trim(), dto.confirmDuplicate);
 
     const output = await this.prisma.output.create({
       data: {
@@ -231,6 +264,7 @@ export class MaterialsService {
 
   async createInput(userId: string, dto: CreateInputDto) {
     const facilityId = await this.getFacilityIdForUser(userId);
+    await this.checkPossibleDuplicate(this.prisma.input, facilityId, dto.description.trim(), dto.confirmDuplicate);
 
     const input = await this.prisma.input.create({
       data: {
