@@ -14,6 +14,9 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { ReportsModule } from './modules/reports/reports.module';
 import { CronModule } from './modules/cron/cron.module';
 import { HealthModule } from './modules/health/health.module';
+import { ChatModule } from './modules/chat/chat.module';
+import { OsbDashboardModule } from './modules/osb-dashboard/osb-dashboard.module';
+import { IotModule } from './modules/iot/iot.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { AuditInterceptor } from './common/interceptors/audit.interceptor';
@@ -26,7 +29,10 @@ import { AppThrottlerGuard } from './common/guards/app-throttler.guard';
       isGlobal: true,
     }),
     ScheduleModule.forRoot(),
-    ThrottlerModule.forRoot([{ name: 'default', ttl: 60 * 60 * 1000, limit: 1000 }]), // docs/04: "Diğer authenticated"
+    ThrottlerModule.forRoot([
+      { name: 'default', ttl: 60 * 60 * 1000, limit: 1000 }, // docs/04: "Diğer authenticated"
+      { name: 'chat-daily', ttl: 24 * 60 * 60 * 1000, limit: 50 }, // docs/04: POST /v1/chat, 50/gün
+    ]),
     AuthModule,
     OsbsModule,
     FacilitiesModule,
@@ -38,6 +44,9 @@ import { AppThrottlerGuard } from './common/guards/app-throttler.guard';
     ReportsModule,
     CronModule,
     HealthModule,
+    ChatModule,
+    OsbDashboardModule,
+    IotModule,
     PrismaModule,
   ],
   controllers: [],

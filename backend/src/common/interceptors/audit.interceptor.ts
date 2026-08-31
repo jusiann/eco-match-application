@@ -1,6 +1,7 @@
 import { CallHandler, ExecutionContext, Injectable, Logger, NestInterceptor } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { Observable, tap } from 'rxjs';
+import { Observable, map } from 'rxjs';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AUDIT_KEY, AuditMetadata } from '../decorators/audit.decorator';
 
@@ -22,13 +23,24 @@ export class AuditInterceptor implements NestInterceptor {
     const request = context.switchToHttp().getRequest();
 
     return next.handle().pipe(
-      tap((result) => {
-        void this.write(meta, request, result);
+      map((result) => {
+        // Servis before/after farkını (AD2: "before=v2, after=v3") isteğe bağlı olarak
+        // result._audit üzerinden taşıyabilir -- var olan hiçbir endpoint bunu döndürmüyor,
+        // bu yüzden geriye dönük tamamen uyumlu (K-30). İstemciye asla sızmaması için
+        // yanıttan çıkarılıyor.
+        const { _audit, ...rest } = (result ?? {}) as Record<string, unknown> & { _audit?: { before?: unknown; after?: unknown } };
+        void this.write(meta, request, result, _audit);
+        return result && typeof result === 'object' && '_audit' in result ? rest : result;
       }),
     );
   }
 
-  private async write(meta: AuditMetadata, request: any, result: any): Promise<void> {
+  private async write(
+    meta: AuditMetadata,
+    request: any,
+    result: any,
+    audit?: { before?: unknown; after?: unknown },
+  ): Promise<void> {
     // Farklı endpoint'ler farklı kaynak-özel id alan adı döner (outputId, inputId,
     // matchId, userId...) -- create endpoint'lerinde :id route param'ı da olmuyor.
     // Bilinen tüm örüntüleri sırayla dene (K-29).
@@ -53,6 +65,8 @@ export class AuditInterceptor implements NestInterceptor {
           action: meta.action,
           entity: meta.entity,
           entityId,
+          before: (audit?.before as Prisma.InputJsonValue) ?? undefined,
+          after: (audit?.after as Prisma.InputJsonValue) ?? undefined,
           ipAddress: request.ip ?? null,
         },
       });
