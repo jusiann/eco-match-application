@@ -20,7 +20,7 @@ Ayrıntılı kurulum ve veritabanı hazırlığı: [docs/10-gelistirme-rehberi.m
 
 ## Dokümantasyon
 
-Tüm teknik dokümantasyon [`docs/`](docs/README.md) altında.
+Tüm teknik dokümantasyonlar [`docs/`](docs/README.md) altında.
 
 | Doküman | İçerik |
 |---|---|
