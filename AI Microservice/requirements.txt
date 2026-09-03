@@ -1,0 +1,11 @@
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+pydantic==2.9.0
+pydantic-settings==2.5.0
+sentence-transformers==3.1.0
+psycopg2-binary==2.9.9
+numpy
+matplotlib
+seaborn
+rank-bm25==0.2.2
+requests

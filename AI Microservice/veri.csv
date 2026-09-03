@@ -1,0 +1,602 @@
+id,kategori,tanim,tip
+KG001,METAL,çelik talaşı,kisa
+KG002,METAL,demir tozu,kisa
+KG003,METAL,bakır kablo hurda,kisa
+KG004,METAL,alüminyum plaka fire,kisa
+KG005,METAL,çinko kaplama atığı,kisa
+KG006,METAL,paslanmaz çelik saç,kisa
+KG007,METAL,kurşun akü parçası,kisa
+KG008,METAL,titanyum talaş,kisa
+KG009,METAL,DKP sac fire,kisaltma
+KG010,METAL,HRP sac zımba,kisaltma
+KG011,METAL,CNC talaş çeliği,kisaltma
+KG012,METAL,ST52 profıl fire,kisaltma
+KG013,METAL,steel scrap talaş,karma
+KG014,METAL,stainless çelik hurda,karma
+KG015,METAL,copper boru kırığı,karma
+KG016,METAL,alu billet fire,karma
+KG017,METAL,aluminyum profıl,yazim_hatali
+KG018,METAL,paslanmas celik scrap,yazim_hatali
+KG019,METAL,metal atık,genel
+KG020,METAL,demir parça,genel
+KG021,PLASTİK,pet şişe kırığı,kisa
+KG022,PLASTİK,plastik palet fire,kisa
+KG023,PLASTİK,pvc profil atık,kisa
+KG024,PLASTİK,polietilen torba,kisa
+KG025,PLASTİK,plastik ambalaj naylon,kisa
+KG026,PLASTİK,plastik boru parçası,kisa
+KG027,PLASTİK,plastik kova kırığı,kisa
+KG028,PLASTİK,plastik kapak fire,kisa
+KG029,PLASTİK,LDPE film artık,kisaltma
+KG030,PLASTİK,HDPE granül fire,kisaltma
+KG031,PLASTİK,PP palet kırığı,kisaltma
+KG032,PLASTİK,ABS enjeksiyon fire,kisaltma
+KG033,PLASTİK,PET bottle kırık,karma
+KG034,PLASTİK,PP scrap atık,karma
+KG035,PLASTİK,plastic pallet fire,karma
+KG036,PLASTİK,HDPE pipe kırığı,karma
+KG037,PLASTİK,polietlen granul,yazim_hatali
+KG038,PLASTİK,pvc profıl fire,yazim_hatali
+KG039,PLASTİK,plastik atık,genel
+KG040,PLASTİK,plastik hurda,genel
+KG041,ORGANİK,yemek artığı mutfak,kisa
+KG042,ORGANİK,meyve kabukları atık,kisa
+KG043,ORGANİK,sebze posası fire,kisa
+KG044,ORGANİK,çay posası atığı,kisa
+KG045,ORGANİK,kompost malzeme artık,kisa
+KG046,ORGANİK,peynir altı suyu,kisa
+KG047,ORGANİK,ekmek bayat kırıntı,kisa
+KG048,ORGANİK,bitki dalları budama,kisa
+KG049,ORGANİK,yağ filtresi posası,kisaltma
+KG050,ORGANİK,kompost çürük meyve,kisaltma
+KG051,ORGANİK,AHŞAP talaş fire,kisaltma
+KG052,ORGANİK,OSB levha kırığı,kisaltma
+KG053,ORGANİK,food waste artık,karma
+KG054,ORGANİK,organic gübre atığı,karma
+KG055,ORGANİK,kitchen scrap posa,karma
+KG056,ORGANİK,compost malzeme fire,karma
+KG057,ORGANİK,organık posa atıgı,yazim_hatali
+KG058,ORGANİK,kompost malzeme curuf,yazim_hatali
+KG059,ORGANİK,organik atık,genel
+KG060,ORGANİK,bitkisel artık,genel
+KG061,KİMYASAL,asit çözelti atığı,kisa
+KG062,KİMYASAL,çözücü banyo fire,kisa
+KG063,KİMYASAL,yağ emici malzeme,kisa
+KG064,KİMYASAL,alkali temizleyici atık,kisa
+KG065,KİMYASAL,vernik çamuru atığı,kisa
+KG066,KİMYASAL,reçine artık kalıp,kisa
+KG067,KİMYASAL,hidrolik yağ atığı,kisa
+KG068,KİMYASAL,flokülant çamur,kisa
+KG069,KİMYASAL,DROSS alüminyum tufal,kisaltma
+KG070,KİMYASAL,CURUF demir oksit,kisaltma
+KG071,KİMYASAL,PCB temizleme solvent,kisaltma
+KG072,KİMYASAL,CNC soğutma sıvısı,kisaltma
+KG073,KİMYASAL,chemical sludge çamur,karma
+KG074,KİMYASAL,acid waste çözelti,karma
+KG075,KİMYASAL,solvent barrel artık,karma
+KG076,KİMYASAL,oil filter posası,karma
+KG077,KİMYASAL,kimyasal çamur atıgı,yazim_hatali
+KG078,KİMYASAL,asidik cozelti fire,yazim_hatali
+KG079,KİMYASAL,kimyasal atık,genel
+KG080,KİMYASAL,tehlikeli sıvı,genel
+KG081,TEKSTİL,pamuk kumaş fire,kisa
+KG082,TEKSTİL,polyester iplik atığı,kisa
+KG083,TEKSTİL,yün keçe artık,kisa
+KG084,TEKSTİL,konfeksiyon kumaş kırpıntı,kisa
+KG085,TEKSTİL,halı tüyü tozu,kisa
+KG086,TEKSTİL,keten kumaş artık,kisa
+KG087,TEKSTİL,viskon bez parçası,kisa
+KG088,TEKSTİL,naylon çuval atığı,kisa
+KG089,TEKSTİL,PP dokuma fire,kisaltma
+KG090,TEKSTİL,PET keçe artık,kisaltma
+KG091,TEKSTİL,PA iplik bobini,kisaltma
+KG092,TEKSTİL,PE örtü atığı,kisaltma
+KG093,TEKSTİL,textile scrap kumaş,karma
+KG094,TEKSTİL,cotton waste fire,karma
+KG095,TEKSTİL,fabric atık parça,karma
+KG096,TEKSTİL,polyester yarn döküntü,karma
+KG097,TEKSTİL,tekstıl kumas fire,yazim_hatali
+KG098,TEKSTİL,pamuk atıgı yün,yazim_hatali
+KG099,TEKSTİL,tekstil atık,genel
+KG100,TEKSTİL,kumaş hurda,genel
+KG101,CAM,cam şişe kırığı,kisa
+KG102,CAM,düz cam fire parça,kisa
+KG103,CAM,renkli cam atığı,kisa
+KG104,CAM,otel cam bardak,kisa
+KG105,CAM,cam yünü atığı,kisa
+KG106,CAM,ayna camı kırığı,kisa
+KG107,CAM,otomat cam artığı,kisa
+KG108,CAM,cam boru parçası,kisa
+KG109,CAM,float cam fire,kisaltma
+KG110,CAM,OSB cam elyaf,kisaltma
+KG111,CAM,PC cam atık parça,kisaltma
+KG112,CAM,PET cam fire artık,kisaltma
+KG113,CAM,glass bottle kırığı,karma
+KG114,CAM,plate cam scrap,karma
+KG115,CAM,window glass fire,karma
+KG116,CAM,mirror glass atık,karma
+KG117,CAM,cam kırıgı silis,yazim_hatali
+KG118,CAM,cam yünü atıgı,yazim_hatali
+KG119,CAM,cam atık,genel
+KG120,CAM,cam hurda,genel
+KG121,KAĞIT,karton koli fire,kisa
+KG122,KAĞIT,ofis kağıdı atığı,kisa
+KG123,KAĞIT,gazete kağıdı artık,kisa
+KG124,KAĞIT,oluklu mukavva,kisa
+KG125,KAĞIT,ambalaj kağıdı parça,kisa
+KG126,KAĞIT,kuşe kağıt fire,kisa
+KG127,KAĞIT,kraft kağıt rulo,kisa
+KG128,KAĞIT,kopya kağıdı atık,kisa
+KG129,KAĞIT,OSB talaş karışım,kisaltma
+KG130,KAĞIT,PE kaplı kağıt fire,kisaltma
+KG131,KAĞIT,PP dokuma kağıt,kisaltma
+KG132,KAĞIT,DKP kağıt bobin,kisaltma
+KG133,KAĞIT,paper scrap karton,karma
+KG134,KAĞIT,cardboard fire atık,karma
+KG135,KAĞIT,kraft box fire,karma
+KG136,KAĞIT,office paper scrap,karma
+KG137,KAĞIT,kagit karton hurda,yazim_hatali
+KG138,KAĞIT,oluklu mukavva fire,yazim_hatali
+KG139,KAĞIT,kağıt atık,genel
+KG140,KAĞIT,karton hurda,genel
+id,kategori,cikti_tanim,girdi_tanim,etiket,neden
+IN001,METAL,"304 paslanmaz çelik CNC talaşı","Bakır rafinasyon tesisi granül girdisi",0,"Farklı metal ailesi: demir bazlı paslanmaz çelik ile bakır bazlı malzeme arasında metalurjik uyumsuzluk, eritme sıcaklıkları ve alaşım davranışları farklı"
+IN002,METAL,"DKP sac zımba fire (kalın sac)","Alüminyum profil ince talaş",0,"Farklı form ve yoğunluk: haddelenmiş çelik sac artığı ile alüminyum talaş, ergitme fırını beslemesinde aynı potada çözünmezlik problemi"
+IN003,METAL,"Galvanizli çinko kaplama atığı (çinko dross)","HRP sıcak haddelenmiş çelik levha",0,"Ağır kontaminasyon: çinko kaplama atığı yüksek oranda oksit içerir, sıcak haddelenmiş temiz çelik ile karıştırıldığında kalite bozulması"
+IN004,METAL,"Titanyum torna talaşı","DKP sac kalıp zımbası artığı",0,"Alaşım uyumsuzluğu: titanyum reaktif metaldir, demir bazlı malzeme ile eritildiğinde gevrek intermetalik bileşikler oluşur"
+IN005,METAL,"Kontamine bakır kablo hurda (PVC kaplı)","Paslanmaz 316 şerit fire (temiz)",0,"Kontamine vs temiz: PVC kaplı bakır, temiz paslanmaz çelik ile aynı geri dönüşüm hattında işlenemez, organik kalıntı kül fırınını kirletir"
+IN006,PLASTİK,"PVC profil pencere atığı (sert PVC)","PET şişe kırığı (şeffaf)",0,"Farklı polimer ailesi: PVC (klorlu) ile PET (polyester) geri dönüşüm sıcaklıkları ve kimyasal dirençleri farklı, PVC PET'i degrade eder"
+IN007,PLASTİK,"ABS enjeksiyon fire (termoplastik)","Bakalit kalıp artığı (termoset)",0,"Termoset vs termoplastik: ABS tekrar eritilebilir, bakalit çapraz bağlıdır ve ısıyla yeniden şekillendirilemez, aynı ekstrüderde işlenemez"
+IN008,PLASTİK,"LDPE film ambalaj atığı (gıda temaslı)","HDPE kimyasal bidon atığı (endüstriyel)",0,"Gıda temaslı vs endüstriyel: LDPE temiz gıda sınıfı, HDPE kimyasal kaplıdır, karışım toksik kontaminasyon riski oluşturur"
+IN009,PLASTİK,"PP granül doğal (katkısız)","ABS PC karışım elektronik fire (katkılı)",0,"Katkılı vs saf: saf PP doğal renkte, ABS/PC karışımı alev geciktirici ve boyalı içerir, geri dönüşümde renk ve mekanik uyumsuzluk"
+IN010,PLASTİK,"PEX (çapraz bağlı PE) boru parçası","HDPE (lineer) kırığı",0,"Cross-linked vs linear: PEX çapraz bağlı yapısı nedeniyle HDPE gibi erimez, aynı granülasyon ve ekstrüzyon prosesine uygun değil"
+IN011,ORGANİK,"Mutfak yemek artığı (ıslak, organik)","OSB ahşap talaşı (kuru) ",0,"Gıda vs ahşap: yemek artığı yüksek nemli ve biyolojik olarak aktiftir, ahşap talaşı kuru lignoselülozik malzemedir, kompost prosesleri farklı"
+IN012,ORGANİK,"Tavuk kemik unu (hayvansal)","Sebze posası (bitkisel)",0,"Hayvansal vs bitkisel: kemik unu hayvansal protein ve mineral içerir, sebze posası selüloz ağırlıklıdır, kompost hızları ve vermikompost uyumu farklı"
+IN013,ORGANİK,"Mantar zehirli atığı (tehlikeli organik)","Elma kabuğu kompostu (tehlikesiz)",0,"Tehlikeli vs tehlikesiz: zehirli mantar atığı toksin içerir, elma kabuğu güvenli kompost malzemesidir, aynı havuzda işlenmez"
+IN014,ORGANİK,"Islak kahve telvesi (nem %70)","Kuru çay posası (nem %10)",0,"Islak vs kuru: kahve telvesi yüksek nem ve asidik, kuru çay posası düşük nem, kompostlama pH ve havalandırma gereksinimleri uyumsuz"
+IN015,ORGANİK,"Muz kabuğu (kompostlanabilir)","Parafin kaplı ahşap palet (yakılabilir)",0,"Kompostlanabilir vs yakılabilir: muz kabuğu tamamen biyobozunur, parafin kaplı ahşap petrokimyasal içerir ve yakma tesisine yönlendirilir"
+IN016,KİMYASAL,"Sülfürik asit çözeltisi (pH<1)","Sodyum hidroksit çözeltisi (pH>13)",0,"Asidik vs bazik: sülfürik asit ile sodyum hidroksit nötralizasyon tepkimesi verir, ekzotermik reaksiyonla tehlikeli kıvılcım ve sıçrama oluşur"
+IN017,KİMYASAL,"Aseton çözücü (organik, uçucu)","Sodyum klorür tuzu (inorganik)",0,"Organik solvent vs inorganik tuz: aseton yanıcı organik çözücü, sodyum klorür inorganik katı tuz, atık su arıtma prosesleri tamamen farklı"
+IN018,KİMYASAL,"Benzin atığı (yanıcı, parlama noktası -43°C)","Sulu boya atığı (sulu, yanıcı değil)",0,"Yanıcı vs yanıcı olmayan: benzin alev alabilir, sulu boya su bazlıdır, aynı depolama ve taşıma standartlarına uymaz"
+IN019,KİMYASAL,"Siyanür içeren atık (toksik)","Tuz ruhu seyreltik (düşük toksik)",0,"Toksik vs toksik olmayan: siyanür ölümcül toksin, seyreltik tuz ruhu hafif asidiktir, atık kodları (EWC) ve bertaraf yöntemleri farklı"
+IN020,KİMYASAL,"Endüstriyel yağ çamuru (sıvı viskoz)","Kurşun asit batarya katı çamuru",0,"Sıvı vs katı: yağ çamuru akışkan organik atık, batarya çamuru kurşun-sülfat katıdır, farklı stabilizasyon ve katılaştırma prosesleri"
+IN021,TEKSTİL,"Pamuk kumaş kırpıntısı (doğal lif)","Polyester dokuma atığı (sentetik)",0,"Doğal lif vs sentetik lif: pamuk selüloz bazlı, polyester petrol bazlı, aynı geri dönüşüm hattında birlikte işlenemez (sıcaklık ve yıkama uyumsuz)"
+IN022,TEKSTİL,"Koyu mavi boyalı denim kırpıntı","Beyaz dokusuz kumaş (boyasız)",0,"Boyalı vs boyasız: boyalı denim'de azo boyalar ve mordan maddeleri var, boyasız kumaş temiz selüloz, geri dönüşümde renk ayrımı gerekir"
+IN023,TEKSTİL,"Triko örme atığı (yuvarlak örme)","Bez dokuma atığı (düz dokuma)",0,"Örme vs dokuma: örme kumaş elastik ve gevşek yapılı, dokuma kumaş sıkı ve dimensional olarak farklı, aynı parçalama makinesinde sorun çıkarır"
+IN024,TEKSTİL,"Makine yağı bulaşık bez artığı (kontamine)","Buharla sterilize edilmiş tıbbi örtü (temiz)",0,"Kontamine vs temiz: yağlı bez ağır metal ve hidrokarbon içerir, steril örtü termal olarak temizlenmiştir, farklı dezenfeksiyon ve proses gereksinimi"
+IN025,TEKSTİL,"%100 yün atığı (tek lif)","Pamuk/polyester karışım kumaş (%50/50)",0,"Tek lif vs karışım: saf yün proteindir, pamuk/polyester karışımı selüloz+sentetik, kimyasal geri kazanımda çözücü uyumsuzluğu ve lif ayrımı zor"
+IN026,CAM,"Soda-kireç cam şişe kırığı","Borosilikat laboratuvar camı parçası",0,"Soda-kireç vs borosilikat: soda-kireç cam düşük ısıl dayanıklı, borosilikat yüksek bor oksit içerir, eritme sıcaklıkları ve katsayıları farklı"
+IN027,CAM,"Temperli araç yan cam kırığı","Float düz cam fire",0,"Temperli vs float: temperli cam gerilimli ve küçük küpler halinde kırılır, float cam gerilimsizdir, aynı kırma ve öğütme ekipmanına uyumsuz"
+IN028,CAM,"Renkli yeşil cam şişe atığı","Şeffaf cam bardak kırığı",0,"Renkli vs şeffaf: yeşil cam demir oksit renklendirici içerir, şeffaf cam renksizdir, cam eritme fırını renk homojenliğini bozar"
+IN029,CAM,"Cam elyaf keçe atığı (lifli)","Düz cam levha fire",0,"Cam elyaf vs düz cam: cam elyafı yüksek oranda bağlayıcı ve organik apre içerir, düz cam saf silikattır, aynı fırın yükü olamaz"
+IN030,CAM,"Low-E kaplamalı cam parçası (metal oksit kaplı)","Kaplamasız float cam atığı",0,"Kaplamalı vs kaplamasız: Low-E cam yüzeyi gümüş ve oksit katmanlıdır, kaplamasız camda bu alaşım kirletici olur, geri dönüşüm kalitesi düşer"
+IN031,KAĞIT,"Kraft koli kartonu (doğal kahve renk)","Kuşe kağıt fire (parlak beyaz)",0,"Kraft vs kuşe: kraft uzun lifli hamur ve kaba yüzeyli, kuşe kağıt dolgu ve kaplama maddesi içerir, aynı hamur havuzunda lif uyumsuzluğu"
+IN032,KAĞIT,"PE lamine karton (süt kutusu)","Saf selüloz ofis kağıdı",0,"Kaplamalı vs kaplamasız: lamine karton polietilen filmin varlığı selüloz hamuruna karışınca kaliteyi düşürür, saf ofis kağıdı temiz selülozdur"
+IN033,KAĞIT,"Beyaz ofis kağıdı (birinci hamur)","Gri karton atığı (ikinci hamur)",0,"Birinci hamur vs ikinci hamur: birinci hamur uzun lifli, mukavemetli; ikinci hamur kısa lifli ve dolgu maddesi yüksek, mukavemet değerleri farklı"
+IN034,KAĞIT,"Plastik kaplı katalog baskı kağıdı","Mukavva kutu (saf kağıt hamuru)",0,"Lamine vs saf selüloz: plastik kaplama geri dönüşümde süzme problemidir, saf mukavva doğrudan hidropulper'e alınabilir"
+IN035,KAĞIT,"Renkli baskılı dergi kağıdı (mürekkepli)","Kraft koli iç astarı (baskısız)",0,"Baskılı vs baskısız: renkli dergi mürekkep ve kimyasal içerir, baskısız kraft astarı temizdir, dekontaminasyon prosesleri ayrı"
+id,kategori,cikti_sektor,cikti_tanim,girdi_sektor,girdi_tanim,etiket,uzunluk
+PP001,METAL,Otomotiv pres,"DKP sac zımba fire",Çelik dökümhane,"indüksiyon ocağı ferrous şarj",1,orta
+PP002,METAL,Kablo geri dönüşüm,"bakır granül",Rafinasyon tesisi,"elektroliz bakır anot girdisi",1,kisa
+PP003,METAL,Talaş işleme,"demir-çelik torna talaşı",Demir-çelik tesisi,"ark ocağı metalik şarj",1,orta
+PP004,METAL,Metal işleme,"alüminyum levha fire",Alüminyum döküm,"ikincil külçe üretim hammaddesi",1,kisa
+PP005,METAL,Metalurji yan ürün,"çinko dross",Çinko rafineri,"oksit indirgeme girdisi",1,orta
+PP006,PLASTİK,Şişe geri dönüşüm,"PET şişe kırığı",Plastik granül,"polimer eriyik besleme",1,kisa
+PP007,PLASTİK,Ambalaj atık,"LDPE film artık",Plastik enjeksiyon,"ekstrüder hammadde",1,kisa
+PP008,PLASTİK,Tarımsal atık,"zeytin posası",Enerji tesisi,"piroliz reaktör biyokütle",1,orta 
+PP009,PLASTİK,Plastik hurda,"PP palet kırığı",Plastik geri dönüşüm,"granül üretim beslemesi",1,kisa
+PP010,PLASTİK,Plastik atık,"HDPE kimyasal bidon",Piroliz tesisi,"piroliz yağı üretim girdisi",1,orta 
+PP011,ORGANİK,Gıda işleme,"meyve-sebze kabuk posası",Biyogaz tesisi,"anaerobik fermentör besleme",1,orta
+PP012,ORGANİK,Unlu mamul,"bayat ekmek kırıntısı",Yem sanayi,"hayvan yemi katkı",1,kisa
+PP013,ORGANİK,Orman ürünleri,"ahşap talaşı ve tozu",Sunta fabrikası,"OSB levha selülozik dolgu",1,orta
+PP014,ORGANİK,Tarımsal atık,"buğday samanı",Kompost tesisi,"olgunlaştırma karışımı",1,kisa
+PP015,ORGANİK,Restoran atık,"yemek artığı (ıslak)",Biyometan tesisi,"biyogaz üretim substratı",1,orta
+PP016,KİMYASAL,Geri kazanım,"atık yağ filtre posası",Rafineri,"bitüm modifikasyon girdisi",1,orta
+PP017,KİMYASAL,Kaplama atık,"boyahane çamuru",Çimento fabrikası,"alternatif yakıt klinker",1,kisa
+PP018,KİMYASAL,Maden işleme,"mermer işleme çamuru",Plastik piroliz,"katalitik piroliz mineral",1,orta 
+PP019,KİMYASAL,Petrokimya,"çözücü distillation dip",İlaç tesisi,"reaksiyon ortamı",1,kisa
+PP020,KİMYASAL,Galvaniz atık,"asit banyo çözeltisi",Arıtma tesisi,"nötralizasyon reaktifi",1,orta
+PP021,TEKSTİL,Konfeksiyon,"pamuk kumaş kırpıntısı",Lif geri dönüşüm,"selüloz hamuru besleme",1,kisa 
+PP022,TEKSTİL,İplik üretim,"polyester atık iplik",Geri kazanım,"eritme granül üretimi",1,kisa
+PP023,TEKSTİL,Tekstil atık,"boyasız bez artığı",Kağıt fabrikası,"selüloz hamuru karışım",1,orta
+PP024,TEKSTİL,Halı üretim,"naylon halı tüyü",Plastik kompozit,"takviye lif hammaddesi",1,kisa
+PP025,TEKSTİL,Örme atık,"triko kumaş fire",Yeniden iplik,"open-end iplik üretim",1,orta
+PP026,CAM,Cam şişe,"soda-kireç cam kırığı",Cam ambalaj,"fırın camcı girdisi",1,kisa
+PP027,CAM,Otomotiv cam,"temperli cam parçası",Cam elyaf,"eritme fırın camcı",1,orta
+PP028,CAM,Düz cam,"float cam fire",Ayna üreticisi,"cam yüzey hammadde",1,kisa
+PP029,CAM,Arıtma atık,"cam elyaf keçe artık",Yalıtım üreticisi,"kompozit takviye",1,orta
+PP030,CAM,Laboratuvar,"borosilikat cam parça",Cam geri dönüşüm,"özel cam eritme",1,kisa
+PP031,KAĞIT,Koli üretim,"karton mukavva fire",Kraft kağıt,"hamur havuzu besleme",1,kisa
+PP032,KAĞIT,Matbaa,"kuşe kağıt süprüntü",Geri dönüşüm,"deinking hamur girdisi",1,orta
+PP033,KAĞIT,Ofis atık,"beyaz ofis kağıdı",Selüloz üretici,"ikinci hamur üretim",1,kisa
+PP034,KAĞIT,Ambalaj,"oluklu mukavva fire",Karton üreticisi,"yeni karton astar hammadde",1,orta
+PP035,KAĞIT,Etiket üretim,"kağıt etiket rulo fire",İnşaat malzeme,"yalıtım levha dolgu",1,kisa
+id,tip,metin_1,metin_2,beklenen_benzerlik,aciklama
+EC001,kontamine,"Yağlı çelik talaşı CNC","Temiz kuru çelik talaşı",yuksek,"Aynı malzeme, kontaminasyon farkı — kalite skorunda yakalanır"
+EC002,kontamine,"PVC kaplı bakır kablo","Sıyrılmış temiz bakır kablo",yuksek,"Aynı bakır malzeme, PVC kontaminasyonu kalite skorunda ayrıştırılır"
+EC003,kontamine,"Boyalı alüminyum profil fire","Eloksalsız temiz alüminyum profil",yuksek,"Alüminyum aynı, yüzey kontaminasyonu kalite parametresidir"
+EC004,kontamine,"Vernikli bakır tel atığı","Sıyrılmış bakır tel",yuksek,"Bakır metal aynı, vernik kalıntısı alt proseste filtrelenir"
+EC005,kontamine,"Mürekkepli kuşe kağıt","Baskısız kuşe kağıt fire",yuksek,"Kuşe kağıt aynı, mürekkep kontaminasyonu değerlendirme kriteri"
+EC006,kontamine,"Gıda bulaşık LDPE ambalaj","Temiz LDPE film",yuksek,"Polimer aynı, organik kalıntı alt süreçte ayrılır"
+EC007,kontamine,"Yağlı pamuk kumaş kırpıntısı","Temiz pamuk kırpıntısı",yuksek,"Lif aynı, yağ kontaminasyonu ikincil ayırım"
+EC008,kontamine,"Klorlu içme suyu PET şişe","Temiz PET şişe kırığı",yuksek,"PET polimer aynı, klor kalıntısı dezenfeksiyon prosesine bırakılır"
+EC009,form,"Polipropilen granül 3mm","Polipropilen palet kırığı 20cm",yuksek,"Aynı PP polimeri, farklı boyut ve form"
+EC010,form,"ABS enjeksiyon pelet","ABS kalıp fire",yuksek,"Aynı ABS malzemesi, pelet vs döküm fire farklı form"
+EC011,form,"Alüminyum toz 60μm","Alüminyum levha 1.2mm",yuksek,"Element aynı, toz vs levha fiziksel form farkı"
+EC012,form,"Polietilen şeffaf film","Polietilen süt şişesi kırığı",yuksek,"PE polimeri aynı, film vs şişe farklı form"
+EC013,form,"Çelik sac 2mm","Çelik talaşı tozu",yuksek,"Demir bazlı aynı, sac vs talaş form farkı"
+EC014,form,"PET şişe kırığı 10mm","PET granül 4mm",yuksek,"Aynı PET, kırık vs granül form farkı"
+EC015,form,"Paslanmaz çelik boru parçası","Paslanmaz çelik plaka fire",yuksek,"AISI 304 aynı alaşım, boru vs plaka farklı form"
+EC016,form,"Cam levha 6mm","Cam kırığı tozu",yuksek,"Aynı cam bileşimi, levha vs kırık form farkı"
+EC017,yazim,"alüminyum profil","aluminyum profıl",yuksek,"Alüminyum yazım varyasyonu, aynı malzeme"
+EC018,yazim,"polietilen film","polietlen film",yuksek,"Polietilen yazım varyasyonu, aynı malzeme"
+EC019,yazim,"paslanmaz çelik","paslanmas celik",yuksek,"Paslanmaz yazım hatası, aynı malzeme"
+EC020,yazim,"polyethylene granül","polietilen granul",yuksek,"İngilizce-Türkçe varyasyon, aynı polimer"
+EC021,yazim,"aluminium sac","aluminyum saç",yuksek,"İngilizce-Türkçe varyasyon, aynı malzeme"
+EC022,yazim,"stainless steel scrap","paslanmaz hurda",yuksek,"İngilizce-Türkçe varyasyon, aynı malzeme"
+EC023,yazim,"poliüretan köpük","polyurethane foam",yuksek,"Türkçe-İngilizce varyasyon, aynı malzeme"
+EC024,yazim,"bakır sülfat","bakır sulfat",yuksek,"Kimyasal yazım varyasyonu, aynı bileşik"
+EC025,genel_spesifik,"metal atık","304 paslanmaz çelik CNC talaşı",orta,"Genel metal kategorisi vs spesifik alaşım ve talaş formu"
+EC026,genel_spesifik,"plastik atık","ABS antistatik enjeksiyon fire",orta,"Genel plastik vs spesifik polimer tipi ve katkı"
+EC027,genel_spesifik,"kağıt atık","ofis fotokopi kağıdı kırpıntısı",orta,"Genel kağıt vs spesifik ofis kağıdı"
+EC028,genel_spesifik,"kimyasal atık","sülfürik asit %98 çözelti",orta,"Genel kimyasal vs spesifik asit ve konsantrasyon"
+EC029,genel_spesifik,"cam atık","borosilikat laboratuvar camı parçası",orta,"Genel cam vs spesifik ısıya dayanıklı laboratuvar camı"
+EC030,genel_spesifik,"tekstil atık","%100 pamuk örme kumaş fire",orta,"Genel tekstil vs spesifik lif tipi ve kumaş yapısı"
+EC031,genel_spesifik,"organik atık","kahve telvesi kompost",orta,"Genel organik vs spesifik kahve posası kompost malzemesi"
+EC032,genel_spesifik,"ahşap atık","OSB talaş kırıntısı",orta,"Genel ahşap vs spesifik orman ürünü levha atığı"
+EC033,yaniltici,"cam yünü izolasyon","koyun yünü tekstil",dusuk,"İkisinde de yünü var ama cam mineral vs hayvansal lif — farklı kategori"
+EC034,yaniltici,"metal boya atığı","metal hurda",dusuk,"Metal kelimesi ortak ama kimyasal kaplama vs metal geri dönüşüm — farklı atık sınıfı"
+EC035,yaniltici,"plastik kaplama atığı","plastik hurda parça",dusuk,"Plastik ortak ama yüzey kaplama proses atığı vs plastik malzeme hurdası"
+EC036,yaniltici,"organik çözücü","organik gübre",dusuk,"Organik kelimesi ortak ama uçucu petrokimyasal vs tarımsal kompost — tamamen farklı"
+EC037,yaniltici,"demir tozu","demir oksit curuf",dusuk,"Demir ortak ama metalik element vs oksitlenmiş cüruf — farklı faz"
+EC038,yaniltici,"selüloz yalıtım","selüloz asetat",dusuk,"Selüloz ortak ama lifli yapı malzemesi vs kimyasal türev — farklı sektör"
+EC039,yaniltici,"kurşun asit batarya","asit çözeltisi",dusuk,"Asit kelimesi ortak ama katı batarya atığı vs sıvı kimyasal atık"
+EC040,yaniltici,"şeker kamışı atığı","şeker endüstri asidi",dusuk,"Şeker ortak ama tarımsal biyokütle vs gıda kimyasal atığı — farklı proses"
+id,kategori,cikti_sektor,cikti_tanim,girdi_sektor,girdi_tanim,etiket,neden
+M001,METAL,Otomotiv,"DKP sac pres fire","Çelik döküm","indüksiyon ocağı şarj hurdası",1,"Karbon çeliği hurdası ergitme girdisi olarak değerlendirilebilir"
+M002,METAL,Kablo,"bakır granül","Rafinasyon","bakır ergitme ve rafinasyon beslemesi",1,"Yüksek bakır içeriği doğrudan metal geri kazanımına uygundur"
+M003,METAL,Alüminyum döküm,"alüminyum döküm çapakları","Alüminyum ergitme","ikincil alüminyum alaşım üretim hammaddesi",1,"Alüminyum talaş ve çapaklar yeniden ergitilebilir"
+M004,METAL,Demir çelik,"haddehane tufalı","Sinter tesisi","demir cevheri yerine sinter besleme malzemesi",1,"Yüksek demir oksit içeriği sinter üretiminde değerlendirilebilir"
+M005,METAL,Alüminyum döküm,"Alüminyum dross","İkincil alüminyum","dross işleme sonrası metalik alüminyum üretim girdisi",1,"Dross içindeki metalik alüminyum geri kazanılabilir"
+M006,METAL,Metal işleme,"paslanmaz çelik talaşı","Paslanmaz çelik üretimi","elektrik ark ocağı alaşımlı hurda şarjı",1,"Alaşımlı çelik talaşı uygun hazırlama sonrası ergitme girdisidir"
+M007,METAL,Demir çelik,"elektrik ark ocağı curufu","Çimento","demir içeren mineral katkı malzemesi",1,"Uygun karakterizasyon sonrası mineral hammadde yerine kullanılabilir"
+P001,PLASTİK,Şişe üretimi,"PET şişe kırığı","Polyester elyaf","geri dönüştürülmüş polyester üretim beslemesi",1,"PET temizlenip kırılarak polyester hammaddesine dönüştürülebilir"
+P002,PLASTİK,Ambalaj,"LDPE film firesi","Plastik geri dönüşüm","granül PE üretim hattı beslemesi",1,"Aynı polimer ailesi mekanik geri dönüşüme uygundur"
+P003,PLASTİK,Otomotiv,"PP enjeksiyon fireleri","Plastik parça üretimi","geri kazanılmış polipropilen granül girdisi",1,"PP üretim firesi yeniden granüle edilerek kullanılabilir"
+P004,PLASTİK,Kablo,"PVC kablo kırpıntısı","PVC profil üretimi","plastikleştirici içeren geri kazanılmış PVC hammaddesi",1,"Uygun ayrıştırılmış PVC kırpıntıları profil üretiminde değerlendirilebilir"
+P005,PLASTİK,Elektronik,"ABS parça fireleri","Elektrikli ekipman","geri dönüştürülmüş ABS granül üretim hammaddesi",1,"ABS kırıntıları sınıflandırma sonrası yeniden işlenebilir"
+P006,PLASTİK,Ambalaj üretimi,"temiz HDPE kapak firesi","Plastik kasa üretimi","ikincil polietilen enjeksiyon hammaddesi",1,"HDPE kapaklar yıkama ve granülasyon sonrası enjeksiyonda kullanılabilir"
+P007,PLASTİK,Beyaz eşya,"PC kırma parçaları","Teknik plastik üretimi","geri kazanılmış polikarbonat bileşik üretim beslemesi",1,"Polikarbonat atığı uygun kalite kontrol ile yeniden bileşiklenebilir"
+O001,ORGANİK,Meyve işleme,"meyve pres posası","Biyogaz tesisi","anaerobik çürütme için organik besleme",1,"Yüksek biyobozunur organik içerik biyogaz üretimine uygundur"
+O002,ORGANİK,Yağlı tohum işleme,"ayçiçeği küspesi","Hayvan yemi","protein ve lif içeren yem hammaddesi",1,"Uygun kalite şartlarında küspe yem bileşeni olarak değerlendirilebilir"
+O003,ORGANİK,Tahıl işleme,"buğday samanı","Pelet üretimi","öğütülmüş tarımsal biyokütle yakıt hammaddesi",1,"Kuru lignoselülozik yapı pelet yakıt üretimine uygundur"
+O004,ORGANİK,Kereste,"temiz talaş ve yonga","Panel üretimi","MDF veya yonga levha lif hammaddesi",1,"Temiz odun fraksiyonu levha üretiminde hammadde olabilir"
+O005,ORGANİK,Gıda üretimi,"sebze-meyve ayıklama artıkları","Kompost tesisi","kontrollü aerobik kompostlama için biyobozunur girdi",1,"Organik madde içeriği kompost üretimine uygundur"
+O006,ORGANİK,Şeker üretimi,"şeker pancarı posası","Biyokütle enerji tesisi","yüksek nemli organik yakıt ve biyogaz beslemesi",1,"Posa enerji geri kazanımı için yüksek organik yük sağlar"
+O007,ORGANİK,Ahşap işleme,"kabuk ve odun artığı","Biyokütle kazanı","katı biyoyakıt olarak yakma sistemi beslemesi",1,"Kuru odunsu fraksiyon kontrollü yakma sistemlerinde enerji üretir"
+K001,KİMYASAL,Boya üretimi,"atık solvent","Solvent geri kazanım","damıtma ünitesi için çözücü beslemesi",1,"Uygun ayrıştırılmış solvent damıtma ile yeniden kazanılabilir"
+K002,KİMYASAL,Metal yüzey işlem,"kullanılmış hidroklorik asit","Asit rejenerasyon","demir içeren hidroklorik asit rejenerasyon prosesi girdisi",1,"Pickling asidi rejenerasyonla yeniden kullanılabilir ve metal tuzları geri kazanılabilir"
+K003,KİMYASAL,Endüstriyel temizlik,"alkali yıkama çözeltisi","Atık su arıtma","pH düzenleme ve kontrollü nötralizasyon kimyasal girdisi",1,"Uygun analiz sonrası alkalinite kontrollü arıtma prosesinde değerlendirilebilir"
+K004,KİMYASAL,Makine imalatı,"kullanılmış hidrolik yağ","Yağ geri kazanım","re-rafinasyon tesisi için baz yağ beslemesi",1,"Atık yağ uygun toplama ve analiz sonrası yeniden rafine edilebilir"
+K005,KİMYASAL,Metal işleme,"bor yağlı emülsiyon","Endüstriyel atık arıtma","yağ-su ayırma ve emülsiyon kırma proses girdisi",1,"Yağ içeren emülsiyonlar uygun arıtma tesislerinde bileşenlerine ayrılabilir"
+K006,KİMYASAL,Gübre üretimi,"fosforik asitli proses artığı","Fosfat gübresi","fosfat bazlı gübre üretiminde ikincil hammadde",1,"Fosfat içeren proses akımı uygun spesifikasyonda gübre üretimine katılabilir"
+K007,KİMYASAL,Kimya üretimi,"sodyum hidroksitli proses çözeltisi","Kimyasal üretim","alkali ortam gerektiren endüstriyel proses beslemesi",1,"Uygun konsantrasyon ve saflıkta yeniden proses kimyasalı olabilir"
+T001,TEKSTİL,Tekstil konfeksiyon,"pamuk kumaş kesim firesi","Geri dönüştürülmüş elyaf","mekanik açma hattı için selülozik lif beslemesi",1,"Pamuk kesim artıkları lif haline getirilerek yeniden değerlendirilebilir"
+T002,TEKSTİL,Polyester tekstil,"polyester elyaf kırpıntısı","Polyester iplik","geri kazanılmış PET elyaf üretim hammaddesi",1,"Polyester atıkları mekanik veya kimyasal geri dönüşüme girebilir"
+T003,TEKSTİL,Konfeksiyon,"polyester-pamuk kumaş firesi","Tekstil geri dönüşüm","ayrıştırılmış karışım liflerden ikincil tekstil hammaddesi",1,"Karışım kumaşlar uygun teknolojiyle elyaf ve malzeme olarak geri kazanılabilir"
+T004,TEKSTİL,Halı üretimi,"naylon iplik artığı","Plastik geri dönüşüm","poliamid granül üretim prosesi beslemesi",1,"Poliamid içeren temiz üretim artıkları granüle edilebilir"
+T005,TEKSTİL,Denim üretimi,"kot kumaş kırpıntısı","İzolasyon üretimi","selüloz esaslı akustik ve ısı yalıtım lifi hammaddesi",1,"Pamuk ağırlıklı denim lifleri yalıtım ürünlerinde kullanılabilir"
+T006,TEKSTİL,İplik üretimi,"akrilik elyaf telefleri","Keçe üretimi","sentetik lif esaslı nonwoven ürün hammaddesi",1,"Akrilik lif atıkları uygun harmanlama ile keçe üretiminde değerlendirilebilir"
+T007,TEKSTİL,Konfeksiyon,"temiz tekstil üretim artıkları","Yakıt hazırlama","RDF türevi katı yakıt üretiminde yüksek kalorifik fraksiyon",1,"Kirlenmemiş sentetik tekstil fraksiyonu uygun tesiste enerji geri kazanımına yönlendirilebilir"
+C001,CAM,Cam şişe üretimi,"renkli cam kırığı","Cam ambalaj","fırın harmanında ikincil cam girdisi",1,"Cam kırığı yeniden eritilerek yeni ambalaj camına dönüşebilir"
+C002,CAM,Cam ambalaj,"renksiz cam şişe kırığı","Cam üretimi","yüksek oranda geri dönüştürülmüş cam içeren fırın şarjı",1,"Temiz renksiz cam kırığı doğrudan cam harmanında değerlendirilebilir"
+C003,CAM,Düz cam,"düz cam kesim fireleri","Düz cam üretimi","cam ergitme fırını için cullet hammaddesi",1,"Kaplamasız düz cam kırıkları yeniden ergitilebilir"
+C004,CAM,Isıcam üretimi,"ısıcam kırık camı","Cam geri dönüşüm","ayıklama sonrası düz cam ergitme proses beslemesi",1,"Uygun ayrıştırılmış cam kırığı cullet olarak kullanılabilir"
+C005,CAM,Laboratuvar camı,"borosilikat cam kırığı","Teknik cam","borosilikat ürün üretiminde ikincil mineral cam girdisi",1,"Aynı cam ailesi kontrollü kaliteyle teknik cam üretimine katkı sağlar"
+C006,CAM,Cam temperleme,"temperli cam kırpıntısı","Cam elyaf üretimi","cam esaslı mineral hammadde ve geri kazanılmış cam girdisi",1,"Uygun hazırlanmış cam kırığı cam elyaf prosesinde kullanılabilir"
+C007,CAM,Elektronik,"teknik cam üretim artığı","Cam seramik","cam esaslı ürünlerde ergitme ve mineral katkı hammaddesi",1,"Kimyasal bileşimi doğrulanan teknik cam artıkları ikincil hammadde olabilir"
+KĞ001,KAĞIT,Ambalaj üretimi,"kraft mukavva kırpıntısı","Oluklu mukavva","geri kazanılmış lif içeren kağıt hamuru beslemesi",1,"Kraft lifleri yeniden hamurlaştırılarak ambalaj kağıdına katılabilir"
+KĞ002,KAĞIT,Ofisler,"kullanılmış ofis kağıdı","Kağıt fabrikası","deink işlemi sonrası beyaz geri dönüşüm lifi hammaddesi",1,"Ofis kağıdı mürekkep giderme sonrası yeniden kağıt üretiminde kullanılır"
+KĞ003,KAĞIT,Matbaa,"ofset baskı kağıdı firesi","Geri dönüşüm tesisi","selülozik lif geri kazanım hattı için kağıt beslemesi",1,"Temiz baskı kağıdı lif kaynağı olarak geri kazanılabilir"
+KĞ004,KAĞIT,Karton ambalaj,"karton kutu kırpıntıları","Yumurta viyolü üretimi","geri kazanılmış selüloz hamuru üretim girdisi",1,"Karton lifleri yeniden hamurlaştırılarak kalıplanmış selüloz ürüne dönüşebilir"
+KĞ005,KAĞIT,Oluklu mukavva,"oluklu kutu üretim firesi","Kağıt fabrikası","testliner ve fluting üretiminde ikincil lif beslemesi",1,"Oluklu mukavva lifleri ambalaj kağıdı üretiminde tekrar kullanılabilir"
+KĞ006,KAĞIT,Ambalaj,"temiz kağıt torba artığı","Selüloz ürünleri","geri kazanılmış lif esaslı kalıplanmış ambalaj hammaddesi",1,"Temiz kağıt torba atıkları selüloz bazlı ürünlere dönüştürülebilir"
+KĞ007,KAĞIT,Kağıt üretimi,"kağıt çamuru","Çimento fabrikası","mineral ve organik içerikli alternatif hammadde beslemesi",1,"Uygun analiz sonrası kağıt çamurunun mineral fraksiyonu klinker hammaddesine katkı sağlayabilir"
+XS001,ÇAPRAZ SEKTÖR,Metal işleme,"demir talaşı ve kesim artığı","Çimento üretimi","demir oksit içeren alternatif mineral hammadde karışımı",1,"Demir içeren metal proses artıkları uygun hazırlama sonrası klinker hammaddesine demir kaynağı sağlayabilir"
+id,cikti_kategori,girdi_kategori,cikti_tanim,girdi_tanim,etiket,neden
+CN001,METAL,ORGANİK,"paslanmaz çelik talaşı","kompost tesisi organik girdi",0,"Farklı malzeme yapıları nedeniyle doğrudan eşleşmez"
+CN002,PLASTİK,CAM,"PET enjeksiyon firesi","cam fırını kırık cam beslemesi",0,"Polimer ve cam birbirinin hammadde girdisi değildir"
+CN003,KİMYASAL,TEKSTİL,"kullanılmış solvent","pamuk iplik üretim girdisi",0,"Solvent atığı doğrudan tekstil elyaf hammaddesi olamaz"
+CN004,KAĞIT,METAL,"ofis kağıdı atığı","çelik ergitme ocağı hurda şarjı",0,"Selülozik atık metal ergitme girdisiyle uyumlu değildir"
+CN005,ORGANİK,CAM,"meyve posası","şişe camı üretim fırını girdisi",0,"Organik posa cam üretiminde hammadde olarak kullanılamaz"
+CN006,CAM,PLASTİK,"cam kırığı","HDPE enjeksiyon hammaddesi",0,"Cam fraksiyonu polietilen üretim girdisi değildir"
+CN007,TEKSTİL,KİMYASAL,"polyester kumaş firesi","asit nötralizasyon kimyasalı",0,"Tekstil atığı kimyasal proses girdisi olarak doğrudan kullanılamaz"
+CN008,ORGANİK,METAL,"ahşap talaşı","alüminyum döküm şarj malzemesi",0,"Odunsu biyokütle metal ergitme hammaddesi değildir"
+CN009,PLASTİK,KAĞIT,"PVC boru kırpıntısı","kraft kağıt hamuru girdisi",0,"PVC ile selüloz esaslı kağıt hammaddesi arasında doğrudan uyum yoktur"
+CN010,CAM,ORGANİK,"temperli cam kırığı","biyogaz tesisi organik beslemesi",0,"İnorganik cam atığı anaerobik biyolojik besleme olamaz"
+CN011,METAL,TEKSTİL,"bakır kablo hurdası","polyester elyaf üretim hammaddesi",0,"Bakır metal tekstil elyafı üretimine hammadde sağlamaz"
+CN012,KAĞIT,KİMYASAL,"karton kırpıntısı","solvent bazlı boya hammaddesi",0,"Karton atığı boya kimyasal girdisi yerine kullanılamaz"
+CN013,TEKSTİL,CAM,"naylon iplik firesi","borosilikat cam üretim girdisi",0,"Sentetik lif ile teknik cam hammaddesi uyumsuzdur"
+CN014,KİMYASAL,ORGANİK,"atık hidrolik yağ","kompostlama organik beslemesi",0,"Petrol bazlı yağ biyolojik kompost girdisi değildir"
+CN015,CAM,METAL,"renksiz cam kırığı","bakır rafinasyon şarjı",0,"Cam kırığı bakır metalurjisi için uygun metal girdisi değildir"
+CN016,ORGANİK,PLASTİK,"şeker pancarı posası","PVC profil üretim hammaddesi",0,"Organik posa PVC üretiminde polimer girdisi olarak kullanılamaz"
+CN017,PLASTİK,ORGANİK,"ABS parça firesi","hayvan yemi üretim hammaddesi",0,"ABS plastik gıda veya yem hammaddesi değildir"
+CN018,METAL,KAĞIT,"çelik tufalı","ofset kağıt hamuru girdisi",0,"Demir oksit ağırlıklı tufal kağıt üretim girdisi değildir"
+CN019,KİMYASAL,CAM,"kostik yıkama çözeltisi","cam ambalaj fırın beslemesi",0,"Alkali proses çözeltisi cam kırığı yerine geçemez"
+CN020,TEKSTİL,ORGANİK,"akrilik elyaf telefleri","biyogaz reaktörü gıda atığı beslemesi",0,"Sentetik lif biyobozunur organik besleme olarak uygun değildir"
+CN021,KAĞIT,CAM,"gazete kağıdı firesi","cam elyaf üretim hammaddesi",0,"Kağıt lifi cam esaslı üretime doğrudan girdi olamaz"
+CN022,ORGANİK,KİMYASAL,"ayçiçeği küspesi","hidroklorik asit üretim girdisi",0,"Bitkisel küspe asit üretiminde kimyasal hammadde değildir"
+CN023,CAM,TEKSTİL,"cam elyaf kırpıntısı","pamuk iplik eğirme hammaddesi",0,"Cam elyafı pamuk ipliği üretiminde kullanılamaz"
+CN024,PLASTİK,METAL,"polipropilen granül","çelik döküm indüksiyon ocağı şarjı",0,"PP granül metal ergitme şarjı olarak uygun değildir"
+CN025,KİMYASAL,KAĞIT,"atık boya çamuru","karton üretiminde selüloz lif girdisi",0,"Boya çamuru selülozik karton hammaddesi yerine kullanılamaz"
+SN001,METAL,METAL,"alüminyum dross oksitli","temiz alüminyum ergitme şarjı",0.5,"Dross metal geri kazanımından sonra kullanılabilir; ham oksitli halde doğrudan uyumsuzdur"
+SN002,ORGANİK,ENERJİ,"boyalı ahşap talaşı","biyokütle kazanı yakıt beslemesi",0.5,"Boya ve kaplama yoksa yakıt olabilir; kontaminasyon emisyon ve kül riski yaratır"
+SN003,PLASTİK,PLASTİK,"karışık plastik hurda","PP enjeksiyon hammaddesi",0.5,"PP oranı yeterli ve diğer polimerler ayrılırsa kullanılabilir; karışık halde kaliteyi bozar"
+SN004,KAĞIT,KAĞIT,"ıslak karton","kağıt hamuru girdisi",0.5,"Kurutma ve uygun kalite kontrolü sonrası lif geri kazanılabilir; küflenmiş malzeme uygun değildir"
+SN005,CAM,CAM,"kontamine cam kırığı","cam fırın beslemesi",0.5,"Yabancı maddeler temizlenirse cullet olarak kullanılabilir; kontaminasyon sürerse uygun değildir"
+SN006,METAL,METAL,"yağlı çelik talaşı","elektrik ark ocağı hurda şarjı",0.5,"Yağdan arındırılıp hazırlanırsa ergitilebilir; yağlı halde çevresel ve proses riski taşır"
+SN007,PLASTİK,PLASTİK,"PVC üretim firesi","PVC profil ekstrüzyon girdisi",0.5,"Aynı PVC reçine ve katkı sistemi uyumluysa geri kullanılabilir; farklı reçete kaliteyi etkiler"
+SN008,ORGANİK,ORGANİK,"küflenmiş meyve posası","hayvan yemi hammaddesi",0.5,"Küf ve mikotoksin riski yoksa değerlendirilebilir; bozulmuş parti yem için uygun değildir"
+SN009,KİMYASAL,KİMYASAL,"kullanılmış solvent karışımı","geri kazanılmış solvent üretim beslemesi",0.5,"Bileşimi biliniyor ve damıtma ile ayrıştırılabiliyorsa değerlendirilebilir; karışım kontrolsüzse uygun değildir"
+SN010,TEKSTİL,TEKSTİL,"pamuk-polyester karışım kumaş","geri dönüştürülmüş tekstil elyafı üretimi",0.5,"Karışım oranı ve geri dönüşüm teknolojisi uygunsa kullanılabilir; ayrıştırma mümkün değilse seçenekler sınırlıdır"
+SN011,CAM,CAM,"temperli cam kırığı","cam ambalaj fırın şarjı",0.5,"Kimyasal bileşim uygunsa cam geri dönüşümünde değerlendirilebilir; temperleme kaynaklı uygunsuz cam türleri ayrılmalıdır"
+SN012,KAĞIT,KAĞIT,"mumlu karton ambalaj firesi","geri kazanılmış karton hamuru girdisi",0.5,"Kaplama ayrıştırılabilirse lif geri kazanılabilir; mum kaplama prosesi engelleyebilir"
+SN013,METAL,METAL,"bakır alaşımlı talaş","saf bakır ergitme girdisi",0.5,"Alaşım ayrıştırılırsa uygun olabilir; pirinç veya bronz karışımı saf bakır kalitesini düşürür"
+SN014,ORGANİK,ENERJİ,"yüksek nemli tarımsal posa","biyokütle kazanı katı yakıt beslemesi",0.5,"Kurutma veya uygun kazan teknolojisi gerekir; yüksek nem tek başına yakıt verimini düşürür"
+SN015,PLASTİK,PLASTİK,"PET renkli şişe kırığı","şeffaf PET levha üretim hammaddesi",0.5,"Renk ayrıştırması yapılırsa kullanılabilir; renkli fraksiyon şeffaf ürün kalitesini bozar"
+SN016,KİMYASAL,KİMYASAL,"asidik metal yüzey işlem banyosu","asit rejenerasyon proses girdisi",0.5,"Asit konsantrasyonu ve metal yükü uygunsa rejenerasyon mümkündür; aşırı kontaminasyon engel olur"
+SN017,TEKSTİL,TEKSTİL,"silikon apreli tekstil firesi","mekanik elyaf geri dönüşüm hattı beslemesi",0.5,"Apre miktarı düşükse işlenebilir; yüksek silikon içeriği elyaf kalitesini ve prosesi olumsuz etkiler"
+SN018,CAM,CAM,"borosilikat laboratuvar camı kırığı","standart soda-kireç camı fırın girdisi",0.5,"Bileşim farkı nedeniyle sınırlı miktarda değerlendirilebilir; yüksek oran standart cam kalitesini bozabilir"
+SN019,KAĞIT,KAĞIT,"ıslanmış oluklu mukavva","testliner kağıt üretim hamuru",0.5,"Lif yapısı korunmuş ve küf oluşmamışsa kurutma sonrası değerlendirilebilir; çürüme kaliteyi düşürür"
+SN020,METAL,METAL,"karışık metal talaşı","alaşımlı çelik üretim şarjı",0.5,"Çelik fraksiyonu ayrıştırılırsa kullanılabilir; bakır ve alüminyum karışımı alaşım kontrolünü bozar"
+SN021,ORGANİK,ORGANİK,"kabuklu odun atığı","MDF üretiminde odunsu lif hammaddesi",0.5,"Temiz ve uygun tane boyutundaysa kullanılabilir; toprak, taş ve kimyasal bulaşı varsa reddedilir"
+SN022,PLASTİK,PLASTİK,"kirli HDPE bidon kırığı","geri dönüştürülmüş HDPE granül üretimi",0.5,"Yıkama ve metal-yabancı madde ayırma yapılırsa değerlendirilebilir; tehlikeli kimyasal kalıntıları varsa uygun değildir"
+SN023,KİMYASAL,KİMYASAL,"kullanılmış kesme yağı emülsiyonu","endüstriyel yağ geri kazanım beslemesi",0.5,"Yağ fazı uygun ayırma ile geri kazanılabilir; yüksek su ve kimyasal içerik ekonomikliği düşürür"
+SN024,TEKSTİL,TEKSTİL,"alev geciktirici tekstil kırpıntısı","nonwoven yalıtım ürünü hammaddesi",0.5,"Kimyasal apre üründe izinliyse kullanılabilir; uygunsuz alev geciktiriciler ürün ve mevzuat açısından engeldir"
+SN025,KAĞIT,KAĞIT,"plastik pencereli karton ambalaj firesi","kalıplanmış selüloz ambalaj hamuru",0.5,"Plastik pencere ayrılırsa lif fraksiyonu kullanılabilir; ayrıştırılmadan prosese verilmesi yabancı madde oluşturur"
+id,kategori,cikti_tanim,girdi_tanim,etiket,uyumsuzluk_tipi,neden
+IN001,METAL,Fason üretim hattından çıkan dökme demir ve çelik karışık torna talaşı,Elektrolitik bakır rafinasyon tesisine uygun saf bakır iletken tel kırpıntıları,0,farkli_metal,"Demir bazlı malzeme, bakır tesisinde kullanılamaz — metalurjik uyumsuzluk"
+IN002,METAL,Gıda endüstrisi ekipmanlarından kaynaklanan 304 kalite östenitik paslanmaz çelik hurda,Otomotiv sanayi şasi imalatından çıkan 1040 kalite düşük karbonlu çelik sac firesi,0,farkli_alasim,Paslanmaz çelik ile karbon çeliği birlikte ergitilemez — alaşım bozulması
+IN003,METAL,Ağır makine parçaları işlemesinden kaynaklanan yoğun kesme sıvısı içeren metal talaşı,CNC dik işlem merkezinden alınan yıkanmış kurutulmuş bakir alüminyum talaşı,0,kontamine_vs_temiz,Yağlı ve kontamine hurda ile temiz hurda prosesleri farklıdır
+IN004,METAL,Elektronik atık geri kazanımından elde edilen yüksek kurşun içeren lehim cürufu,Telekomünikasyon altyapı sökümünden çıkan izolasyonu soyulmuş yüzde 99 saf bakır kablo,0,tehlikeli_vs_tehlikesiz,"Kurşunlu atık tehlikelidir, temiz bakır ile aynı tesiste işlenemez"
+IN005,METAL,Plazma kesim prosesi filtrelerinden toplanan son derece ince mikronize çelik tozu,Tersane söküm faaliyetlerinden kaynaklanan yirmi santimetre kalınlığında devasa denizcilik çelik blokları,0,form_uyumsuzlugu,"Toz formundaki metal fırında uçar, masif blokla aynı prosese giremez"
+IN006,METAL,Sıcak haddeleme tesisinden çıkan yoğun demir oksit içerikli tufal ve cüruf,Soğuk şekillendirme pres hattından çıkan pırıl pırıl pas ve oksitsiz sac kırpıntıları,0,oksitli_vs_metalik,"Oksitli tufal indirgeme gerektirir, temiz hurda ise doğrudan ergitilir"
+IN007,PLASTİK,Ambalaj endüstrisinden kaynaklanan enjeksiyonluk yüksek akışkanlığa sahip saf polipropilen granül,Boru imalat hattından çıkan sert yapıdaki polivinil klorür profil kırma firesi,0,farkli_polimer,"PP ve PVC farklı polimerlerdir, aynı sıcaklıkta ergitilemez ve karışımları bozulur"
+IN008,PLASTİK,Elektrik şalt malzemesi üretiminden kaynaklanan çapraz bağlı ve eritilemeyen bakalit kırıkları,Mutfak eşyası üretiminden çıkan ısıtıldığında tekrar şekillendirilebilen polipropilen enjeksiyon çapakları,0,termoset_vs_termoplastik,"Bakalit termosettir eritilemez, PP termoplastiktir eritilebilir — proses tamamen uyumsuz"
+IN009,PLASTİK,İçecek dolum tesisinden gelen yıkanmış renksiz ve gıda temasına uygun PET kırığı,Tarımsal ilaçlama firmasından gelen ve tehlikeli kimyasal kalıntısı barındıran polietilen bidonlar,0,gida_vs_endustriyel,"Zirai ilaç bidonları tehlikelidir, gıda sınıfı temiz PET ile işlenemez"
+IN010,PLASTİK,Otomotiv tampon üretiminden kaynaklanan yüzde otuz cam elyaf dolgulu modifiye polipropilen atığı,Ambalaj filmi ekstrüzyon hattından çıkan katkısız şeffaf ve esnek saf polipropilen firesi,0,katkili_vs_saf,"Cam elyaf takviyeli plastik, esnek film üretiminde kullanılamaz"
+IN011,PLASTİK,Yüksek gerilim kablo izolasyonundan çıkan çapraz bağlı polietilen XLPE granül atığı,Sera örtüsü üretiminden kaynaklanan eriyik akış indeksi yüksek lineer LDPE filmi,0,cross_linked_vs_lineer,"XLPE çapraz bağlıdır erimez, LDPE ise lineerdir ve kolayca eritilir"
+IN012,PLASTİK,Elektronik eşya dış gövde üretiminden çıkan yüksek sıcaklığa dayanıklı ABS plastik kırması,Plastik kova ve leğen imalatından çıkan düşük sıcaklıkta kolayca işlenebilen polipropilen hurdası,0,erime_sicakligi_farki,"ABS 220 derecede, PP 160 derecede erir — beraber enjekte edilemezler"
+IN013,ORGANİK,Meyve suyu konsantre tesisinden çıkan yüksek nemli fermente olabilen elma posası,Mobilya fabrikası ebatlama bölümünden kaynaklanan fırınlanmış ve kurutulmuş saf çam kereste talaşı,0,gida_vs_ahsap,"Gıda posası biyogaza gider, kereste talaşı biyokütle yakıtına veya pelete gider"
+IN014,ORGANİK,Mezbaha ve et işleme tesisinden kaynaklanan kategori üç hayvansal kemik parçaları,Toptancı halinden toplanan çürümüş domates ve marul gibi bitkisel hal atıkları,0,hayvansal_vs_bitkisel,"Hayvansal atık sterilizasyon gerektirir, bitkisel atık standart kompost prosesine girer"
+IN015,ORGANİK,Kontrplak üretiminden kaynaklanan fenol formaldehit reçinesi bulaşıklı tehlikeli ahşap tozu,Organik tarım çiftliğinden çıkan kompost yapımına son derece uygun temiz bitki sapları,0,tehlikeli_vs_kompost,"Fenollü ahşap tehlikeli atıktır, kompost üretim sürecini zehirler"
+IN016,ORGANİK,Peynir üretim prosesinden kaynaklanan çok yüksek su içeriğine sahip sıvı peynir altı suyu,Fındık kırma tesisinden çıkan yakıta uygun yüksek kalorifik değere sahip fındık kabukları,0,islak_vs_kuru,"Sıvı peynir altı suyu arıtma/biyogaz gerektirir, kuru kabuklar doğrudan yakılır"
+IN017,ORGANİK,Otel restoranlarından toplanan biyogaz tesisine doğrudan beslenebilen organik zengin gıda atığı,Orman ürünleri sanayisinden gelen biyolojik olarak çok yavaş bozunan lignoselülozik odun yongaları,0,fermente_vs_olamaz,"Gıda atığı metan üretir, odun yongası anaerobik çürüteçlerde bozunmaz"
+IN018,ORGANİK,Kağıt hamuru üretiminden kaynaklanan süspansiyon halindeki çok ince selüloz lifi çamuru,Lojistik operasyonlarından çıkan kırık ve hasarlı büyük boyutlu çam palet tahtaları,0,ince_lif_vs_masif,"Selüloz çamuru santrifüj gerektirir, masif ahşap parçalama ve kırma gerektirir"
+IN019,KİMYASAL,Galvaniz yüzey işlem tesisinden çıkan düşük pH değerli atık hidroklorik asit çözeltisi,Alüminyum eloksal hattından kaynaklanan yüksek pH değerli sodyum hidroksit kostik atığı,0,asidik_vs_bazik,"Kuvvetli asit ve kuvvetli baz reaksiyona girer, beraber depolanamaz veya taşınamaz"
+IN020,KİMYASAL,Boya üretim tesisinden kaynaklanan yüksek oranda uçucu organik bileşik içeren atık aseton,Atıksu arıtma tesisi kimyasal çöktürme ünitesinden çıkan inorganik yapılı demir sülfat çamuru,0,organik_solvent_vs_inorganik,"Aseton yanıcı organik solventtir, demir sülfat ise nötralizasyon ürünü inorganik tuzdur"
+IN021,KİMYASAL,Otomotiv boyahane hatlarının temizliğinde kullanılmış parlayıcı ve patlayıcı özellikteki atık selülozik tiner,Gübre fabrikasından çıkan yanmaz ve tamamen inorganik yapıdaki kalsiyum sülfat fosfojips atığı,0,yanici_vs_yanmayan,"Tiner yüksek yangın riski taşır, fosfojips ise stabil inorganik atıktır"
+IN022,KİMYASAL,Metal kaplama endüstrisinden çıkan yüksek oranda zehirli ağır metal içeren krom banyosu atığı,Gıda endüstrisi yıkama hatlarından çıkan zehirsiz ve seyreltik sodyum karbonat çözeltisi,0,toksik_vs_toksik_olmayan,"Krom altı değerlikli toksiktir, soda çözeltisi ise basit bazik temizleme suyudur"
+IN023,KİMYASAL,Motorlu araç bakım servislerinden toplanan pompalanabilir sıvı formdaki atık madeni motor yağı,Elektrostatik boyama kabinlerinin filtrelerinden toplanan çok ince tanecikli katı epoksi toz boya,0,sivi_vs_kati,"Madeni yağ sıvı rafinasyona gider, toz boya katı bertaraf tesisine gönderilir"
+IN024,KİMYASAL,Tekstil ağartma prosesinden kaynaklanan kuvvetli yükseltgeyici özelliğe sahip hidrojen peroksit atığı,Fotoğrafçılık ve kağıt endüstrisinden çıkan kuvvetli indirgeyici ajan olan sodyum metabisülfit çözeltisi,0,oksidan_vs_reduktan,Oksidan ve redüktan kimyasallar temas ederse şiddetli ekzotermik tepkime verir
+IN025,TEKSTİL,Konfeksiyon atölyesinden çıkan tişört dikim firesi yüzde yüz saf pamuklu örme kumaş kırpıntıları,Spor giyim üretiminden kaynaklanan petrol türevi yüzde yüz polyester içerikli sentetik kumaş firesi,0,dogal_vs_sentetik,"Pamuk mekanik şifanozdan geçer, polyester eritilerek veya kimyasal geri kazanımla işlenir"
+IN026,TEKSTİL,Kot pantolon üretim hattından çıkan reaktif boyar maddelerle yoğun şekilde boyanmış indigo denim parçaları,Ev tekstili fabrikasından kaynaklanan hiçbir renklendirme işlemi görmemiş kasarlanmış beyaz pamuklu nevresim fireleri,0,boyali_vs_boyasiz,Boyalı denim beyaz pamuğun içine karışırsa tüm harmanın rengini ve kalitesini bozar
+IN027,TEKSTİL,Tayt ve aktif giyim üretiminden çıkan yüksek oranda elastan içeren geri dönüşümü zor streç kumaş,Gömleklik kumaş dokuma tesisinden gelen hiç esnemeyen tamamen düz dokunmuş pamuklu poplin kumaş,0,elastan_vs_duz,"Elastan iplik açma makinesinde erir ve sarar, düz kumaşla aynı hatta işlenemez"
+IN028,TEKSTİL,Makine bakım atölyelerinden toplanmış makine yağı ve gres ile yoğun şekilde kirlenmiş tekstil bezleri,Konfeksiyon kesimhanesinden zeminle temas etmeden çuvallanmış tertemiz ve hijyenik pamuklu penye kırpıntıları,0,kontamine_vs_temiz,"Yağlı üstüpü tehlikeli atıktır bertarafa gider, temiz kırpıntı ipliğe geri döndürülür"
+IN029,TEKSTİL,Havluluk kumaş üretiminden kaynaklanan ayırma gerektirmeyen tamamen saf pamuklu iplik telefleri,Ceket üretiminden çıkan pamuk polyester ve viskon karışımlı ayrıştırılması çok zor kumaş kırpıntıları,0,tek_lif_vs_karisim,"Saf lif doğrudan eğrilir, karışım liflerin kimyasal veya mekanik ayrıştırması uyumsuzdur"
+IN030,TEKSTİL,Gelinlik ve abiye üretimi yapan atölyelerden çıkan çok düşük gramajlı ve hassas tül kumaş fireleri,Çadır ve tente imalatından kaynaklanan çok yüksek gramajlı kalın ve sert yapılı su geçirmez branda,0,ince_vs_kalin,Hassas tül ile kalın branda aynı kesim ve açma makinelerinden geçirilemez
+IN031,CAM,İçecek endüstrisinden toplanmış standart soda kireç yapısında renk ayrımı yapılmış cam şişe kırıkları,İlaç ve laboratuvar endüstrisinden çıkan erime sıcaklığı çok daha yüksek borosilikat tüp atıkları,0,soda_kirec_vs_borosilikat,"Borosilikat fırında erimez, soda kireç camının fırınında taşlaşarak üretim hatasına yol açar"
+IN032,CAM,Otomotiv yan sanayisinden kaynaklanan kırıldığında küçük küplere ayrılan ısıl işlem görmüş temperli cam,Pencere üretim tesisinden çıkan kesildiğinde büyük ve keskin parçalara ayrılan düz float cam plakaları,0,temperli_vs_float,"Temperli camın ısıl gerilimi fırın proseslerini etkiler, düz camla karışması istenmez"
+IN033,CAM,Maden suyu ve şarap şişelerinden kaynaklanan krom ve demir içeren koyu yeşil renkli cam kırıkları,Avize ve züccaciye imalatından çıkan yüksek ışık geçirgenliğine sahip renksiz ve şeffaf kristal cam fireleri,0,renkli_vs_seffaf,Yeşil cam şeffaf fırınına girerse tüm cam partisinin rengi yeşile dönerek kalitesini bozar
+IN034,CAM,Kompozit malzeme üretiminden çıkan polyester reçine ile kaplanmış birbirine yapışık cam elyaf kırpıntıları,Mimari cam işleme tesisinden kaynaklanan üzerinde organik bağlayıcı bulunmayan saf silisyum dioksit bazlı düz cam,0,cam_elyaf_vs_duz_cam,"Cam elyafındaki polimer reçine yanarak fırında gaz çıkarır, düz cam eritme hattına verilmez"
+IN035,CAM,Enerji tasarruflu cephe camı üretiminden çıkan üzerinde ince metalik film tabakası bulunan kaplamalı cam,Sera camı imalatından kaynaklanan yüzeyinde herhangi bir ısı veya güneş kontrol kaplaması olmayan saf cam,0,kaplamali_vs_kaplamasiz,"Metal kaplama fırında kimyasal kirliliğe yol açar, optik özellikleri bozar"
+IN036,CAM,Araç ön camı değişimlerinden toplanan iki cam tabakası arasında polivinil butiral plastik film bulunan lamine cam,Duşakabin imalatından çıkan arasında herhangi bir polimer film tabakası barındırmayan tek katmanlı monolitik cam firesi,0,lamine_vs_monolitik,"PVB film camdan ayrılmadan ergitilemez, doğrudan fırına girmesi büyük emisyon sorunu yaratır"
+IN037,KAĞIT,Oluklu mukavva kutu üretiminden kaynaklanan uzun selüloz lifli ve dayanıklı kahverengi kraft kağıt firesi,Dergi ve broşür basımından çıkan yüzeyi kalsiyum karbonat ile kaplanmış parlak beyaz kuşe kağıt kırpıntıları,0,kraft_vs_kuse,Kuşe kağıttaki inorganik dolgu maddeleri kahverengi kraft hamurunun mukavemetini bozar
+IN038,KAĞIT,Karton bardak üretiminden çıkan sızdırmazlık sağlaması için içi polietilen film ile kaplanmış kağıt firesi,Matbaa giyotin kesiminden kaynaklanan üzerinde hiçbir plastik bariyer bulunmayan saf düz bristol karton kırpıntıları,0,pe_kaplamali_vs_kaplamasiz,"PE film hamurlaştırıcı pulperde ayrışmaz ve elekleri tıkar, normal kartonla işlenemez"
+IN039,KAĞIT,Banka ve ofis arşivlerinin imhasından elde edilen yüksek kaliteli beyaz birinci hamur fotokopi kağıdı,Geri dönüştürülmüş liflerden üretilmiş yumurta viyolü imalatından çıkan düşük mukavemetli çok kısa lifli gri karton,0,birinci_hamur_vs_ikinci,"Birinci hamur beyaz kağıt ağartma hattına gider, yumurta viyolü ise düşük kalite hamurdur"
+IN040,KAĞIT,Lüks kozmetik kutusu üretiminden çıkan dış yüzeyi parlak alüminyum folyo ile lamine edilmiş dekoratif karton,Çimento torbası imalatından kaynaklanan katkısız kaplamasız ve yüksek kopma mukavemetli saf selüloz kraft kağıt,0,lamine_vs_saf_seluloz,"Alüminyum tabakası kağıt geri dönüşümünde çok zor ayrılır, temiz selülozla beraber atılamaz"
+IN041,KAĞIT,İade gelen günlük gazetelerden oluşan ve geri dönüşümde yoğun mürekkep giderme işlemi gerektiren gazete kağıdı,Defter imalat fabrikasından çıkan üzerinde tek bir damla bile baskı boyası bulunmayan bembeyaz kağıt fireleri,0,murekkepli_vs_baskisiz,"Gazete kağıdı deinking tesisine girmelidir, temiz firesi ise doğrudan pulperde hamurlaştırılır"
+IN042,KAĞIT,Manav ve balık hallerinden toplanan su çekmiş nemli ve biyolojik bozunmaya başlamış oluklu mukavva atığı,Ambalaj üretim tesisinin deposundan doğrudan preslenerek balyalanmış tamamen kuru ve rutubetsiz kraft kağıt ruloları,0,islak_vs_kuru,"Islak ve çürümeye başlamış mukavva proses verimini düşürür, kuru depo firesi ise birincil kalitedir"
+id,kategori,cikti_tanim,girdi_tanim,etiket,format_tipi,neden
+PT001,METAL,"çelik talaşı yağlı","metal hurda şarj",1,kisa_kisa,"Aynı malzeme ailesi, form uyumlu"
+PT002,METAL,"bakır kablo hurda","bakır rafinasyon ve ergitme tesisi için granül bakır girdisi",1,kisa_orta,"Doğrudan ergitme uyumlu"
+PT003,PLASTIK,"PET şişe kırığı","PET granül hammadde",1,kisa_kisa,"Polimer zinciri uyumu"
+PT004,ORGANIK,"meyve posası ıslak","biyogaz beslemesi",1,kisa_kisa,"Yüksek organik içerik"
+PT005,CAM,"cam kırığı şeffaf","cam ambalaj üretim fırını için soda-kireç cullet beslemesi",1,kisa_orta,"Cullet oranı artırır"
+PT006,TEXSTIL,"pamuk kumaş fireleri","pamuk elyaf hammadde",1,kisa_kisa,"Lif kalitesi korunur"
+PT007,KAGIT,"oluklu mukavva artıkları","karton hamuru üretiminde dolgu maddesi",1,kisa_orta,"Selüloz geri kazanımı"
+PT008,KIMYASAL,"atık aseton çözücü","distilasyon ile geri kazanım tesisi beslemesi",1,kisa_orta,"Saf geri kazanım mümkün"
+PT009,METAL,"alüminyum dross","alüminyum ergitme tesisi şarj malzemesi",1,kisa_kisa,"Metal içeriği yüksek"
+PT010,PLASTIK,"PP enjeksiyon firesi","PP regranül hammadde",1,kisa_kisa,"Ergitme ile geri dönüşüm"
+PT011,ORGANIK,"buğday samanı","kompost tesisi karbon kaynağı",1,kisa_kisa,"C/N oranı uygun"
+PT012,CAM,"cam şişe kırığı","cam elyaf üretiminde besleme stok",1,kisa_orta,"Camsı yapı korunur"
+PT013,TEXSTIL,"polyester iplik artığı","keçe üretimi için sentetik lif girdisi",1,kisa_orta,"Termal bağlamaya uygun"
+PT014,KAGIT,"gazete kağıdı atığı","yumurta viyolü üretim hamuru",1,kisa_kisa,"Hamur kalitesi yeterli"
+PT015,KIMYASAL,"kullanılmış yağ","biyodizel üretim reaktörü beslemesi",1,kisa_orta,"Yağ asitleri uygun"
+PT016,METAL,"demir tufal","çimento fabrikası için demir oksit katkısı",1,kisa_orta,"Pişirme katkısı"
+PT017,PLASTIK,"LDPE streç film artığı","LDPE granül geri dönüşüm hammaddesi",1,kisa_kisa,"Ergitme stabil"
+PT018,ORGANIK,"şeker pancarı küspesi","hayvan yemi üretiminde lif kaynağı",1,kisa_kisa,"Besleyici değer yüksek"
+PT019,CAM,"cam kırığı renkli","köpük cam üretimi için cullet",1,kisa_orta,"Gözenek yapıcı"
+PT020,TEXSTIL,"denim kırpıntı","otomotiv iç döşeme keçe üretimi",1,kisa_kisa,"Ses yalıtımı uygun"
+PT021,METAL,"DKP saç pres atıkları","çelik döküm tesisi için hurda şarj malzemesi",1,kisa_orta,"Karbon çeliği uyumlu"
+PT022,METAL,"CNC işlemeden çıkan alüminyum talaş","ikincil alüminyum ergitme tesisi için talaş briketi",1,kisa_orta,"Briketleme ile verim artar"
+PT023,PLASTIK,"PVC profil kesim artığı","PVC boru ekstrüzyonunda regranül katkı",1,kisa_orta,"Akışkanlık korunur"
+PT024,PLASTIK,"ABS enjeksiyon çapakları","ABS geri dönüşüm tesisi granül girdisi",1,kisa_kisa,"Mekanik özellikler yeterli"
+PT025,ORGANIK,"zeytin prinası","biyokütle enerji santrali yakıt beslemesi",1,kisa_orta,"Kalorifik değer 4.000 kcal/kg"
+PT026,ORGANIK,"mısır koçanı","kompost üretiminde karbon zengini katkı",1,kisa_kisa,"Lignoselülozik yapı"
+PT027,KIMYASAL,"atık hidrojen peroksit","tekstil ağartma çözeltisi hazırlama",1,kisa_orta,"Konsantrasyon düşürülerek"
+PT028,KIMYASAL,"sülfürik asit atığı","gübre fabrikasında asit regülasyonu",1,kisa_orta,"Nötrleştirme ile kullanım"
+PT029,CAM,"düz cam kırığı","cam yünü üretim hattı cullet beslemesi",1,kisa_orta,"Lif çekimi uygun"
+PT030,CAM,"otocam kırığı","cam blok üretim fırını şarj stoku",1,kisa_orta,"Düşük demir içeriği avantaj"
+PT031,TEXSTIL,"naylon 66 ağ artığı","mühendislik plastik kompaund katkısı",1,kisa_orta,"Aşınma direnci artırır"
+PT032,TEXSTIL,"akrilik iplik atığı","kumaş kaplama malzemesi dolgu lifi",1,kisa_kisa,"Yumuşak dolgu"
+PT033,KAGIT,"kraft kağıt artığı","ambalaj kağıdı hamuruna ilave",1,kisa_orta,"Mukavemet artırıcı"
+PT034,KAGIT,"ofis kağıdı atığı","selüloz yalıtım malzemesi üretimi",1,kisa_orta,"Lif uzunluğu yeterli"
+PT035,METAL,"bakır levha delme fireleri","bakır alaşım dökümhane şarj malzemesi",1,kisa_orta,"Alaşım elementi"
+PT036,METAL,"çinko dişli talaşı","çinko oksit üretim fırını beslemesi",1,kisa_orta,"Oksitleme ile ZnO"
+PT037,PLASTIK,"HDPE şişe kapakları","HDPE geri dönüşüm hattı granül besleme",1,kisa_kisa,"Renk ayrımı yapılmış"
+PT038,PLASTIK,"PS köpük artığı","yapı panellerinde hafif dolgu malzemesi",1,kisa_orta,"Isı yalıtımı katkısı"
+PT039,ORGANIK,"et kemik unu atığı","biyogaz tesisi protein zengini besleme",1,kisa_orta,"Metan verimi yüksek"
+PT040,ORGANIK,"meyve suyu posası","fermantasyon ile biyoetanol üretim hammaddesi",1,kisa_orta,"Şeker içeriği yüksek"
+PT041,KIMYASAL,"boya çamuru (su bazlı)","çimento fabrikasında mineralize katkı",1,kisa_orta,"Kalsiyum karbonat kaynağı"
+PT042,KIMYASAL,"bor atığı (kolemanit)","cam elyaf üretiminde bor kaynağı",1,kisa_orta,"Ergime noktası düşürücü"
+PT043,CAM,"ayna camı kırığı","mozaik cam üretim hammaddesi",1,kisa_orta,"Cullet kalitesi iyi"
+PT044,CAM,"floresan cam atığı","cam yalıtım malzemesi üretimi",1,kisa_orta,"Kurşun içeriği kontrol altında"
+PT045,TEXSTIL,"keçe kırpıntı","metalurji filtre keçesi hammaddesi",1,kisa_orta,"Isı dayanımı yüksek"
+PT046,TEXSTIL,"viskon atığı","ıslak mendil üretim hattı lif kaynağı",1,kisa_orta,"Su tutma yüksek"
+PT047,KAGIT,"çimento kağıt artığı","yumurta kartonu üretim hamuru",1,kisa_kisa,"Kalıplama uygun"
+PT048,KAGIT,"pamuklu selüloz atığı","nitroselüloz üretim hammaddesi",1,kisa_orta,"Selüloz saflığı iyi"
+PT049,METAL,"nikel kaplama atık çamuru","paslanmaz çelik üretiminde nikel kaynağı",1,kisa_orta,"Alaşım elementi"
+PT050,METAL,"kurşun asit akü hurdası","kurşun ergitme tesisi şarj malzemesi",1,kisa_kisa,"Kurşun içeriği >60%"
+PT051,PLASTIK,"PC otomotiv far artığı","PC geri dönüşüm kompaund hammaddesi",1,kisa_orta,"Optik kalite korunur"
+PT052,PLASTIK,"PA 6 enjeksiyon artığı","PA 6 plastik boru katkı granülü",1,kisa_kisa,"Mekanik dayanım yeterli"
+PT053,ORGANIK,"patates kabuğu atığı","biyokömür üretim hattı beslemesi",1,kisa_orta,"Karbonlaşma verimi iyi"
+PT054,ORGANIK,"çay atığı (siyah)","kompost tesisi nem düzenleyici",1,kisa_orta,"C/N oranı 25/1"
+PT055,KIMYASAL,"iyotlu atık solüsyon","iyot geri kazanım tesisi beslemesi",1,kisa_orta,"Distilasyon ile saflaşma"
+PT056,KIMYASAL,"krom atık çözeltisi","tabaklıkta krom yeniden kullanımı",1,kisa_orta,"pH ayarı ile çöktürme"
+PT057,CAM,"buzlu cam kırığı","cam kumlama aşındırıcısı üretimi",1,kisa_orta,"Sertlik 6 Mohs"
+PT058,CAM,"renkli cam mozaik atığı","dekoratif cam panel üretimi",1,kisa_kisa,"Estetik kullanım"
+PT059,TEXSTIL,"kenevir lif atığı","kompozit otomobil kapı paneli dolgusu",1,kisa_orta,"Hafif ve sert"
+PT060,TEXSTIL,"yün atığı (kalın)","ısı yalıtım keçesi üretim hammaddesi",1,kisa_orta,"Yanmazlık katkısı"
+PT061,KAGIT,"mukavva ambalaj atığı","selüloz yalıtım levhası üretimi",1,kisa_orta,"Kalınlık kontrolü"
+PT062,KAGIT,"sigara kağıdı atığı","özel dokulu kağıt üretim hammaddesi",1,kisa_orta,"İnce lif yapısı"
+PT063,METAL,"HRP sac kesim artığı","demir dökümhane şarj hurdası",1,kisa_kisa,"Karbon düşük, kaynak uygun"
+PT064,METAL,"çelik tel çekim artığı","çelik yünü üretim teli",1,kisa_orta,"Çap toleransı uygun"
+PT065,PLASTIK,"PET şişe etiket atığı (PVC)","PVC geri dönüşüm granülü",1,kisa_orta,"PVC saflığı %95"
+PT066,PLASTIK,"PP ip atığı","PP sentetik halı baz malzemesi",1,kisa_orta,"Ergime sıcaklığı 165°C"
+PT067,ORGANIK,"pamuk yağı atığı (rafine)","biyodizel reaktörü besleme yağı",1,kisa_kisa,"Asit değeri <2"
+PT068,ORGANIK,"ayçekirdeği küspesi","hayvan yemi mineral + lif katkısı",1,kisa_orta,"Protein %30"
+PT069,KIMYASAL,"atık toluen","boya inceltici geri kazanım beslemesi",1,kisa_orta,"Distilasyon ile tekrar kullanım"
+PT070,KIMYASAL,"sodyum hipoklorit atığı","dezenfektan üretim hattı hammaddesi",1,kisa_orta,"Klor aktif madde"
+PT071,CAM,"ultra ince cam tozu","seramik sır üretiminde cam oksit kaynağı",1,kisa_orta,"Ergime düşürücü"
+PT072,CAM,"cam bilya atığı","yansıtıcı boya dolgu malzemesi",1,kisa_kisa,"Küresellik iyi"
+PT073,TEXSTIL,"karbon lif artığı","uçak iç panelleri için hafif kompozit",1,kisa_orta,"Yüksek modül"
+PT074,TEXSTIL,"astar kumaş atığı","dolap iç kaplama keçesi",1,kisa_orta,"Nem emici özellik"
+PT075,KAGIT,"filtre kağıdı atığı","yağ filtre kartuşu hamuru",1,kisa_orta,"Gözeneklilik ayarlı"
+PT076,KAGIT,"parafin kağıdı atığı","mum ambalaj üretim hammaddesi",1,kisa_orta,"Parafin emdirme uygun"
+PT077,METAL,"magnezyum talaşı","magnezyum alaşım dökümhane şarjı",1,kisa_kisa,"Yanma riski kontrol altında"
+PT078,METAL,"kalay atık çamuru","lehim alaşımı üretim hammaddesi",1,kisa_orta,"Kalay içeriği %40"
+PT079,PLASTIK,"EPDM lastik artığı","çatı membranı üretim katkısı",1,kisa_orta,"Esneklik artırıcı"
+PT080,PLASTIK,"teflon (PTFE) atık tozu","kimyasal boru kaplama hammaddesi",1,kisa_kisa,"Kimyasal direnç yüksek"
+id,cikti_sektor,girdi_sektor,cikti_tanim,girdi_tanim,etiket,uzunluk_tipi,neden
+SS001,Çelik,Çimento,"yüksek fırın cürufu","çimento klinker mineral katkısı",1,orta_orta,"Cüruf çimento üretiminde doğrudan hammadde olarak kullanılır"
+SS002,Çelik,Çimento,"çelik tufal","çimento pişirme hattında demir oksit kaynağı",1,kisa_orta,"Tufal, klinker reaksiyonlarına demir sağlar"
+SS003,Çelik,Çimento,"EAF tozu","beton katkısı ve çimento mineralizeri",1,orta_orta,"Kalsiyum oksit içeriği ile doğal mineral yerine geçer"
+SS004,Çelik,Çimento,"BOF curufu","çimento fabrikası Portland katkı hammaddesi",1,kisa_kisa,"Curuf, hidrolik özellik gösterir"
+SS005,Gıda,Enerji,"meyve suyu posası ıslak","biyogaz fermantasyon beslemesi",1,kisa_orta,"Yüksek şeker ve lif içeriği metan verimini artırır"
+SS006,Gıda,Enerji,"hayvansal yağ atığı","biyodizel reaktörü yağ girdisi",1,kisa_kisa,"Yağ asitleri esterleşmeye uygundur"
+SS007,Gıda,Enerji,"pirinç kepeği","biyokütle kojenerasyon tesisi yakıtı",1,kisa_orta,"Kalorifik değer 3.800 kcal/kg"
+SS008,Otomotiv,Döküm,"DKP sac pres hurdası","dökümhane şarj malzemesi",1,kisa_kisa,"Düşük karbonlu çelik doğrudan ergitilebilir"
+SS009,Otomotiv,Döküm,"HRP sac kırpıntı","çelik döküm fırını besleme hurdası",1,kisa_orta,"Boyasız, oksit tabakası temizlenebilir"
+SS010,Otomotiv,Döküm,"alüminyum jant kesim atığı","ikincil alüminyum ergitme şarjı",1,kisa_orta,"Alaşım elementi kaybı olmadan kullanılır"
+SS011,Gıda,Yem,"buğday kepeği","hayvan yemi karma rasyon lif kaynağı",1,kisa_kisa,"Sindirimi düzenleyici özellikte"
+SS012,Gıda,Yem,"ayçekirdeği küspesi","besi hayvanı yemi protein takviyesi",1,kisa_orta,"Protein oranı %32-35 arası"
+SS013,Gıda,Yem,"elma posası (kuru)","ruminant yemi enerji katkısı",1,kisa_orta,"PEK değeri yüksek"
+SS014,Plastik,Geri Dönüşüm,"PP enjeksiyon fireleri","PP regranülasyon hattı beslemesi",1,kisa_kisa,"Renk ayrımı yapılmış, saf polimer"
+SS015,Plastik,Geri Dönüşüm,"HDPE film fire atığı","HDPE geri dönüşüm granül girdisi",1,kisa_orta,"Ergime indeksi sabit, kalite korunur"
+SS016,Plastik,Geri Dönüşüm,"PET şişe preform artığı","PET geri kazanım ve re-kristalizasyon",1,kisa_orta,"Bozunma olmamış, IV değeri yüksek"
+SS017,Cam,Geri Dönüşüm,"düz cam kesim fireleri","cam fırını cullet beslemesi",1,kisa_kisa,"Cullet oranı %30'a kadar çıkarılabilir"
+SS018,Cam,Geri Dönüşüm,"renkli cam şişe kırığı","cam elyaf üretim hattı şarj stoku",1,kisa_orta,"Demir oksit içeriği elyaf çekimine uygun"
+SS019,Cam,Geri Dönüşüm,"otocam laminat artığı","cam blok üretiminde cullet katkısı",1,orta_orta,"PVB ayrıştırıldıktan sonra saf cullet"
+SS020,Kağıt,Kağıt,"oluklu mukavva kenar fireleri","karton hamur hattına ilave selüloz",1,kisa_kisa,"Lif uzunluğu geri kazanım uygun"
+SS021,Kağıt,Kağıt,"ofis kağıdı trim atığı","yumurta viyolü üretim hamuru",1,kisa_orta,"Beyazlatılmış selüloz kaliteli viyol yapar"
+SS022,Tekstil,Geri Kazanım,"pamuklu kumaş kırpıntısı","şoddy elyaf üretim hammaddesi",1,kisa_kisa,"Kısa lifler düşük iplik numarası için uygun"
+SS023,Tekstil,Geri Kazanım,"polyester iplik atığı","keçe üretiminde sentetik elyaf kaynağı",1,kisa_orta,"Termofiksaj ile yapışma sağlar"
+SS024,Tekstil,Geri Kazanım,"denim söküm atığı","izolasyon malzemesi ve keçe dolgusu",1,orta_orta,"Ses ve ısı yalıtımı katkısı"
+SS025,Kimya,Geri Kazanım,"aseton solvent atığı","distilasyon kolonu besleme hammaddesi",1,kisa_orta,"Saflık %98'e yükseltilebilir"
+SS026,Kimya,Geri Kazanım,"krom asit banyosu","nötralizasyon ile krom tuzu geri kazanımı",1,kisa_orta,"pH ayarı ile çöktürme verimli"
+SS027,Kimya,Geri Kazanım,"toluen boya inceltici","fraksiyonlu distilasyon geri kazanım ünitesi",1,orta_orta,"Kaynama noktası 110°C, ayırım uygun"
+SS028,Enerji,İnşaat,"uçucu kül (FGD)","tuğla fabrikasında puzolanik katkı",1,kisa_kisa,"Silis + alümina içeriği yüksek"
+SS029,Enerji,İnşaat,"desülfürizasyon jipsi","alçıpan levha üretim hammaddesi",1,kisa_orta,"Kalsiyum sülfat dihidrat, doğal alçı yerine"
+SS030,Enerji,İnşaat,"kül (uçucu)","beton harman malzemesi ve mineral katkı",1,orta_orta,"Puzolanik reaksiyon ile dayanım artar"
+SS031,Gıda,Yem,"bira üretimi malt posası","süt sığırı yemi selüloz kaynağı",1,kisa_orta,"Sindirim sistemi dostu lif"
+SS032,Lastik,İnşaat,"öğütülmüş kauçuk tozu","spor sahası sentetik çim zemin kaplama",1,kisa_kisa,"Esneklik ve darbe emme özelliği"
+SS033,Seramik,İnşaat,"kırık seramik karolar","agrega ve beton dolgu malzemesi",1,kisa_kisa,"Sertlik yüksek, iyi dolgu"
+SS034,İlaç,Kimya,"etanol atık çözeltisi","biyoyakıt üretim hattı beslemesi",1,kisa_orta,"Fermentasyon ile tekrar etanol üretimi"
+SS035,Matbaa,Kimya,"mürekkep atığı (su bazlı)","beyaz boya dolgu hammaddesi",1,kisa_orta,"Renk pigmenti ayırımı ile kullanım"
+SS036,Petrokimya,Plastik,"nafta kraker artığı","LDPE polimerizasyon başlangıç monomeri",1,orta_orta,"Etilen/buten geri kazanımı"
+SS037,Alüminyum,İnşaat,"alüminyum dross","hafif beton gazlaştırıcı katkı",1,kisa_orta,"Hidrojen gazı oluşturarak gözenek sağlar"
+SS038,Madencilik,İnşaat,"bakır flotasyon artığı","çimento rengi ve dayanım düzenleyici",1,orta_orta,"Demir oksit içeriği %35"
+SS039,Gıda,Enerji,"şeker pancarı posası","biyogaz ko-fermentasyon beslemesi",1,kisa_kisa,"C/N dengesi biyogaz için uygun"
+SS040,Tarım,Kimya,"mısır koçanı külü","silika jeli üretim hammaddesi",1,kisa_orta,"Amorf silika içeriği yüksek"
+SS041,Çelik,Gıda,"ağır metal içeren çelik tozu","gıda takviyesi demir kaynağı",0,orta_orta,"Ağır metal kontaminasyonu (Pb, Cd) — gıda güvenliği riski"
+SS042,Petrokimya,İlaç,"benzen atık çözücü","ilaç aktif madde sentez girdisi",0,kisa_orta,"Kanserojen safsızlıklar — USP saflığı gereksinimi karşılamaz"
+SS043,Lastik,Gıda,"öğütülmüş lastik tozu","ekmek katkı maddesi koyulaştırıcı",0,kisa_kisa,"Polisiklik aromatik hidrokarbon (PAH) kontaminasyonu"
+SS044,Atık Su,Gıda,"endüstriyel arıtma çamuru","çorba bazı hammaddesi",0,orta_orta,"Mikrobiyal patojen ve ağır metal içeriği"
+SS045,Elektronik,Tekstil,"PCB atık tozu","bebek giysisi kumaş lifi",0,kisa_orta,"Halojenli alev geciktirici (PBDE) — deri teması toksik"
+SS046,Boya,Gıda,"kurşunlu boya atığı","gıda boyası üretim girdisi",0,kisa_orta,"Kurşun zehirlenmesi riski, gıda ile temas yasak"
+SS047,Atık Pil,Tarım,"nikel-kadmiyum pil çamuru","organik gübre mineralli katkı",0,orta_orta,"Kadmiyum toprakta birikir, bitkilere geçer"
+SS048,Seramik,Plastik,"seramik tozu (sert)","LDPE film ekstrüzyon katkısı",0,kisa_kisa,"Aşındırıcılık — ekstrüder vida aşınması, uyumsuz sertlik"
+SS049,Kimyasal,Otomotiv,"konsantre sülfürik asit atığı","fren hidroliği hammaddesi",0,kisa_orta,"Asit ve hidrolik sıvı reaksiyonu — korozyon + hidrojen gazı"
+SS050,Cam,Enerji,"cam yünü kesim artığı","yakıt olarak enerji santrali beslemesi",0,kisa_kisa,"Cam yanmaz, kalorifik değer sıfır — enerji verimsiz"
+SS051,Alüminyum,Gıda,"alüminyum talaşı (yağlı)","un değirmeni katkı maddesi",0,kisa_orta,"Yağ oksidasyonu, alüminyum toksisitesi — gıda mevzuatına aykırı"
+SS052,Deri,Gıda,"kromlu deri talaşı","jelatin üretim hammaddesi",0,orta_orta,"Krom (VI) içeriği — jelatin saflığını bozar, alerjen"
+SS053,Petrokimya,Gıda,"etilen oksit atığı","meyve olgunlaştırma gazı",0,kisa_kisa,"Etilen oksit toksik kalıntı bırakır, gıda teması yasak"
+SS054,İnşaat,Plastik,"asbest içeren yalıtım atığı","PVC boru hammaddesi",0,kisa_orta,"Asbest lifleri — polimer karışımda sağlık riski"
+SS055,Madencilik,Enerji,"yüksek kükürtlü kömür artığı","biyogaz türbin yakıtı",0,kisa_orta,"Kükürt emisyonu — türbin korozyon, yanma verimsiz"
+SS056,Nükleer,Tekstil,"radyasyonlu nükleer atık","bebek bezi üretim lifi",0,kisa_kisa,"Radyoaktif kontaminasyon — hayatı tehdit eder"
+SS057,Kağıt,Kimya,"klorlu kağıt ağartma atığı","farmasötik reaktif suyu",0,orta_orta,"Organik klor bileşikleri — ilaç saflığını bozar"
+SS058,Otomotiv,Gıda,"kullanılmış motor yağı","margarin üretim yağ bazı",0,kisa_orta,"PAH, ağır metaller — gıda mevzuatına uygun değil"
+SS059,Plastik,Enerji,"PVC fire tozu","yakma fırını beslemesi",0,kisa_kisa,"HCl gazı oluşumu — korozyon ve emisyon sorunu"
+SS060,Tekstil,Otomotiv,"naylon iplik atığı (nemli)","havalı fren hortumu katmanı",0,kisa_orta,"Nem yapısal zayıflık, hidroliz — güvenlik riski"
+id,seviye,cikti_kategori,girdi_kategori,cikti_tanim,girdi_tanim,etiket,yaniltici_kelime,neden
+HN001,seviye1,METAL,METAL,"304 paslanmaz çelik CNC talaşı","Bakır rafinasyon tesisi granül girdisi",0,"çelik/talaş","Farklı metal ailesi: Fe-Cr-Ni (paslanmaz) vs Cu (bakır), ergime sıcaklıkları (1400°C vs 1085°C) uyumsuz, alaşım kontaminasyonu"
+HN002,seviye1,METAL,METAL,"alüminyum 6063 profil ekstrüzyon artığı","dökme demir dökümhane şarj malzemesi",0,"alüminyum/metal","Alüminyum (hafif, düşük erime) vs dökme demir (ağır, yüksek C), birlikte ergitilemez, kırılgan ara fazlar oluşur"
+HN003,seviye1,METAL,METAL,"tungsten karbür takım ucu atığı","yumuşak çelik şarj hurdası",0,"takım/çelik","WC sertliği (Mohs 9) vs yumuşak çelik (HB 120), erime noktası 2870°C vs 1420°C, aşındırıcı ve uyumsuz"
+HN004,seviye1,METAL,METAL,"kurşunlu lehim atığı (Sn-Pb)","gıda sektörü metal ambalaj girdisi",0,"lehim/kurşun","Pb toksisitesi, gıda teması kesinlikle yasak (AB direktifi), ağır metal kontaminasyonu"
+HN005,seviye1,PLASTIK,PLASTIK,"PP enjeksiyon çapak artığı","PVC boru ekstrüzyon hammadde granülü",0,"plastik/polimer","PP (polipropilen) vs PVC (polivinil klorür), farklı polarite, birlikte işlenemez, HCl gazı oluşumu"
+HN006,seviye1,PLASTIK,PLASTIK,"termoset bakalit kalıp artığı","termoplastik granül ekstrüzyon girdisi",0,"kalıp/plastik","Bakalit (termoset, eritilemez, kürlenmiş) vs termoplastik (eritilebilir), geri dönüşüm mümkün değil"
+HN007,seviye1,PLASTIK,PLASTIK,"cam elyaf takviyeli PA66 granül atığı","saf PP enjeksiyon hammadde granülü",0,"takviyeli/elyaf","PA66 (poliamid) + %30 cam elyaf vs saf PP, aşındırıcı takviye PP ekstrüderini aşındırır, uyumsuz polimer"
+HN008,seviye1,PLASTIK,PLASTIK,"gıda temaslı PET şişe kırığı","endüstriyel kimyasal bidon üretim granülü",0,"PET/kırık","PET gıda sınıfı kontaminasyon riski taşır, endüstriyel kimyasallar geri dönüşüm akışını bozar, AB uygunluk ihlali"
+HN009,seviye1,ORGANIK,ORGANIK,"fenol reçine kaplı ahşap atığı","kompost üretim beslemesi",0,"ahşap/reçine","Fenol formaldehit toksik, toprağa geçer, mikroorganizmalar parçalayamaz, kompost kalitesini düşürür"
+HN010,seviye1,ORGANIK,ORGANIK,"et kesimhane atığı (kanatlı)","bitkisel organik gübre hammaddesi",0,"et/gübre","Patojen (Salmonella, E.coli) ve hijyen riski, bitkisel gübre mevzuatına uygun değil"
+HN011,seviye1,ORGANIK,ORGANIK,"laminat kaplı MDF tozu","biyokütle santrali yakıt beslemesi",0,"laminat/MDF","Melamin reçine ve yapıştırıcılar yanınca HCN, formaldehit yayar, emisyon limit aşımı"
+HN012,seviye1,KIMYASAL,KIMYASAL,"konsantre HCl asit atık çözeltisi","NaOH baz çözelti üretim girdisi",0,"asit/baz","Ekzotermik reaksiyon, nötrleşme sırasında sıçrama, buhar, tehlikeli asit-baz karışımı, korozyon"
+HN013,seviye1,KIMYASAL,KIMYASAL,"organik solvent atığı (aseton)","inorganik tuz (NaCl) üretim hammaddesi",0,"solvent/organik","Organik kirletici tuz saflığını bozar, distilasyon değil, direkt karışım geçimsiz"
+HN014,seviye1,KIMYASAL,KIMYASAL,"oksitleyici hidrojen peroksit atığı","indirgen sodyum sülfit çözeltisi",0,"peroksit/sülfit","Redoks reaksiyonu ani ısı ve gaz çıkışı, patlama riski, birlikte depolanamaz"
+HN015,seviye1,TEXSTIL,TEXSTIL,"boyalı sentetik poliester kumaş kırpıntısı","beyaz pamuk elyaf iplik üretim girdisi",0,"boyalı/kumaş","Renk ve sentetik kontaminasyonu pamuk ipliğinde renk bozukluğu, elyaf farklığı, ayrıştırma zorluğu"
+HN016,seviye1,TEXSTIL,TEXSTIL,"elastan içeren strech kumaş artığı","saf polyester iplik eğirme hammaddesi",0,"elastan/strech","Elastan (poliüretan) polyester ile uyumsuz, termal bozunma, elyaf eğrilmez"
+HN017,seviye1,CAM,CAM,"borosilikat cam laboratuvar artığı","soda-kireç cam şişe fırını cullet beslemesi",0,"borosilikat/lab","Erime sıcaklığı 820°C vs 1200°C, farklı viskozite, cam fırını kalitesi düşer"
+HN018,seviye1,CAM,CAM,"lamineli araba yan camı kırığı","düz float cam üretim fırını cullet girdisi",0,"lamineli/araba","PVB ara film (polivinil butiral) yanar, cam fırınında sorun çıkarır, temizlenmesi maliyetli"
+HN019,seviye1,KAGIT,KAGIT,"PE kaplamalı bardak karton atığı","kraft kağıt hamur makineleri girdisi",0,"kaplamalı/karton","Polietilen kaplama hamurda erimez, kalite düşürür, elek tıkanıklığı"
+HN020,seviye1,KAGIT,KAGIT,"ıslak çürümüş mukavva atığı","birinci hamur kalite kağıt üretim girdisi",0,"çürümüş/mukavva","Biyo-bozunma, koku, mikrobiyel kontaminasyon, mukavemet kaybı, kalite düşük"
+HN021,seviye2,KIMYASAL,METAL,"metal boya atık çamuru","metal hurda şarj malzemesi",0,"metal","Biri organik kimyasal (boya pigmenti), diğeri metalik hurda, kurşun içerikli, ergitme zehirlidir"
+HN022,seviye2,INSAAAT,CAM,"cam yünü izolasyon levha atığı","cam şişe kırığı cullet girdisi",0,"cam/yün","Cam yünü (boncuklu yapı) vs şişe camı (amorf), farklı kompozisyon, fırına zarar verir"
+HN023,seviye2,KIMYASAL,TARIM,"organik solvent atığı (toluen)","organik gübre üretim hammaddesi",0,"organik","Toluen (petrokimyasal aromatik) vs organik gübre (doğal), toksisite, toprak ve bitki ölümü"
+HN024,seviye2,PLASTIK,PLASTIK,"plastik kaplama atık tozu","plastik granül ekstrüzyon girdisi",0,"plastik","Kaplama (yüzey işlem katmanı, boya, vernik) vs granül (saf polimer), uyumsuz katkılar"
+HN025,seviye2,KIMYASAL,METAL,"demir oksit pigment atığı","demir hurda döküm şarjı",0,"demir/oksit","Pigment (Fe2O3, inorganik boya) vs hurda (metalik Fe), oksit ergitmede cüruf artırır"
+HN026,seviye2,KAGIT,KAGIT,"kağıt filtre atığı (kullanılmış)","kağıt hamur makineleri hammaddesi",0,"kağıt/filtre","Filtre (kontamine, yağ/metal partiküllü) vs hamur (temiz selüloz), kalite bozar"
+HN027,seviye2,TEXSTIL,KIMYASAL,"tekstil boya atık çözeltisi","tekstil elyaf eğirme girdisi",0,"tekstil/boya","Boya (kimyasal solüsyon) vs elyaf (lif), karıştırılamaz, renk kontaminasyonu"
+HN028,seviye2,KIMYASAL,METAL,"bakır sülfat çözelti atığı","bakır kablo hurda granülü",0,"bakır/sülfat","CuSO4 (kimyasal tuz, çözünür) vs Cu metal (iletken), farklı form ve kullanım"
+HN029,seviye2,METAL,METAL,"alüminyum folyo atığı","alüminyum profil ekstrüzyon şarjı",0,"alüminyum/folyo","Folyo (10-20 mikron, ince) vs profil (kalın, yapısal), ince folyo ergitmede yanar, oksit miktarı yüksek"
+HN030,seviye2,KOMPOZIT,CAM,"cam elyaf kompozit kırığı","cam şişe kırığı cullet beslemesi",0,"cam/elyaf","Cam elyaf (reçine kaplı kompozit) vs cam cullet (saf), reçine yanar ve fırını kirletir"
+HN031,seviye2,PLASTIK,PLASTIK,"polietilen film streç atığı","polipropilen enjeksiyon granülü",0,"polietilen/polipropilen","PE ve PP farklı monomer, birlikte karıştırılamaz, mekanik özellikler bozulur"
+HN032,seviye2,KIMYASAL,KIMYASAL,"amonyum nitrat atık gübresi","sodyum klorür kimyasal girdisi",0,"nitrat/klorür","Ayrı kristal yapılar, reaktif farkı, NH4NO3 patlayıcı riski"
+HN033,seviye2,TEXSTIL,TEXSTIL,"naylon halı atığı","poliamid iplik girdisi",0,"naylon/halı","Halı (ağır, dolgulu) vs iplik (ince, saf), ayrıştırma maliyetli, kalite uyumsuz"
+HN034,seviye2,KAGIT,KAGIT,"parafin kaplı kağıt bardak","selüloz hamur makineleri beslemesi",0,"parafin/bardak","Parafin hamuru kirletir, yapışkan, elek tıkar, kalite düşürür"
+HN035,seviye2,INSAAAT,KIMYASAL,"PVC pencere profili atığı","PVC granül ekstrüzyon girdisi",0,"PVC/profil","Profil (stabilizatörlü) vs granül (saf), stabilizatör karışımı uyumsuz"
+HN036,seviye2,METAL,KIMYASAL,"çinko kaplama atık çamuru","çinko sülfat gübre hammaddesi",0,"çinko/kaplama","Metal çamuru (Fe, Pb karışık) vs çinko tuzu (saf), ağır metal kontaminasyonu"
+HN037,seviye2,ORGANIK,KIMYASAL,"ahşap talaşı (ıslak)","etanol distilasyon hammaddesi",0,"ahşap/ıslak","Selülozik vs fermantabl şeker, asit hidroliz gerekli, direkt işlenemez"
+HN038,seviye2,PLASTIK,TEXSTIL,"polyester kumaş fire","PET granül şişe üretimi",0,"polyester/PET","Kumaş (boyalı, apresli) vs granül (saf), renk ve katkı sorunu"
+HN039,seviye2,KIMYASAL,ORGANIK,"etanol atık çözeltisi (sanayi)","fermantasyon besleme substratı",0,"etanol","Solvent (saflığı düşük, metanol karışık) vs fermentasyon substratı (şekerli), zehirler"
+HN040,seviye2,CAM,INSAAAT,"cam tozu çamuru (kuru)","beton agrega hammaddesi",0,"cam/tozu","Cam (amorf silika) vs agrega (kalker/kum), alkali-silika reaksiyonu riski"
+HN041,seviye3,PLASTIK,INSAAAT,"PP halı lif atığı","asfalt kaplama modifiye katkısı",0,"lif/kaplama","PP lif (termoplastik) vs asfalt (bitüm), uyumluluk zayıf, sıcaklık dayanımı düşük"
+HN042,seviye3,KIMYASAL,METAL,"sodyum borat atığı","bor çeliği üretim alaşım girdisi",0,"bor/çelik","Borat (kristal tuz) vs element bor (katkı), farklı form ve saflık"
+HN043,seviye3,ORGANIK,PLASTIK,"mısır nişastası atığı","biyoplastik (PLA) üretim hammaddesi",0,"nişasta/PLA","Nişasta (polimer) vs PLA (polilaktik asit), farklı fermentasyon ve polimerizasyon"
+HN044,seviye3,METAL,CAM,"kurşun oksit tozu","kurşun kristal cam üretim girdisi",0,"kurşun/kristal","PbO tozu (saf oksit) vs cam ergitme (SiO2 ile reaksiyon), form uyumsuzluğu"
+HN045,seviye3,TEXSTIL,KIMYASAL,"selüloz asetat lif atığı","selüloz nitrat üretim hammaddesi",0,"selüloz/asetat","Asetat (ester) vs nitrat (nitro), farklı kimyasal reaksiyon"
+HN046,seviye3,ELEKTRIK,METAL,"kablolardan bakır sıyırma atığı","bakır ergitme oksit giderici",0,"sıyırma/ergitme","Bakır (saf) vs oksit giderici (fosfor/kalsiyum), farklı işlev"
+HN047,seviye3,GIDA,KIMYASAL,"zeytin prinası","sabun üretim yağ asidi girdisi",0,"prina/yağ","Prina (küspe) vs yağ asidi (saf yağ), içerik ve saflık farkı"
+HN048,seviye3,KIMYASAL,CAM,"sodyum silikat çözeltisi","cam elyaf üretim beslemesi",0,"silikat/elyaf","Çözelti (sıvı) vs elyaf (katı), direkt kullanılamaz"
+HN049,seviye3,PLASTIK,OTOMOTIV,"ABS kaporta parça kırığı","ABS geri dönüşüm granülü",0,"kaporta/geri dönüşüm","Kırık parça (boya, katkı) vs granül (saf), kalite düşer"
+HN050,seviye3,TEKSTIL,PLASTIK,"karbon keçe artığı","karbon elyaf takviyeli kompozit girdisi",0,"keçe/elyaf","Keçe (düzensiz) vs takviyeli kompozit (düzenli), mekanik zayıf"
+HN051,seviye3,KAGIT,KIMYASAL,"beyaz kağıt çamuru","mikrokristalin selüloz üretimi",0,"çamur/mikro","Çamur (dolgu+kısa lif) vs saf selüloz, saflık düşük"
+HN052,seviye3,METAL,INSAAAT,"demir tozu atığı","demir oksit pigment üretimi",0,"toz/oksit","Fe toz (metal) vs Fe2O3 (oksit), farklı oksidasyon seviyesi"
+HN053,seviye3,ORGANIK,TEKSTIL,"buğday samanı","viskoz elyaf üretim selülozu",0,"saman/elyaf","Saman (ligninli) vs saf selüloz, saflık yeterli değil"
+HN054,seviye3,KIMYASAL,PLASTIK,"fenol formaldehit reçine artığı","melamin formaldehit kalıp hammaddesi",0,"fenol/melamin","Farklı reçine ailesi, kürlenme sıcaklıkları farklı"
+HN055,seviye3,CAM,INSAAAT,"cam yünü tozu","cam kırığı beton katkısı",0,"yün/kırığı","Cam yünü (lif) vs kırık (parçacık), farklı yüzey alanı, alkali reaksiyon farkı"
+HN056,seviye3,PLASTIK,KIMYASAL,"PVC kaplı tel atığı","PVC plastisol üretim girdisi",0,"kaplı/tel","Tel (metal kaplı) vs plastisol (sıvı), kontaminasyon"
+HN057,seviye3,TEXSTIL,KAGIT,"pamuk tozu","selüloz dolgu maddesi üretimi",0,"pamuk/tozu","Pamuk tozu (kısa, kalıntı) vs selüloz (uzun lif), kalite düşük"
+HN058,seviye3,METAL,PLASTIK,"çinko tozu (atık)","çinko borat alev geciktirici",0,"toz/borat","Zn metal vs Zn-borat, farklı bileşim, tepkime yok"
+HN059,seviye3,GIDA,CAM,"yumurta kabuğu tozu","cam üretim kalsiyum oksit kaynağı",0,"kabuk/kalsiyum","Kabuk (organik zar içerir) vs saf CaO, yanma artefaktları"
+HN060,seviye3,KIMYASAL,TEKSTIL,"sülfürik asit atığı","viskoz elyaf üretim kullanılmış asiti",0,"asit/viskoz","Atık asit (organik kirli) vs rejenere asit (saflığı düşük), proses farkı"

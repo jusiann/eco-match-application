@@ -1,0 +1,18 @@
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: dongunet_pgvector
+    ports:
+      # NOT: Windows'ta yerel PostgreSQL servisi (postgresql-x64-18) 5432'yi
+      # kullandığı için container'ı 5433'e yönlendiriyoruz (host:container).
+      - "5433:5432"
+    environment:
+      POSTGRES_DB: ecomatch
+      POSTGRES_USER: ecomatch
+      POSTGRES_PASSWORD: 1Eco2Meko3Seko
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+
+volumes:
+  pgdata:
