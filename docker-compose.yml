@@ -1,0 +1,22 @@
+# Monorepo-wide orchestration. Each part of the stack owns its own
+# docker-compose.yml (backend/, "AI Microservice/") — this file only
+# `include`s them so `docker compose up` from the repo root brings
+# everything up together, in the right order (each included file's own
+# healthchecks/depends_on still apply). Edit the owning file, not this one,
+# unless the change is genuinely cross-cutting.
+name: eco-match
+
+include:
+  - backend/docker-compose.yml
+  - "AI Microservice/docker-compose.yml"
+
+# Not included here:
+# - The AI FastAPI app itself (only its scratch Postgres is dockerized above,
+#   in AI Microservice/docker-compose.yml). Run it natively per
+#   "AI Microservice/README.md" (`uvicorn app.main:app --port 8000`) — see
+#   CLAUDE.md, the AI service is teammate-owned and out of scope here.
+#   Backend already tolerates it being unreachable (H1 fallback, docs/07),
+#   so there's no startup-order dependency to express even once it is
+#   containerized. If/when it is, reach it from the backend container at
+#   http://host.docker.internal:8000, not localhost.
+# - web/ — doesn't exist yet.

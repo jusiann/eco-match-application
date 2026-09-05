@@ -1,0 +1,76 @@
+# Project name pinned so image/network/volume names read "eco-match-*"
+# instead of defaulting to this directory's name ("backend").
+name: eco-match
+
+services:
+  # Service key is "backend-db", not "db" -- the root-level docker-compose.yml
+  # includes this file alongside AI Microservice/docker-compose.yml, which
+  # also has a service named "db". Compose's `include:` errors on duplicate
+  # service names across included files, so this one gets a unique key.
+  # container_name (below) is unaffected -- external tools/commands still see
+  # "eco-match-db".
+  backend-db:
+    build:
+      context: ./docker/postgres
+    container_name: eco-match-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: eco_match
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: "1397"
+    ports:
+      # Host 5434: 5432 is commonly taken by a native local PostgreSQL, and
+      # 5433 by the AI microservice's own docker-compose (../AI Microservice).
+      - "5434:5432"
+    volumes:
+      - ecomatch_pgdata:/var/lib/postgresql/data
+      # Hand-written SQL migrations are the schema source of truth (CLAUDE.md).
+      # Postgres runs every *.sql here once, in filename order, on first init
+      # of an empty volume — same effect as the documented
+      # `for f in prisma/migrations/*.sql; do psql "$DIRECT_URL" -f "$f"; done`.
+      - ./prisma/migrations:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d eco_match"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: .
+    container_name: eco-match-backend
+    env_file:
+      - .env
+    environment:
+      # .env is written for native/non-docker runs (localhost). Inside the
+      # compose network the db is reachable at the "backend-db" hostname instead.
+      DATABASE_URL: postgresql://postgres:1397@backend-db:5432/eco_match?schema=public
+      DIRECT_URL: postgresql://postgres:1397@backend-db:5432/eco_match?schema=public
+      # tsc's native file watcher misses change events over a Windows bind
+      # mount fairly often; polling is slower but reliable.
+      TSC_WATCHFILE: PriorityPollingInterval
+      TSC_WATCHDIRECTORY: DynamicPriorityPolling
+    ports:
+      # Host 3001: another project's container already holds 3000 on this
+      # machine (docker ps). The app still listens on 3000 inside the
+      # container/network — only the host-side mapping changed.
+      - "3001:3000"
+    volumes:
+      - .:/app
+      # Protects the container's own Linux-built node_modules (native
+      # modules like bcrypt) from being shadowed by the host bind mount.
+      # dist/ is NOT similarly protected: nest-cli's deleteOutDir rmdir's it
+      # on every rebuild, which fails with EBUSY against a mounted path.
+      - /app/node_modules
+    depends_on:
+      backend-db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/health',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+volumes:
+  ecomatch_pgdata:

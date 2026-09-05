@@ -1,0 +1,17 @@
+node_modules
+dist
+uploads
+training
+logs
+*.log
+coverage
+.nyc_output
+.git
+.gitignore
+.history
+.vscode
+.idea
+.env
+.env.local
+.env.test
+.env.production
