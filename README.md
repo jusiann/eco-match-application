@@ -18,6 +18,24 @@ Swagger: `http://localhost:3000/api/docs`
 
 Ayrıntılı kurulum ve veritabanı hazırlığı: [docs/10-gelistirme-rehberi.md](docs/10-gelistirme-rehberi.md)
 
+### Docker ile — tüm stack tek komutla
+
+Repo kökündeki `docker-compose.yml`, `backend/docker-compose.yml` (backend + DB) ile
+`AI Microservice/docker-compose.yml`'i (AI ekibinin kendi scratch DB'si) `include:` ile
+birleştirir:
+
+```bash
+docker compose up --build
+```
+
+- Backend: `http://localhost:3001` (Swagger `/api/docs`) — bu makinede 3000 başka bir
+  projede kullanıldığı için host portu 3001, bkz. [docs/10](docs/10-gelistirme-rehberi.md).
+- AI mikroservisinin FastAPI uygulaması (`uvicorn`) buna dahil değil — hâlâ ayrı, native
+  çalıştırılıyor (bkz. `AI Microservice/README.md`); backend AI'siz de çalışır (H1
+  fallback). `web/` henüz yok, eklendiğinde buraya kendi compose dosyasıyla dahil edilir.
+- Sadece backend + DB yetiyorsa `backend/docker-compose.yml`'i tek başına da
+  çalıştırabilirsin, bkz. [docs/10](docs/10-gelistirme-rehberi.md).
+
 ## Dokümantasyon
 
 Tüm teknik dokümantasyonlar [`docs/`](docs/README.md) altında.
@@ -38,13 +56,16 @@ Tüm teknik dokümantasyonlar [`docs/`](docs/README.md) altında.
 ## Yapı
 
 ```
-backend/          NestJS 10 + Fastify + Prisma 5 + PostgreSQL 16
-docs/             Teknik dokümantasyon
-.claude/          Claude Code yapılandırması ve slash komutları
+backend/            NestJS 10 + Fastify + Prisma 5 + PostgreSQL 16
+AI Microservice/    Python/FastAPI/SBERT — ayrı ekip tarafından geliştiriliyor
+docs/               Teknik dokümantasyon
+.claude/            Claude Code yapılandırması ve slash komutları
+docker-compose.yml  backend + DB + AI'nin scratch DB'sini birlikte ayağa kaldırır
 ```
 
-AI mikroservisi (Python/FastAPI/SBERT) ve frontend (Next.js/React Native) ayrı repolarda,
-ayrı ekipler tarafından geliştiriliyor.
+Hepsi aynı repoda (monorepo), ama `AI Microservice/` (Python/FastAPI/SBERT) ve ileride
+eklenecek frontend (Next.js/React Native) ayrı ekipler tarafından geliştiriliyor — bkz.
+`CLAUDE.md`, burada implemente edilmiyorlar.
 
 ## Durum
 

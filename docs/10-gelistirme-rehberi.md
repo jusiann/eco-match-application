@@ -7,45 +7,80 @@
 | Node.js | 20 LTS | |
 | PostgreSQL | 16 | `pgvector` + `postgis` + `pgcrypto` eklentileriyle |
 | Redis | 7 | Embedding kuyruğu, idempotency cache, rate limit |
-| Docker | — | Yerel PostgreSQL için en kolay yol |
+| Docker | — | Backend + DB'yi birlikte çalıştırmanın en kolay yolu (`backend/docker-compose.yml`) |
 
 ## Kurulum
 
 ```bash
 npm --prefix backend install
-```
-
-Veritabanı — eklentileri hazır bir imaj kullan, yoksa elle kurman gerekir:
-
-```bash
-docker run -d --name ecomatch-db -p 5432:5432 -e POSTGRES_PASSWORD=password -e POSTGRES_DB=eco_match postgis/postgis:16-3.4
-```
-
-`pgvector` bu imajda yok; eklemek için `pgvector/pgvector:pg16` ile PostGIS'i birleştiren
-bir imaj ya da kendi `Dockerfile`'ın gerekir. Faz 0'da `docker-compose.yml` bunu
-çözecek — o zamana kadar yerel kurulum.
-
-Ortam değişkenleri:
-
-```bash
 cp backend/.env.example backend/.env
 ```
 
-Migration'ları sırayla uygula (pooler değil, **doğrudan bağlantı**):
+### Docker ile — backend + DB (önerilen)
+
+`backend/docker-compose.yml`, PostgreSQL 16 + pgvector + PostGIS (`backend/docker/postgres/Dockerfile`,
+`pgvector/pgvector:pg16` üstüne PostGIS eklenmiş hali) ile backend'i birlikte ayağa kaldırır.
+Aşağıdaki komutlar `backend/` içinden çalıştırılır (repo kökünden çalıştıracaksan
+`-f backend/docker-compose.yml` ekle):
+
+```bash
+cd backend
+docker compose up --build
+```
+
+Compose proje adı `eco-match` olarak sabitlendi (`docker-compose.yml`'deki `name:`), yani
+image/network/volume isimleri klasör adına (`backend`) değil `eco-match-*`'e göre kurulur —
+container'lar `eco-match-backend` / `eco-match-db`.
+
+- Backend: `http://localhost:3001` (Swagger: `/api/docs`) — host tarafında 3001, çünkü
+  bu makinede 3000 zaten başka bir projenin container'ında; app container içinde/ağda
+  yine 3000'de dinliyor. Çakışma yoksa `docker-compose.yml`'de `3001:3000`'i `3000:3000`
+  yapabilirsin. `src/` container'a bind-mount edilir ve `nest start --watch` çalışır —
+  kod değişikliği otomatik yeniden derlenir. `node_modules` kendi volume'ünde kalır,
+  yani Windows'ta derlenmiş native modüller (ör. `bcrypt`) Linux container'ına taşınmaz.
+- DB: host'tan `localhost:5434` ile erişilebilir (5432 genelde yerel bir PostgreSQL
+  servisi tarafından, 5433 ise AI mikroservisinin kendi `docker-compose.yml`'i
+  tarafından kullanılıyor).
+- Migration'lar (`backend/prisma/migrations/*.sql`) ilk açılışta otomatik uygulanır:
+  Postgres'in `docker-entrypoint-initdb.d` mekanizması dosyaları isim sırasına göre tek
+  tek çalıştırır — aşağıdaki `psql` döngüsüyle birebir aynı sonucu verir.
+
+Container zaten ayaktayken sonradan eklenen bir migration'ı (bkz. `/migration`)
+uygulamak için — `docker-entrypoint-initdb.d` yalnızca boş volume'de çalışır:
+
+```bash
+psql "postgresql://postgres:1397@localhost:5434/eco_match" -f backend/prisma/migrations/NNN_x.sql
+```
+
+Şemayı sıfırdan kurmak istersen `docker compose down -v` (`pgdata` volume'ünü siler);
+sıradaki `up` tüm migration'ları yeniden uygular.
+
+`package.json` değiştiyse (yeni bağımlılık eklendiyse) `node_modules` volume'ü eski
+image'dan kalma olabilir — Compose bir container'ı yeniden oluştururken, mümkünse
+önceki container'ın anonymous volume'lerini olduğu gibi taşır. Yeni bağımlılıkları
+görmek için:
+
+```bash
+docker compose up --build -V
+```
+
+(`-V` / `--renew-anon-volumes` olmadan container yeni image'la ayağa kalkar ama
+`node_modules` içinde hâlâ eski paket seti olur.)
+
+### Native — backend host'ta, sadece DB Docker'da
+
+Hot-reload'da Docker bind-mount davranışıyla uğraşmak istemeyenler için:
+
+```bash
+docker compose up -d db
+```
+
+`.env` içinde `DATABASE_URL` / `DIRECT_URL` portunu `5434`'e çevir (pooler değil,
+**doğrudan bağlantı**), sonra:
 
 ```bash
 for f in backend/prisma/migrations/*.sql; do psql "$DIRECT_URL" -f "$f"; done
-```
-
-Prisma istemcisini üret:
-
-```bash
 npm --prefix backend run prisma:generate
-```
-
-Çalıştır:
-
-```bash
 npm --prefix backend run dev
 ```
 
@@ -178,6 +213,22 @@ ihtiyacı olduğu [04-api-sozlesmesi.md](04-api-sozlesmesi.md) tablolarında.
 npm --prefix backend run test
 npm --prefix backend run test -- --coverage
 ```
+
+`test/index.js`, sunucuyu kendisi başlatmaz — `API_URL` (varsayılan `localhost:3000/v1`)
+adresine HTTP isteği atar ve DB temizliği için kendi Prisma bağlantısını açar (`.env`'i
+yükler). Backend'i `backend/docker-compose.yml` ile çalıştırıyorsan ve host portu 3000
+değilse (bkz. yukarıdaki Docker bölümü), testi çalıştırmadan önce override et:
+
+```bash
+API_URL="http://localhost:3001/v1" DATABASE_URL="postgresql://postgres:1397@localhost:5434/eco_match?schema=public" DIRECT_URL="postgresql://postgres:1397@localhost:5434/eco_match?schema=public" npm --prefix backend run test
+```
+
+(PowerShell: `$env:API_URL="http://localhost:3001/v1"; $env:DATABASE_URL="postgresql://postgres:1397@localhost:5434/eco_match?schema=public"; $env:DIRECT_URL=$env:DATABASE_URL; npm --prefix backend run test`)
+
+`DATABASE_URL`/`DIRECT_URL` override'ı gerekli çünkü test süreci `.env`'deki bağlantı
+dizesini doğrudan kendi Prisma client'ı için de kullanıyor — konteynerdeki backend'in
+gördüğü veritabanının aynısına (host'tan `5434`) bakmazsa, HTTP üzerinden oluşturduğu
+veriyi kendi DB sorgularında bulamaz.
 
 Test isimleri senaryo kodunu taşır:
 
