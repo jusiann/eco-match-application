@@ -1,0 +1,118 @@
+@import "tailwindcss";
+@import "leaflet/dist/leaflet.css";
+
+@theme {
+  --color-primary: #1e5f46;
+  --color-primary-light: #2f8261;
+  --color-secondary: #a8672e;
+  --color-background: #f6f3ea;
+  --color-surface: #fffdf8;
+  --color-surface-light: #ede8db;
+  --color-on-surface: #1d2420;
+  --color-on-surface-variant: #666f63;
+  --color-border-color: rgba(29, 36, 32, 0.1);
+  --color-accent-mint: #16915f;
+}
+
+body {
+  background-color: #f6f3ea;
+  color: #1d2420;
+  overflow-x: hidden;
+  font-family: 'Inter', sans-serif;
+}
+
+.font-title {
+  font-family: 'Outfit', sans-serif;
+}
+
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+.material-symbols-outlined.filled {
+  font-variation-settings: 'FILL' 1;
+}
+
+/* Soft paper panel styling */
+.glass-panel {
+  background: rgba(255, 253, 248, 0.72);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(29, 36, 32, 0.08);
+  box-shadow: 0 1px 2px rgba(29, 36, 32, 0.04), 0 12px 28px -18px rgba(29, 36, 32, 0.18);
+}
+
+.glass-panel:hover {
+  border-color: rgba(30, 95, 70, 0.25);
+  box-shadow: 0 1px 2px rgba(29, 36, 32, 0.04), 0 16px 32px -16px rgba(29, 36, 32, 0.22);
+}
+
+/* Primary Action Button */
+.btn-primary {
+  background: linear-gradient(135deg, #1e5f46 0%, #2f8261 100%);
+  color: #fdfbf6;
+  box-shadow: 0 1px 2px rgba(29, 36, 32, 0.06), 0 10px 24px -10px rgba(30, 95, 70, 0.45);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.btn-primary:hover {
+  box-shadow: 0 1px 2px rgba(29, 36, 32, 0.08), 0 14px 30px -10px rgba(30, 95, 70, 0.55);
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background: #fffdf8;
+  border: 1px solid rgba(29, 36, 32, 0.14);
+  color: #1d2420;
+  transition: all 0.2s ease;
+}
+.btn-secondary:hover {
+  background: rgba(30, 95, 70, 0.06);
+  border-color: rgba(30, 95, 70, 0.35);
+  color: #1e5f46;
+}
+
+/* Ticker Animation */
+@keyframes ticker {
+  0% { transform: translateX(0%); }
+  100% { transform: translateX(-50%); }
+}
+.ticker-content {
+  animation: ticker 35s linear infinite;
+}
+.ticker-container:hover .ticker-content {
+  animation-play-state: paused;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #f6f3ea;
+}
+::-webkit-scrollbar-thumb {
+  background: #d9d3c1;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #1e5f46;
+}
+
+/* Sidebar Link Active State */
+.sidebar-link.active {
+  background: rgba(30, 95, 70, 0.1);
+  color: #1e5f46;
+  border-left: 4px solid #1e5f46;
+}
+
+/* Durum/kategori etiketi -- eskiden her yerde tekrarlanan renkli-arka-planlı +
+   kenarlıklı "pill" rozetlerin (bg-{renk}/10 border-{renk}/20 rounded-full) yerini
+   alıyor. Sadece kalın, harf aralıklı, renkli metin -- kutu/dolgu/kenarlık yok.
+   Rengi çağıran yer Tailwind text-{renk} sınıfıyla veriyor. */
+.status-label {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}

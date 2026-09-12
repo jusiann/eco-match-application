@@ -1,0 +1,85 @@
+.stack {
+  position: fixed;
+  bottom: 1.25rem;
+  right: 1.25rem;
+  left: 1.25rem;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.6rem;
+  pointer-events: none;
+}
+
+@media (min-width: 640px) {
+  .stack {
+    left: auto;
+    width: 22rem;
+  }
+}
+
+.toast {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.75rem 0.875rem;
+  border-radius: 0.9rem;
+  pointer-events: auto;
+  animation: toast-in 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.icon {
+  margin-top: 0.05rem;
+  flex-shrink: 0;
+}
+
+.message {
+  flex: 1;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  color: var(--color-on-surface);
+  font-weight: 500;
+}
+
+.close {
+  flex-shrink: 0;
+  color: var(--color-on-surface-variant);
+  cursor: pointer;
+  margin-top: 0.05rem;
+}
+.close:hover {
+  color: var(--color-on-surface);
+}
+
+.success .icon {
+  color: var(--color-accent-mint);
+}
+.success {
+  border-color: rgba(22, 145, 95, 0.3);
+}
+
+.error .icon {
+  color: #e11d48;
+}
+.error {
+  border-color: rgba(225, 29, 72, 0.3);
+}
+
+.info .icon {
+  color: #0d9488;
+}
+.info {
+  border-color: rgba(13, 148, 136, 0.3);
+}

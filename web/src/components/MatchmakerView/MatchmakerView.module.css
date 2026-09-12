@@ -1,0 +1,35 @@
+/* MatchmakerView.module.css */
+
+.container {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+@media (min-width: 1024px) {
+  .container {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+  }
+}
+
+.candidatesList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.radarCanvasWrapper, .routeMapWrapper {
+  position: relative;
+  width: 100%;
+  height: 12rem;
+  background-color: rgba(29, 36, 32, 0.03);
+  border-radius: 0.75rem;
+  overflow: hidden;
+  border: 1px solid rgba(29, 36, 32, 0.08);
+}
+
+.radarCanvas {
+  width: 100%;
+  height: 100%;
+  padding: 0.5rem;
+}

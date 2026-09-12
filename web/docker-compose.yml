@@ -1,0 +1,37 @@
+# Proje adı backend/docker-compose.yml ile aynı ("eco-match") -- kök dizindeki
+# docker-compose.yml her iki dosyayı `include` ettiğinde tüm servisler tek proje
+# ve tek ağ altında toplanıyor, böylece "backend" konteyner adı buradan çözülüyor.
+name: eco-match
+
+services:
+  web:
+    build:
+      context: .
+      args:
+        # "/" = same-origin (bkz. Dockerfile ve src/lib/api.ts). Backend adresini
+        # BURADAN değil, aşağıdaki BACKEND_ORIGIN'den ayarlayın -- bu değer bundle'a
+        # gömüldüğü için değişikliği ancak yeniden derleme yansıtır.
+        NEXT_PUBLIC_API_URL: "/"
+    container_name: eco-match-web
+    restart: unless-stopped
+    environment:
+      # nginx'in /v1, /health, /api/docs ve /socket.io'yu ilettiği hedef. Compose
+      # ağı içinde backend "backend" adıyla ve KONTEYNER İÇİ portu olan 3000 ile
+      # çözülüyor (host'a açılan 3001 eşlemesi burada geçerli değil).
+      BACKEND_ORIGIN: http://backend:3000
+    ports:
+      # Host 8080: 3000 bu makinede başka bir projenin konteynerinde, 3001 de
+      # backend'in kendi host eşlemesinde (bkz. backend/docker-compose.yml).
+      # Uygulamanın kullanıcıya açık TEK adresi burası -- API de aynı origin
+      # üzerinden bu portta sunuluyor.
+      - "8080:80"
+    # Bilinçli olarak backend'e `depends_on` YOK: nginx backend adını istek anında
+    # çözüyor (default.conf.template'teki resolver), yani backend kapalıyken de
+    # arayüz açılıyor ve "sistem geçici olarak bakımda" uyarısını gösteriyor (H2).
+    # Bu sayede `cd web && docker compose up` tek başına da çalışıyor.
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s

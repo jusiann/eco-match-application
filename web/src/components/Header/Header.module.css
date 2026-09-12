@@ -1,0 +1,23 @@
+/* Header.module.css */
+
+.header {
+  height: 5rem;
+  border-bottom: 1px solid rgba(29, 36, 32, 0.08);
+  background-color: rgba(246, 243, 234, 0.75);
+  backdrop-filter: blur(12px);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+@media (min-width: 768px) {
+  .header {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}

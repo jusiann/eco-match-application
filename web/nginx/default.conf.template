@@ -1,0 +1,124 @@
+# EcoMatch web — Next.js statik export + backend ters vekili.
+#
+# Bu dosya nginx imajının giriş betiği tarafından envsubst'tan geçirilip
+# /etc/nginx/conf.d/default.conf olarak yazılıyor; yani http {} bağlamının
+# içinde (map direktifi bu yüzden burada geçerli).
+#
+# Neden ters vekil? Frontend ve backend tarayıcı açısından AYNI origin'den
+# (http://localhost:8080) konuşuyor. Sonuçları:
+#   - CORS hiç devreye girmiyor (preflight yok, origin listesi tutmaya gerek yok).
+#   - Refresh token'ın httpOnly cookie'si (K-18, path=/v1/auth, SameSite=Lax)
+#     olduğu gibi çalışıyor -- SameSite=None+Secure gerektirmiyor, yani http
+#     üzerinden geliştirme yaparken de oturum kalıcı oluyor.
+#   - Frontend imajı backend'in host portunu bilmek zorunda değil.
+
+# Socket.IO websocket yükseltmesi için (Connection: upgrade / close).
+map $http_upgrade $connection_upgrade {
+    default upgrade;
+    ''      close;
+}
+
+server {
+    listen      80;
+    listen [::]:80;
+    server_name _;
+
+    root  /usr/share/nginx/html;
+    index index.html;
+
+    # Tesis doğrulama belgeleri 10 MB'a kadar olabiliyor
+    # (backend main.ts -> fastifyMultipart limits.fileSize).
+    client_max_body_size 10m;
+
+    gzip              on;
+    gzip_vary         on;
+    gzip_min_length   1024;
+    gzip_proxied      any;
+    gzip_types        text/plain text/css application/javascript application/json image/svg+xml application/manifest+json;
+
+    # Backend adı konteyner AYAĞA KALKARKEN değil, İSTEK GELDİĞİNDE çözülsün diye
+    # proxy_pass'a değişken üzerinden veriliyor. Sabit bir isim yazılsaydı backend
+    # henüz ayakta değilken nginx "host not found in upstream" ile hiç başlamaz,
+    # statik arayüz de sunulamazdı. Bu hâliyle backend kapalıyken uygulama açılıyor
+    # ve kendi /health/ready yoklamasıyla "sistem geçici olarak bakımda" uyarısını
+    # gösteriyor (H2). 127.0.0.11 Docker'ın gömülü DNS sunucusu.
+    resolver 127.0.0.11 valid=10s ipv6=off;
+
+    # ── Backend REST API (/v1 global prefix) ────────────────────────────────
+    location /v1/ {
+        set $backend "${BACKEND_ORIGIN}";
+        proxy_pass $backend$request_uri;
+
+        proxy_http_version 1.1;
+        proxy_set_header Host              $host;
+        proxy_set_header X-Real-IP         $remote_addr;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        # PDF/XLSX üretimi (pdfkit/exceljs) birkaç saniye sürebiliyor.
+        proxy_read_timeout 120s;
+        proxy_send_timeout 120s;
+    }
+
+    # ── Sağlık uçları — /v1 prefix'inin DIŞINDA (main.ts setGlobalPrefix exclude) ──
+    location /health {
+        set $backend "${BACKEND_ORIGIN}";
+        proxy_pass $backend$request_uri;
+
+        proxy_http_version 1.1;
+        proxy_set_header Host              $host;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # ── Swagger (yalnızca geliştirme kolaylığı) ─────────────────────────────
+    location /api/docs {
+        set $backend "${BACKEND_ORIGIN}";
+        proxy_pass $backend$request_uri;
+
+        proxy_http_version 1.1;
+        proxy_set_header Host              $host;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # ── Socket.IO (canlı bildirimler) ───────────────────────────────────────
+    # /v1/notifications/stream bir Socket.IO NAMESPACE'i, HTTP yolu değil --
+    # gerçek istekler daima /socket.io/ altına gider.
+    location /socket.io/ {
+        set $backend "${BACKEND_ORIGIN}";
+        proxy_pass $backend$request_uri;
+
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade    $http_upgrade;
+        proxy_set_header Connection $connection_upgrade;
+        proxy_set_header Host       $host;
+        proxy_set_header X-Real-IP  $remote_addr;
+
+        # Uzun ömürlü bağlantı: varsayılan 60 sn'lik okuma zaman aşımı soketi düşürür.
+        proxy_read_timeout 3600s;
+        proxy_send_timeout 3600s;
+    }
+
+    # ── Statik varlıklar ────────────────────────────────────────────────────
+    # /_next/static altındaki dosya adları içerik hash'i taşıdığı için kalıcı olarak
+    # önbelleklenebilir.
+    location /_next/static/ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+
+    # index.html önbelleklenirse yeni derleme yayına alındığında tarayıcı eski
+    # bundle'ı istemeye devam eder.
+    location = /index.html {
+        add_header Cache-Control "no-cache";
+    }
+
+    # ── SPA ─────────────────────────────────────────────────────────────────
+    # Tek route'lu bir uygulama; bilinmeyen yollar (ör. DPP QR kodunun işaret
+    # ettiği /dpp/<passportId>?sig=...) index.html'e düşürülüp istemci tarafında
+    # ele alınıyor.
+    location / {
+        try_files $uri $uri.html $uri/ /index.html;
+    }
+}

@@ -1,0 +1,39 @@
+/* PassportView.module.css — QR ile açılan herkese açık pasaport sayfası.
+   Uygulamanın geri kalanının aksine sidebar/header yok: tek başına, telefonda
+   okunacak bir belge görünümü. */
+
+.page {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 2rem 1rem 4rem;
+  background: var(--background, #f7f8f6);
+}
+
+.card {
+  width: 100%;
+  max-width: 780px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 1.75rem;
+  border-radius: 1.5rem;
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border-color, rgba(29, 36, 32, 0.08));
+  box-shadow: 0 12px 40px rgba(29, 36, 32, 0.08);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+}
+
+@media (min-width: 640px) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

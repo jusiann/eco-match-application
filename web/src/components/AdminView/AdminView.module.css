@@ -1,0 +1,59 @@
+/* AdminView.module.css */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.tableHeader {
+  background-color: rgba(237, 232, 219, 0.6);
+}
+
+.tableCell {
+  padding: 0.85rem 1.25rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-on-surface-variant);
+}
+
+tbody .tableCell {
+  font-size: 0.8rem;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(29, 36, 32, 0.1);
+  outline: none;
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #1e5f46;
+  cursor: pointer;
+  border: 2px solid #fffdf8;
+  box-shadow: 0 1px 3px rgba(29, 36, 32, 0.3);
+}
+
+.slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #1e5f46;
+  cursor: pointer;
+  border: 2px solid #fffdf8;
+  box-shadow: 0 1px 3px rgba(29, 36, 32, 0.3);
+}

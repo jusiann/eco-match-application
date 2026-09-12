@@ -1,0 +1,46 @@
+/* NotificationCenter.module.css */
+
+.wrapper {
+  position: relative;
+}
+
+.panel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.75rem);
+  width: 20rem;
+  max-width: calc(100vw - 2rem);
+  z-index: 30;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+}
+
+.list {
+  max-height: 22rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid rgba(29, 36, 32, 0.08);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  width: 100%;
+}
+
+.item:hover {
+  background-color: rgba(29, 36, 32, 0.03);
+}
+
+.item:last-child {
+  border-bottom: none;
+}
+
+.itemUnread {
+  background-color: rgba(30, 95, 70, 0.05);
+}
