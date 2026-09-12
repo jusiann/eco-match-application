@@ -60,7 +60,7 @@ paths:
                       type: number
       responses:
         '201':
-          description: Facility and first user created, verification email sent, refresh token set as HttpOnly cookie
+          description: Facility and first user created, refresh token set as HttpOnly cookie
           content:
             application/json:
               schema:
@@ -119,76 +119,6 @@ paths:
           description: New access_token returned, new refresh cookie set
         '401':
           description: Refresh cookie missing, invalid, expired, or revoked
-  /v1/auth/forgot-password:
-    post:
-      summary: Request a password reset email
-      description: Always returns success regardless of whether the email exists, to avoid leaking account existence.
-      tags:
-        - Auth
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - email
-              properties:
-                email:
-                  type: string
-                  format: email
-      responses:
-        '201':
-          description: Reset email sent if the account exists
-  /v1/auth/reset-password:
-    post:
-      summary: Reset password using the token from the reset email
-      tags:
-        - Auth
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - token
-                - newPassword
-              properties:
-                token:
-                  type: string
-                  description: Token from the reset email, valid 1h
-                newPassword:
-                  type: string
-                  minLength: 8
-                  maxLength: 128
-      responses:
-        '201':
-          description: Password updated, all sessions revoked
-        '400':
-          description: Token invalid or expired
-  /v1/auth/verify-email:
-    post:
-      summary: Verify an account's email address
-      tags:
-        - Auth
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - token
-              properties:
-                token:
-                  type: string
-                  description: Token from the verification email, valid 24h
-      responses:
-        '201':
-          description: Email marked as verified
-        '400':
-          description: Token invalid or expired
   /v1/auth/me:
     get:
       summary: Get current logged-in user profile

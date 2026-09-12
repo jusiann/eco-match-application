@@ -1,7 +1,6 @@
 import { Injectable, BadRequestException, UnauthorizedException, NotFoundException } from '@nestjs/common';
-import { RegisterDto, LoginDto, UpdateProfileDto, ForgotPasswordDto, ResetPasswordDto } from './auth.dto';
+import { RegisterDto, LoginDto, UpdateProfileDto } from './auth.dto';
 import { PrismaService } from '../../prisma/prisma.service';
-import { EmailService } from './email.service';
 import * as bcrypt from 'bcrypt';
 import { createHash, timingSafeEqual } from 'crypto';
 import { JwtService } from '@nestjs/jwt';
@@ -11,7 +10,6 @@ export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
-    private readonly emailService: EmailService,
   ) {}
 
   // Hash token using SHA-256
@@ -104,12 +102,9 @@ export class AuthService {
     const user = facility.users[0];
     const { accessToken, refreshToken } = await this.issueTokens(user);
 
-    const verificationToken = this.jwtService.sign({ sub: user.id, type: 'email_verify' }, { expiresIn: '24h' });
-    await this.emailService.sendVerificationEmail(user.email, verificationToken);
-
     return {
       success: true,
-      message: 'Kayıt başarılı. Doğrulama e-postası gönderildi.',
+      message: 'Kayıt başarılı.',
       access_token: accessToken,
       refresh_token: refreshToken,
       user: {
@@ -188,71 +183,6 @@ export class AuthService {
       access_token: tokens.accessToken,
       refresh_token: tokens.refreshToken,
     };
-  }
-
-  async verifyEmail(token: string) {
-    let payload: { sub: string; type?: string };
-    try {
-      payload = this.jwtService.verify(token);
-    } catch {
-      throw new BadRequestException('Doğrulama bağlantısının süresi dolmuş veya geçersiz.');
-    }
-
-    if (payload.type !== 'email_verify') {
-      throw new BadRequestException('Geçersiz doğrulama jetonu.');
-    }
-
-    const user = await this.prisma.user.findUnique({ where: { id: payload.sub } });
-    if (!user) {
-      throw new NotFoundException('Kullanıcı bulunamadı.');
-    }
-
-    if (!user.emailVerified) {
-      await this.prisma.user.update({ where: { id: user.id }, data: { emailVerified: true } });
-    }
-
-    return { success: true, message: 'E-posta adresiniz doğrulandı.' };
-  }
-
-  async forgotPassword(dto: ForgotPasswordDto) {
-    const user = await this.prisma.user.findUnique({ where: { email: dto.email.toLowerCase() } });
-
-    if (user) {
-      const resetToken = this.jwtService.sign({ sub: user.id, type: 'password_reset' }, { expiresIn: '1h' });
-      await this.emailService.sendPasswordResetEmail(user.email, resetToken);
-    }
-
-    // Kullanıcı var mı yok mu bilgisini sızdırmamak için cevap her durumda aynı
-    return {
-      success: true,
-      message: 'E-posta adresiniz sistemde kayıtlıysa şifre sıfırlama bağlantısı gönderildi.',
-    };
-  }
-
-  async resetPassword(dto: ResetPasswordDto) {
-    let payload: { sub: string; type?: string };
-    try {
-      payload = this.jwtService.verify(dto.token);
-    } catch {
-      throw new BadRequestException('Sıfırlama bağlantısının süresi dolmuş veya geçersiz.');
-    }
-
-    if (payload.type !== 'password_reset') {
-      throw new BadRequestException('Geçersiz sıfırlama jetonu.');
-    }
-
-    const user = await this.prisma.user.findUnique({ where: { id: payload.sub } });
-    if (!user) {
-      throw new NotFoundException('Kullanıcı bulunamadı.');
-    }
-
-    const hashedPassword = await bcrypt.hash(dto.newPassword, 10);
-    await this.prisma.user.update({
-      where: { id: user.id },
-      data: { passwordHash: hashedPassword, refreshToken: null },
-    });
-
-    return { success: true, message: 'Şifreniz güncellendi. Lütfen tekrar giriş yapın.' };
   }
 
   async getMe(userId: string) {

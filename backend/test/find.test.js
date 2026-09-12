@@ -115,12 +115,17 @@ export const testFind = async () => {
     assert(findUnclassifiedRes.status === 202, `Sınıflandırılmamış çıktı için find 202 döndürdü (alınan: ${findUnclassifiedRes.status})`);
     assert(findUnclassifiedRes.error === 'PENDING_EXPERT_REVIEW', 'Hata kodu PENDING_EXPERT_REVIEW');
 
-    // Hiçbir adayı olmayan çıktı (gerçek dummy embedding, rastgele vektör) -> boş liste
+    // Hiçbir adayı olmayan çıktı -> boş liste. AI artık gerçek/anlamlı embedding
+    // ürettiğinden (dummy'nin rastgele vektörü gibi otomatik-izole değil), bu
+    // çıktının vektörünü de yukarıdaki setEmbedding ile başka hiçbir fixture'ın
+    // kullanmadığı bir boyuta (767) sabitliyoruz -- iki tek-nokta vektör farklı
+    // boyutlardaysa kosinüs benzerliği matematiksel olarak tam 0, deterministik.
     const lonelyOutput = await api('POST', '/materials/outputs', {
         description: 'Hiçbir adayı olmayacak yalnız çıktı',
         materialClass: 'glass',
         quantityKg: 50,
     }, state.accessToken);
+    await setEmbedding(lonelyOutput.outputId, 'output', 767);
     const findLonelyRes = await api('GET', `/matches/find/${lonelyOutput.outputId}`, null, state.accessToken);
     assert(findLonelyRes.status === 200, `Aday yokken find 200 döndürdü (alınan: ${findLonelyRes.status})`);
     assert(Array.isArray(findLonelyRes.matches) && findLonelyRes.matches.length === 0, 'Aday yokken matches boş dizi döndü');

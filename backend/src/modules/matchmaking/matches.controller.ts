@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Body, Param, Query, Res, UseGuards } from '@nestjs/common';
-import { Throttle } from '@nestjs/throttler';
+import { Throttle, SkipThrottle } from '@nestjs/throttler';
 import type { FastifyReply } from 'fastify';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { GetUser } from '../../common/decorators/get-user.decorator';
@@ -8,6 +8,10 @@ import { Idempotent } from '../../common/decorators/idempotent.decorator';
 import { MatchesService } from './matches.service';
 import { RejectMatchDto, MatchListQueryDto } from './matches.dto';
 
+// list/get/accept/reject/retry/contact hiçbirinin kendi @Throttle'ı yok -- bkz.
+// health.controller.ts başındaki not. `find`'ın kendi method-level @Throttle'ı
+// yalnızca 'default' kullandığı için bu class-level muafiyetten etkilenmez.
+@SkipThrottle({ 'chat-daily': true })
 @UseGuards(JwtAuthGuard)
 @Controller('matches')
 export class MatchesController {

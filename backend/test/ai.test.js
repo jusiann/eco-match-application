@@ -79,10 +79,22 @@ export const testAi = async () => {
     state.rateLimitFacilityId = rateLimitRegister.facility?.id;
     const rateLimitToken = rateLimitRegister.access_token;
 
-    const burst = await Promise.all(
-        Array.from({ length: 65 }, (_, i) =>
-            api('POST', '/ai/classify', { description: `Rate limit testi isteği ${i}` }, rateLimitToken)),
-    );
+    // 65 istek TAM eşzamanlı (Promise.all) gönderilmiyor -- dummy istemciyle sorun
+    // değildi (anlık dönerdi), ama gerçek AI servisi tek process/senkron encode
+    // olduğundan 65-yönlü bir patlama kuyruklanıp backend'in 3s timeout'unu
+    // (docs/07) aşabiliyor, bu da circuit breaker'ı gerçekten açıp bu dosyadan
+    // sonraki testleri etkiliyordu. Küçük gruplar halinde göndermek NestJS
+    // ThrottlerGuard'ın 60/dk sayacını (ki senkron ve AI'dan önce çalışıyor)
+    // etkilemez, sadece AI servisine gerçekçi bir eşzamanlılık bindirir.
+    const burst = [];
+    const BURST_BATCH_SIZE = 5;
+    for (let i = 0; i < 65; i += BURST_BATCH_SIZE) {
+        const batch = await Promise.all(
+            Array.from({ length: Math.min(BURST_BATCH_SIZE, 65 - i) }, (_, j) =>
+                api('POST', '/ai/classify', { description: `Rate limit testi isteği ${i + j}` }, rateLimitToken)),
+        );
+        burst.push(...batch);
+    }
 
     const succeeded = burst.filter((r) => r.status === 201).length;
     const limited = burst.filter((r) => r.status === 429);

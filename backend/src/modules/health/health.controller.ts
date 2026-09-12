@@ -1,7 +1,15 @@
 import { Controller, Get, Res } from '@nestjs/common';
+import { SkipThrottle } from '@nestjs/throttler';
 import type { FastifyReply } from 'fastify';
 import { PrismaService } from '../../prisma/prisma.service';
 
+// 'chat-daily' (50/gün) global bir throttler adı (bkz. app.module.ts) ve @Throttle
+// ile başka bir isim kümesi belirtmeyen HER route'a otomatik uygulanıyor -- ChatController
+// dışında hiçbir yerde açıkça istenmiyordu. Sonuç: bu controller'daki /health/ready gibi
+// sık çağrılan uçlar, kendi trafiğiyle paylaşılan 50/gün bütçesini tüketip TÜM diğer
+// unscoped controller'ları (facilities/admin/osb/notifications/reports/cron) 429'a
+// düşürüyordu -- docs/04'teki "Diğer authenticated: 1000/saat" kuralına aykırı.
+@SkipThrottle({ 'chat-daily': true })
 @Controller('health')
 export class HealthController {
   constructor(private readonly prisma: PrismaService) {}

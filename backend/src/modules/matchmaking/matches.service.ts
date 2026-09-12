@@ -30,6 +30,8 @@ type MatchWithParties = {
   co2Saved: unknown;
   costSaving: unknown;
   cbamImpact: unknown;
+  acceptedBySupplierAt: Date | null;
+  acceptedByConsumerAt: Date | null;
   expiresAt: Date;
   createdAt: Date | null;
   output: { facilityId: string; facility: { sector: string; osb: { name: string } | null } };
@@ -57,24 +59,77 @@ export class MatchesService {
     input: { include: { facility: { include: { osb: { select: { name: true } } } } } },
   } as const;
 
+  // Yaklaşık konum + mesafe için tüm ilgili tesislerin koordinatını TEK bir
+  // sorguda çekip mesafeyi JS'te (haversine) hesaplıyoruz -- serialize() bir
+  // listede N kez çağrıldığında N ayrı PostGIS sorgusu yerine. Sadece görüntü
+  // amaçlı (breakdown.logistics'in temeli olan otoriter ST_Distance zaten
+  // findCandidates()'ta hesaplanıp match oluşturulurken kullanıldı) -- birkaç
+  // km'lik haversine/geography farkı burada önemsiz.
+  private async getFacilityLocations(facilityIds: string[]): Promise<Map<string, { lat: number; lng: number }>> {
+    if (facilityIds.length === 0) return new Map();
+    const rows = await this.prisma.$queryRaw<Array<{ id: string; lat: number | null; lng: number | null }>>`
+      SELECT id, ST_Y(location::geometry) AS lat, ST_X(location::geometry) AS lng
+        FROM facilities
+       WHERE id = ANY(${facilityIds}::uuid[]) AND location IS NOT NULL
+    `;
+    const map = new Map<string, { lat: number; lng: number }>();
+    for (const row of rows) {
+      if (row.lat !== null && row.lng !== null) map.set(row.id, { lat: Number(row.lat), lng: Number(row.lng) });
+    }
+    return map;
+  }
+
+  private haversineKm(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {
+    const R = 6371;
+    const dLat = ((b.lat - a.lat) * Math.PI) / 180;
+    const dLng = ((b.lng - a.lng) * Math.PI) / 180;
+    const lat1 = (a.lat * Math.PI) / 180;
+    const lat2 = (b.lat * Math.PI) / 180;
+    const h = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+    return 2 * R * Math.asin(Math.sqrt(h));
+  }
+
   // Gizlilik kuralı (S3): kabul edilene kadar karşı tarafın adı/adresi/iletişimi gösterilmez,
-  // sadece OSB adı + sektör. Yaklaşık konum burada hesaplanmıyor (bilinen açık, bkz. K-23).
-  private serialize(match: MatchWithParties, viewerFacilityId: string) {
+  // sadece OSB adı + sektör + yaklaşık konum (1 ondalık yuvarlama -- findCandidates()'taki
+  // approximateLocation ile aynı konvansiyon, K-23'ün "ne kadar yuvarlama" sorusunu bu
+  // zaten yanıtlıyordu). Bu üçü S3'ün gizlilik özünü bozmaz, sadece bir "yakınlık hissi" verir.
+  private serialize(
+    match: MatchWithParties,
+    viewerFacilityId: string,
+    locations: Map<string, { lat: number; lng: number }>,
+  ) {
     const isSupplier = match.output.facilityId === viewerFacilityId;
     const counterparty = isSupplier ? match.input.facility : match.output.facility;
+    const counterpartyFacilityId = isSupplier ? match.input.facilityId : match.output.facilityId;
+
+    const viewerLoc = locations.get(viewerFacilityId);
+    const counterpartyLoc = locations.get(counterpartyFacilityId);
+    const distanceKm =
+      viewerLoc && counterpartyLoc ? Math.round(this.haversineKm(viewerLoc, counterpartyLoc) * 10) / 10 : null;
+
+    // status='accepted' iki taraf da kabul edene kadar sürer (-> 'completed'). Frontend
+    // bu bayrak olmadan "siz zaten kabul ettiniz, karşı taraf bekleniyor" ile "sıra sizde"
+    // durumlarını ayıramıyordu -- ikisinde de aynı "Kabul Et" butonunu gösteriyordu,
+    // tıklanırsa backend'in accept()'teki alreadyAcceptedBySelf koruması 409 döndürüyordu.
+    const viewerAccepted = isSupplier ? match.acceptedBySupplierAt !== null : match.acceptedByConsumerAt !== null;
 
     return {
       id: match.id,
       status: match.status,
       role: isSupplier ? 'supplier' : 'consumer',
+      viewerAccepted,
       totalScore: match.totalScore,
       breakdown: match.breakdown,
       co2Saved: match.co2Saved,
       costSaving: match.costSaving,
       cbamImpact: match.cbamImpact,
+      distanceKm,
       counterparty: {
         osbName: counterparty.osb?.name ?? null,
         sectorLabel: counterparty.sector,
+        approximateLocation: counterpartyLoc
+          ? { lat: Math.round(counterpartyLoc.lat * 10) / 10, lng: Math.round(counterpartyLoc.lng * 10) / 10 }
+          : null,
       },
       expiresAt: match.expiresAt,
       createdAt: match.createdAt,
@@ -104,8 +159,12 @@ export class MatchesService {
       this.prisma.match.count({ where }),
     ]);
 
+    const typedMatches = matches as unknown as MatchWithParties[];
+    const facilityIds = Array.from(new Set(typedMatches.flatMap((m) => [m.output.facilityId, m.input.facilityId])));
+    const locations = await this.getFacilityLocations(facilityIds);
+
     return {
-      data: matches.map((m) => this.serialize(m as unknown as MatchWithParties, facilityId)),
+      data: typedMatches.map((m) => this.serialize(m, facilityId, locations)),
       meta: { page, limit, total, totalPages: Math.max(Math.ceil(total / limit), 1) },
     };
   }
@@ -116,8 +175,10 @@ export class MatchesService {
     if (!match) {
       throw new NotFoundException('Eşleşme bulunamadı.');
     }
-    this.assertParty(match, facilityId);
-    return this.serialize(match as unknown as MatchWithParties, facilityId);
+    const typedMatch = match as unknown as MatchWithParties;
+    this.assertParty(typedMatch, facilityId);
+    const locations = await this.getFacilityLocations([typedMatch.output.facilityId, typedMatch.input.facilityId]);
+    return this.serialize(typedMatch, facilityId, locations);
   }
 
   async accept(userId: string, id: string) {
@@ -199,7 +260,15 @@ export class MatchesService {
           ...(isSupplier ? { acceptedBySupplierAt: new Date() } : { acceptedByConsumerAt: new Date() }),
         },
       });
-      await tx.output.update({ where: { id: match.output_id }, data: { stock: { decrement: demandQty } } });
+      // docs/05: "Çıktı availability=false | Stok yetersiz (I1)" -- stok tükenince
+      // bunu burada da düşürmezsek findCandidates() stoğu 0 olan bir çıktı için
+      // yine de aday üretmeye devam eder (co2Saved/costSaving/cbamImpact hepsi
+      // matchedQty=0 yüzünden sessizce 0 çıkar -- kırık değil ama kafa karıştırıcı).
+      const remainingStock = outputStock - demandQty;
+      await tx.output.update({
+        where: { id: match.output_id },
+        data: { stock: { decrement: demandQty }, ...(remainingStock <= 0 ? { availability: false } : {}) },
+      });
 
       return { success: true, status: 'completed', message: 'Eşleşme tamamlandı! İletişim bilgileri artık görünür.' };
     });

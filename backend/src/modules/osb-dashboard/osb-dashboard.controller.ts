@@ -1,4 +1,5 @@
 import { Controller, Get, Query, UseGuards, Res } from '@nestjs/common';
+import { SkipThrottle } from '@nestjs/throttler';
 import type { FastifyReply } from 'fastify';
 import { UserRole } from '@prisma/client';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -8,6 +9,8 @@ import { GetUser } from '../../common/decorators/get-user.decorator';
 import { OsbDashboardService } from './osb-dashboard.service';
 import { OsbFacilitiesQueryDto, OsbMonthlyReportQueryDto } from './osb-dashboard.dto';
 
+// bkz. health.controller.ts başındaki not -- global 'chat-daily' (50/gün) bütçesinden muaf.
+@SkipThrottle({ 'chat-daily': true })
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(UserRole.OSB_MANAGER)
 @Controller('osb')

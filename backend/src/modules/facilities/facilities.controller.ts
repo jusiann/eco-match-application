@@ -1,4 +1,5 @@
 import { Controller, Get, Patch, Post, Body, UseGuards, Req } from '@nestjs/common';
+import { SkipThrottle } from '@nestjs/throttler';
 import type { FastifyRequest } from 'fastify';
 import { UserRole } from '@prisma/client';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -9,6 +10,9 @@ import { Audit } from '../../common/decorators/audit.decorator';
 import { FacilitiesService } from './facilities.service';
 import { UpdateFacilityDto } from './facilities.dto';
 
+// bkz. health.controller.ts başındaki not -- bu route'lar açıkça @Throttle ile bir isim
+// kümesi seçmediği için global 'chat-daily' (50/gün) bütçesini paylaşıyordu.
+@SkipThrottle({ 'chat-daily': true })
 @UseGuards(JwtAuthGuard)
 @Controller('facilities')
 export class FacilitiesController {

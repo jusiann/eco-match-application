@@ -1,7 +1,9 @@
 // ═══════════════════════════════════════════════════════════════
 //  Kimlik Doğrulama (Auth) Modülü Testleri — Kayıt, Giriş, Profil,
-//  Güncelleme, Yenileme (Refresh), Şifremi Unuttum/Sıfırlama,
-//  E-posta Doğrulama, Çıkış ve Negatif Senaryolar
+//  Güncelleme, Yenileme (Refresh), Çıkış ve Negatif Senaryolar.
+//  E-posta doğrulama ve şifremi unuttum/sıfırlama akışları prototip
+//  kapsamında kaldırıldı (2026-09-12) -- ikisi de gerçek e-posta
+//  gönderimine bağlıydı, EmailService zaten sadece bir stub'tı.
 // ═══════════════════════════════════════════════════════════════
 
 import { TEST_DATA, state, assert, api, section, sleep, prisma } from './helpers.js';
@@ -99,48 +101,6 @@ export const testAuth = async () => {
     const noCookieRefresh = await api('POST', '/auth/refresh', null, null, { cookie: false });
     assert(noCookieRefresh.status === 401, 'Hiçbir çerez olmadan yapılan refresh isteği reddedildi (401)', noCookieRefresh);
 
-    // ── POST /v1/auth/verify-email ──
-    const verifyToken = jwt.sign({ sub: state.userId, type: 'email_verify' }, { expiresIn: '24h' });
-    const verifyRes = await api('POST', '/auth/verify-email', { token: verifyToken });
-    assert(verifyRes.status === 200 || verifyRes.status === 201, `E-posta doğrulama 200/201 döndürdü (alınan: ${verifyRes.status})`, verifyRes);
-    assert(verifyRes.success === true, 'E-posta doğrulama başarı bildirdi');
-
-    const meAfterVerify = await api('GET', '/auth/me', null, state.accessToken);
-    assert(meAfterVerify.user?.emailVerified === true, 'Kullanıcının emailVerified değeri true oldu');
-
-    // ── POST /v1/auth/forgot-password & reset-password ──
-    const forgotRes = await api('POST', '/auth/forgot-password', { email: TEST_DATA.user.email });
-    assert(forgotRes.status === 200 || forgotRes.status === 201, `Şifremi unuttum 200/201 döndürdü (alınan: ${forgotRes.status})`, forgotRes);
-
-    // ── Numaralandırma Koruması (Anti-enumeration - K-18) ──
-    const forgotUnknownRes = await api('POST', '/auth/forgot-password', { email: `nobody.${TEST_DATA.runId}@nonexistent.domain` });
-    assert(forgotUnknownRes.status === forgotRes.status, 'Bilinmeyen e-posta için şifremi unuttum durum kodu aynı (numaralandırma koruması)');
-    assert(forgotUnknownRes.message === forgotRes.message, 'Bilinmeyen e-posta için şifremi unuttum mesajı aynı (numaralandırma koruması)');
-
-    const resetToken = jwt.sign({ sub: state.userId, type: 'password_reset' }, { expiresIn: '1h' });
-    const newPassword = 'NewSecretPassword123!';
-    const resetRes = await api('POST', '/auth/reset-password', {
-        token: resetToken,
-        newPassword,
-    });
-    assert(resetRes.status === 200 || resetRes.status === 201, `Şifre sıfırlama 200/201 döndürdü (alınan: ${resetRes.status})`, resetRes);
-
-    // Eski şifrenin geçersiz olduğunu doğrula
-    const oldLogin = await api('POST', '/auth/login', {
-        email: TEST_DATA.user.email,
-        password: TEST_DATA.user.password,
-    });
-    assert(oldLogin.status === 401, 'Eski şifre doğru şekilde reddedildi (401)');
-
-    // Yeni şifrenin çalıştığını doğrula
-    const newLogin = await api('POST', '/auth/login', {
-        email: TEST_DATA.user.email,
-        password: newPassword,
-    });
-    assert(newLogin.status === 200 || newLogin.status === 201, `Yeni şifreyle giriş başarılı oldu (alınan: ${newLogin.status})`);
-    state.accessToken = newLogin.access_token;
-    state.refreshTokenCookie = newLogin.refreshTokenCookie;
-
     // ── POST /v1/auth/logout ──
     const logoutRes = await api('POST', '/auth/logout', null, state.accessToken);
     assert(logoutRes.status === 200 || logoutRes.status === 201, `Çıkış yapma (logout) 200/201 döndürdü (alınan: ${logoutRes.status})`);
@@ -152,7 +112,7 @@ export const testAuth = async () => {
     // Sonraki test paketleri için yeniden giriş yap
     const relogin = await api('POST', '/auth/login', {
         email: TEST_DATA.user.email,
-        password: newPassword,
+        password: TEST_DATA.user.password,
     });
     assert(relogin.status === 200 || relogin.status === 201, `Sonraki testler için yeniden giriş başarılı oldu (alınan: ${relogin.status})`);
     state.accessToken = relogin.access_token;

@@ -22,7 +22,7 @@ export const BACKEND_DIR = fileURLToPath(new URL('..', import.meta.url));
 
 if (!process.env.JWT_SECRET_KEY) {
   console.error('\x1b[31m✖ JWT_SECRET_KEY ayarlanmamış ve backend/.env yüklenemedi.\x1b[0m');
-  console.error('  Kendi kendine imzalanan test belirteçleri (verify-email, reset-password) sunucuyla sessizce uyuşmazlık yaşar.');
+  console.error('  Kendi kendine imzalanan test belirteçleri (ör. auth.test.js\'teki sahte refresh token) sunucuyla sessizce uyuşmazlık yaşar.');
   process.exit(1);
 }
 

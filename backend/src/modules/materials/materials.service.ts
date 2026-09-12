@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ConflictException, ForbiddenException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, ConflictException, ForbiddenException } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { MaterialClass, MatchStatus, Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -10,6 +10,8 @@ import { CreateOutputDto, UpdateOutputDto, CreateInputDto, UpdateInputDto, ListQ
 
 @Injectable()
 export class MaterialsService {
+  private readonly logger = new Logger('MaterialsService');
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly dppService: DppService,
@@ -120,13 +122,22 @@ export class MaterialsService {
     // düşünmüştü" diye görmesi gerekiyor (docs/06 A2 adım 6). human_review_queue şemada
     // sadece output'u destekliyor, input'u değil (K-26) -- girdi tarafı henüz kapsam dışı.
     if (output.pendingReview) {
-      const suggestion = await this.aiClient.classify(output.description);
+      // Bu "canlı öneri" değil, arka-plan zenginleştirmesi -- AI servisi düşükse
+      // (docs/07 H1) insan incelemesi kuyruğa girmekten vazgeçmemeli, sadece AI'ın
+      // tahmini eksik kalır. classify()'in fırlattığı 503'ü burada yutuyoruz.
+      let suggestion: { materialClass: string; confidence: number; top3: Array<[string, number]> } | null = null;
+      try {
+        suggestion = await this.aiClient.classify(output.description);
+      } catch (err) {
+        this.logger.warn(`AI classify basarisiz, onerisiz devam ediliyor: ${err}`);
+      }
+
       await this.prisma.humanReviewQueue.create({
         data: {
           outputId: output.id,
-          confidence: suggestion.confidence,
-          reason: 'low_confidence_classification',
-          aiSuggestion: suggestion.top3 as unknown as Prisma.InputJsonValue,
+          confidence: suggestion?.confidence ?? 0,
+          reason: suggestion ? 'low_confidence_classification' : 'ai_unavailable',
+          aiSuggestion: suggestion ? (suggestion.top3 as unknown as Prisma.InputJsonValue) : Prisma.DbNull,
         },
       });
 
@@ -137,7 +148,9 @@ export class MaterialsService {
             expert.id,
             'review_required',
             'Yeni sınıflandırma incelemesi bekliyor',
-            `AI önerisi: ${suggestion.materialClass} (%${Math.round(suggestion.confidence * 100)})`,
+            suggestion
+              ? `AI önerisi: ${suggestion.materialClass} (%${Math.round(suggestion.confidence * 100)})`
+              : 'AI önerisi şu an mevcut değil, elle inceleme gerekiyor.',
             { output_id: output.id, route: `/admin/review-queue` },
           ),
         ),

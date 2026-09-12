@@ -1,8 +1,8 @@
 import { Controller, Get, Post, Put, Delete, Body, UseGuards, Res, Req, UnauthorizedException } from '@nestjs/common';
-import { Throttle } from '@nestjs/throttler';
+import { Throttle, SkipThrottle } from '@nestjs/throttler';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { AuthService } from './auth.service';
-import { RegisterDto, LoginDto, UpdateProfileDto, VerifyEmailDto, ForgotPasswordDto, ResetPasswordDto } from './auth.dto';
+import { RegisterDto, LoginDto, UpdateProfileDto } from './auth.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { GetUser } from '../../common/decorators/get-user.decorator';
 import { Audit } from '../../common/decorators/audit.decorator';
@@ -18,6 +18,12 @@ const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 const REGISTER_LIMIT = IS_PRODUCTION ? 3 : 1000;
 const LOGIN_LIMIT = IS_PRODUCTION ? 5 : 1000;
 
+// register/login kendi @Throttle(default:...) override'ına sahip; diğer route'lar
+// (refresh/me/update-profile/logout/delete-account) hiçbirini tanımlamadığı için
+// global 'chat-daily' (50/gün) bütçesini paylaşıyordu -- bkz. health.controller.ts
+// başındaki not. Class-level SkipThrottle yalnızca bunu kapatır, register/login'in
+// kendi method-level limitlerini etkilemez.
+@SkipThrottle({ 'chat-daily': true })
 @Controller('auth')
 export class AuthController {
     constructor(private readonly authService: AuthService) { }
@@ -63,21 +69,6 @@ export class AuthController {
         const { refresh_token, ...body } = await this.authService.refresh(refreshToken);
         this.setRefreshCookie(reply, refresh_token);
         return body;
-    }
-
-    @Post('verify-email')
-    verifyEmail(@Body() dto: VerifyEmailDto) {
-        return this.authService.verifyEmail(dto.token);
-    }
-
-    @Post('forgot-password')
-    forgotPassword(@Body() dto: ForgotPasswordDto) {
-        return this.authService.forgotPassword(dto);
-    }
-
-    @Post('reset-password')
-    resetPassword(@Body() dto: ResetPasswordDto) {
-        return this.authService.resetPassword(dto);
     }
 
     @UseGuards(JwtAuthGuard)

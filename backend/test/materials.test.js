@@ -22,12 +22,12 @@ export const testMaterials = async () => {
 
     assert(createOutputRes.status === 201, `POST /v1/materials/outputs 201 döndürdü (alınan: ${createOutputRes.status})`, createOutputRes);
     assert(!!createOutputRes.outputId, 'Çıktı oluşturma outputId döndürdü');
-    assert(createOutputRes.embeddingPending === false, 'embeddingPending değeri false (dummy AiClient senkron embed etti, K-24)');
+    assert(createOutputRes.embeddingPending === false, 'embeddingPending değeri false (AiClient senkron embed etti)');
     assert(createOutputRes.pendingReview === false, 'materialClass sağlandığında pendingReview false olur');
 
     const dbOutputEmbedding = await prisma.embedding.findFirst({ where: { recordId: createOutputRes.outputId, recordType: 'OUTPUT' } });
     assert(!!dbOutputEmbedding, 'embeddings tablosuna gerçek bir satır yazıldı');
-    assert(dbOutputEmbedding?.modelVersion === 'dummy-stub-v0', 'model_version dummy istemcinin adını taşıyor (gerçek servis gelince değişecek)');
+    assert(dbOutputEmbedding?.modelVersion === 'ai-service-fine-tuned-mpnet-v1', 'model_version gerçek AI istemcisinin etiketini taşıyor (bkz. ai-client.service.ts EMBED_MODEL_TAG)');
     assert(!!createOutputRes.passportId, 'Çıktı oluşturma gerçek bir passportId döndürdü (DPP senkron üretildi, Faz 1.6)');
     assert(typeof createOutputRes.qrCode === 'string' && createOutputRes.qrCode.includes('/dpp/'), 'qrCode bir /dpp/:id imzalı URL\'sidir');
     assert(typeof createOutputRes.pdfUrl === 'string' && createOutputRes.pdfUrl.includes('/passport/'), 'pdfUrl imzalı pasaport PDF URL\'sidir');

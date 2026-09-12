@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Patch, Delete, Body, Param, Query, Res, UseGuards } from '@nestjs/common';
-import { Throttle } from '@nestjs/throttler';
+import { Throttle, SkipThrottle } from '@nestjs/throttler';
 import type { FastifyReply } from 'fastify';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { VerifiedFacilityGuard } from '../../common/guards/verified-facility.guard';
@@ -10,6 +10,11 @@ import { Idempotent } from '../../common/decorators/idempotent.decorator';
 import { MaterialsService } from './materials.service';
 import { CreateOutputDto, UpdateOutputDto, CreateInputDto, UpdateInputDto, ListQueryDto } from './materials.dto';
 
+// listOutputs/getOutput/updateOutput/deleteOutput/createInput/listInputs/updateInput/
+// deleteInput/getPassportQr hiçbirinin kendi @Throttle'ı yok -- bkz. health.controller.ts
+// başındaki not. Diğer route'ların (createOutput, passport json/pdf) kendi method-level
+// @Throttle'ı zaten yalnızca 'default' kullandığı için bu class-level muafiyetten etkilenmez.
+@SkipThrottle({ 'chat-daily': true })
 @UseGuards(JwtAuthGuard)
 @Controller('materials')
 export class MaterialsController {

@@ -1,10 +1,13 @@
 import { Controller, Get, Param, Query, UseGuards, Res } from '@nestjs/common';
+import { SkipThrottle } from '@nestjs/throttler';
 import type { FastifyReply } from 'fastify';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { GetUser } from '../../common/decorators/get-user.decorator';
 import { ReportsService } from './reports.service';
 import { ReportFormatQueryDto, ListReportsQueryDto } from './reports.dto';
 
+// bkz. health.controller.ts başındaki not -- global 'chat-daily' (50/gün) bütçesinden muaf.
+@SkipThrottle({ 'chat-daily': true })
 @UseGuards(JwtAuthGuard)
 @Controller('reports')
 export class ReportsController {

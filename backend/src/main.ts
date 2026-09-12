@@ -53,6 +53,36 @@ async function bootstrap() {
     limits: { fileSize: 10 * 1024 * 1024 }, // facility verification documents, max 10 MB
   });
 
+  // Fastify'ın varsayılan JSON ayrıştırıcısı, "Content-Type: application/json var ama
+  // gövde BOŞ" durumunu FastifyError ile reddediyor ve bu 500'e dönüşüyor. Gövdesiz
+  // POST uçlarımız var (auth/refresh, auth/logout, matches/:id/accept,
+  // admin/weights/:id/activate ...) ve tarayıcı istemcileri bu başlığı gövde olmasa
+  // da göndermeye eğilimli -- en görünür sonucu, sayfa her yenilendiğinde
+  // auth/refresh'in 500 alıp oturumu düşürmesiydi.
+  //
+  // Ayrıştırıcıyı DEĞİŞTİRMİYORUZ: Nest kendi 'application/json' ayrıştırıcısını
+  // app.init() sırasında ekliyor ve Fastify aynı içerik türünün ikinci kez
+  // eklenmesini FST_ERR_CTP_ALREADY_PRESENT ile reddediyor. Bunun yerine, gövdesi
+  // olmadığı kesin olan isteklerde başlığı düşürüyoruz -- Content-Type yoksa Fastify
+  // gövde ayrıştırma adımını hiç çalıştırmıyor. Gövdeli istekler etkilenmiyor,
+  // bozuk JSON hâlâ normal 400 yolundan geçiyor.
+  app.getHttpAdapter().getInstance().addHook('onRequest', (request, _reply, done) => {
+    const contentType = request.headers['content-type'];
+    if (!contentType?.startsWith('application/json')) {
+      done();
+      return;
+    }
+
+    const contentLength = request.headers['content-length'];
+    const definitelyEmpty =
+      contentLength === '0' || (contentLength === undefined && request.headers['transfer-encoding'] === undefined);
+
+    if (definitelyEmpty) {
+      delete request.headers['content-type'];
+    }
+    done();
+  });
+
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -61,7 +91,25 @@ async function bootstrap() {
     }),
   );
 
-  app.enableCors();
+  // credentials:true ŞART -- refresh token'ı taşıyan httpOnly cookie (K-18) yalnızca
+  // bununla çapraz-origin gönderilip alınabiliyor. Argümansız enableCors() varsayılan
+  // olarak credentials'ı kapalı bırakıyor ve tarayıcı Set-Cookie'yi sessizce yok
+  // sayıyor -- sonuç: sayfa her yenilendiğinde oturum kaybı.
+  //
+  // Origin yansıtmalı (origin: true) mod yalnızca geliştirme/Docker kolaylığı için;
+  // üretimde CORS_ORIGINS'i virgülle ayrılmış bir liste olarak ayarlayın.
+  // NOT: web/ konteyneri aynı origin üzerinden (nginx /v1'i backend'e proxy'liyor)
+  // çalıştığı için orada CORS hiç devreye girmez -- bu ayar, frontend'i ayrı bir
+  // portta `npm run dev` ile çalıştıran geliştirme akışı içindir.
+  const corsOrigins = process.env.CORS_ORIGINS?.split(',')
+    .map((o) => o.trim())
+    .filter(Boolean);
+
+  app.enableCors({
+    origin: corsOrigins?.length ? corsOrigins : true,
+    credentials: true,
+  });
+
   app.useWebSocketAdapter(new IoAdapter(app)); // Faz 2.5: /v1/notifications/stream (Socket.IO)
 
   const config = new DocumentBuilder()

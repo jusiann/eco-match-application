@@ -1,4 +1,5 @@
 import { Controller, Post, Param, BadRequestException, UseGuards } from '@nestjs/common';
+import { SkipThrottle } from '@nestjs/throttler';
 import { UserRole } from '@prisma/client';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
@@ -11,6 +12,8 @@ type Job = (typeof JOBS)[number];
 // Zamanlanmış işleri (2.3/2.7/2.12) beklemeden elle tetiklemek için -- hem operasyonel bir
 // ihtiyaç (demo/acil durum) hem de bu mantığı HTTP üzerinden test edebilmenin tek yolu,
 // çünkü test paketi uygulamanın DI container'ına değil sadece HTTP'ye erişiyor.
+// bkz. health.controller.ts başındaki not -- global 'chat-daily' (50/gün) bütçesinden muaf.
+@SkipThrottle({ 'chat-daily': true })
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(UserRole.ADMIN)
 @Controller('admin/cron')

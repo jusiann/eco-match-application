@@ -74,28 +74,3 @@ export class UpdateProfileDto {
   @MinLength(8, { message: 'Şifre en az 8 karakter olmalıdır.' })
   password?: string;
 }
-
-export class VerifyEmailDto {
-  @IsString()
-  @IsNotEmpty({ message: 'Doğrulama jetonu (token) zorunludur.' })
-  token: string;
-}
-
-export class ForgotPasswordDto {
-  @IsEmail({}, { message: 'Geçersiz e-posta formatı.' })
-  email: string;
-}
-
-export class ResetPasswordDto {
-  @IsString()
-  @IsNotEmpty({ message: 'Sıfırlama jetonu (token) zorunludur.' })
-  token: string;
-
-  @IsString()
-  @MinLength(8, { message: 'Şifre en az 8 karakter uzunluğunda olmalıdır.' })
-  @MaxLength(128, { message: 'Şifre en fazla 128 karakter olabilir.' })
-  @Matches(/(?=.*[A-Z])/, { message: 'Şifre en az bir büyük harf içermelidir.' })
-  @Matches(/(?=.*[a-z])/, { message: 'Şifre en az bir küçük harf içermelidir.' })
-  @Matches(/(?=.*[0-9])/, { message: 'Şifre en az bir rakam içermelidir.' })
-  newPassword: string;
-}

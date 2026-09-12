@@ -1,11 +1,15 @@
 import { Controller, Post, Get, Body, Query, UseGuards, Res } from '@nestjs/common';
-import { Throttle } from '@nestjs/throttler';
+import { Throttle, SkipThrottle } from '@nestjs/throttler';
 import type { FastifyReply } from 'fastify';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { GetUser } from '../../common/decorators/get-user.decorator';
 import { ChatService } from './chat.service';
 import { ChatMessageDto, ChatHistoryQueryDto } from './chat.dto';
 
+// `history` route'unun kendi @Throttle'ı yok, docs/04'te de chat-daily'ye tabi değil --
+// bu class-level muafiyet onu kapsar. `chat`'in kendi method-level @Throttle'ı 'chat-daily'yi
+// açıkça yeniden içerdiği için (aşağıda) o route için muafiyet geçersiz kalır.
+@SkipThrottle({ 'chat-daily': true })
 @UseGuards(JwtAuthGuard)
 @Controller('chat')
 export class ChatController {

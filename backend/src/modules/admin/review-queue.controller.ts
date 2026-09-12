@@ -1,4 +1,5 @@
 import { Controller, Get, Post, Body, Param, Query, UseGuards } from '@nestjs/common';
+import { SkipThrottle } from '@nestjs/throttler';
 import { UserRole } from '@prisma/client';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
@@ -10,6 +11,8 @@ import { ApproveReviewDto, RejectReviewDto, ReviewQueueListQueryDto } from './re
 
 // docs/04: review-queue endpoint'lerine admin dışında expert de erişir -- bu yüzden
 // admin.controller.ts'in @Roles(ADMIN) kapsamına girmiyor, ayrı bir controller
+// bkz. health.controller.ts başındaki not -- global 'chat-daily' (50/gün) bütçesinden muaf.
+@SkipThrottle({ 'chat-daily': true })
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(UserRole.ADMIN, UserRole.EXPERT)
 @Controller('admin/review-queue')
