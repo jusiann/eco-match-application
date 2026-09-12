@@ -55,12 +55,15 @@ Toplam tahmini: Kritik + Yüksek ~48 adam-gün · Orta ~18 · Düşük ~3 · **~
 **Akış**
 1. Aylin kayıt formunu doldurur: e-posta, şifre, tesis adı, VKN, sektör, OSB, harita konumu
 2. Frontend VKN format kontrolü (10 hane)
-3. `POST /v1/auth/register` → 201, doğrulama e-postası gönderilir
-4. Aylin linke tıklar → `email_verified = true`, giriş yapabilir
-5. `facility_verification` kaydı "belge bekliyor" durumunda açılır — **malzeme ekleyemez**
-6. Aylin ticaret sicil belgesini yükler (PDF/JPG, max 10 MB)
-7. Ayşe admin panelinde görür, kontrol eder, onaylar → `facilities.verified = true`
-8. Aylin'e `facility_verified` bildirimi (e-posta + in-app)
+3. `POST /v1/auth/register` → 201, access/refresh token döner, Aylin doğrudan giriş yapmış olur
+4. `facility_verification` kaydı "belge bekliyor" durumunda açılır — **malzeme ekleyemez**
+5. Aylin ticaret sicil belgesini yükler (PDF/JPG, max 10 MB)
+6. Ayşe admin panelinde görür, kontrol eder, onaylar → `facilities.verified = true`
+7. Aylin'e `facility_verified` bildirimi (in-app)
+
+> E-posta doğrulama akışı prototip kapsamında kaldırıldı (2026-09-12) — gerçek e-posta
+> gönderimine bağlıydı, hiçbir yerde de zorunlu kılınmıyordu. Asıl kapı hâlâ burada: tesis
+> belge onayı (`facilities.verified`), materyal ekleme dahil çoğu işlemi bloklayan gerçek eşik.
 
 **Kabul kriterleri**
 
@@ -69,8 +72,8 @@ Senaryo: Geçerli bilgilerle kayıt
   Diyelim ki VKN "1234567890", e-posta "aylin@doku.com", şifre "Guvenli123!" girilir
   Ve konum haritada işaretlenir (lat=40.19, lng=29.02)
   Ne zaman "Kayıt Ol" tıklanırsa
-  O zaman 201 döner ve doğrulama e-postası gönderilir
-  Ve email_verified = false, facilities.verified = false olur
+  O zaman 201 döner, access/refresh token verilir
+  Ve facilities.verified = false olur
   Ve ilk kullanıcının rolü 'facility_admin' olur
 
 Senaryo: Aynı VKN ile ikinci kayıt engellenir
@@ -92,7 +95,7 @@ Senaryo: Doğrulanmamış tesis malzeme ekleyemez
   Ve mesaj "Tesisiniz henüz onaylanmadı" olur
 ```
 
-**Endpoint'ler:** `POST /v1/auth/register` · `POST /v1/auth/verify-email` ·
+**Endpoint'ler:** `POST /v1/auth/register` ·
 `POST /v1/facilities/me/documents` · `GET /v1/admin/verifications` ·
 `POST /v1/admin/verifications/:id/approve|reject`
 

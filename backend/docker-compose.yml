@@ -46,6 +46,16 @@ services:
       # compose network the db is reachable at the "backend-db" hostname instead.
       DATABASE_URL: postgresql://postgres:1397@backend-db:5432/eco_match?schema=public
       DIRECT_URL: postgresql://postgres:1397@backend-db:5432/eco_match?schema=public
+      # Base URL stamped into Digital Product Passport QR codes and PDF links
+      # (dpp.service.ts#baseUrl). These are scanned from a phone / opened in a
+      # browser, so this has to be the address the USER can reach — the web
+      # container's nginx, which proxies /v1 back here — not "backend:3000",
+      # which only resolves inside the compose network.
+      PUBLIC_BASE_URL: http://localhost:8080
+      # .env is written for native runs (localhost:8000). Inside the compose
+      # network the AI microservice is reachable at the "ai-service" hostname
+      # instead (see "AI Microservice/docker-compose.yml").
+      AI_SERVICE_URL: http://ai-service:8000
       # tsc's native file watcher misses change events over a Windows bind
       # mount fairly often; polling is slower but reliable.
       TSC_WATCHFILE: PriorityPollingInterval

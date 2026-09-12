@@ -20,6 +20,7 @@ Projeye yeni katılıyorsan sırayla oku. Zaten içindeysen tablodan atla.
 | 08 | [Yol Haritası](08-yol-haritasi.md) | Sıradaki iş ne, hangi fazdayız |
 | 09 | [Kararlar](09-kararlar.md) | "Bu neden böyle?" sorusunun cevabı |
 | 10 | [Geliştirme Rehberi](10-gelistirme-rehberi.md) | Kurulum, kod standardı, commit, test |
+| 11 | [Demo Veri Seti](11-demo-veri-seti.md) | Giriş bilgileri, seed'lenmiş tesis/eşleşme senaryoları |
 
 ## Hızlı gerçekler
 

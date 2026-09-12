@@ -16,7 +16,30 @@ npm --prefix backend install
 cp backend/.env.example backend/.env
 ```
 
-### Docker ile — backend + DB (önerilen)
+### Docker ile — tüm yığın (önerilen)
+
+Repo kökündeki `docker-compose.yml`, alt compose dosyalarını `include:` ile birleştirir:
+
+```bash
+docker compose up --build
+```
+
+**Uygulama: `http://localhost:8080`** — kullanıcının bilmesi gereken tek adres. `web`
+konteynerindeki nginx, statik Next.js export'unu sunar ve `/v1`, `/health`, `/socket.io`,
+`/api/docs` yollarını backend'e ters vekil olarak iletir. Frontend ile backend tarayıcı
+açısından aynı origin'de olduğundan CORS devreye girmez ve refresh token'ın httpOnly
+cookie'si (K-18) sorunsuz taşınır. Ayrıntı: `web/README.md`.
+
+`web` servisinin backend'e `depends_on` bağımlılığı yoktur: nginx backend adını istek
+anında çözer (`resolver 127.0.0.11`), yani backend kapalıyken de arayüz açılır ve
+"sistem geçici olarak bakımda" uyarısı gösterilir (H2).
+
+Backend'in DPP QR/PDF bağlantılarına yazdığı önek `PUBLIC_BASE_URL` ile belirlenir ve
+compose'da `http://localhost:8080` olarak ayarlıdır — QR telefondan okutulacağı için bu
+değerin **kullanıcının erişebildiği** adres olması gerekir, konteyner içi `backend:3000`
+değil.
+
+### Docker ile — yalnızca backend + DB
 
 `backend/docker-compose.yml`, PostgreSQL 16 + pgvector + PostGIS (`backend/docker/postgres/Dockerfile`,
 `pgvector/pgvector:pg16` üstüne PostGIS eklenmiş hali) ile backend'i birlikte ayağa kaldırır.

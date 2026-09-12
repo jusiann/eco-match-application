@@ -20,21 +20,37 @@ Ayrıntılı kurulum ve veritabanı hazırlığı: [docs/10-gelistirme-rehberi.m
 
 ### Docker ile — tüm stack tek komutla
 
-Repo kökündeki `docker-compose.yml`, `backend/docker-compose.yml` (backend + DB) ile
-`AI Microservice/docker-compose.yml`'i (AI ekibinin kendi scratch DB'si) `include:` ile
-birleştirir:
+Repo kökündeki `docker-compose.yml`; `backend/docker-compose.yml` (backend + DB),
+`web/docker-compose.yml` (Next.js arayüzü + nginx) ve `AI Microservice/docker-compose.yml`
+(AI ekibinin kendi scratch DB'si) dosyalarını `include:` ile birleştirir:
 
 ```bash
 docker compose up --build
 ```
 
-- Backend: `http://localhost:3001` (Swagger `/api/docs`) — bu makinede 3000 başka bir
-  projede kullanıldığı için host portu 3001, bkz. [docs/10](docs/10-gelistirme-rehberi.md).
+**Uygulamayı `http://localhost:8080` adresinden açın.** Kullanıcının bilmesi gereken tek
+adres burasıdır — nginx `/v1`, `/health`, `/socket.io` ve `/api/docs` yollarını backend'e
+ters vekil (reverse proxy) olarak iletir. Frontend ile backend tarayıcı açısından aynı
+origin'de olduğu için CORS hiç devreye girmez ve refresh token'ın httpOnly cookie'si
+(K-18) sorunsuz çalışır.
+
+| Adres | Ne |
+|---|---|
+| `http://localhost:8080` | Web arayüzü **ve** API (aynı origin) |
+| `http://localhost:8080/api/docs` | Swagger, aynı vekil üzerinden |
+| `http://localhost:3001` | Backend'e doğrudan erişim (curl / e2e paketi için) |
+| `localhost:5434` | Backend PostgreSQL |
+| `localhost:5433` | AI mikroservisinin scratch pgvector DB'si |
+
+- Backend'in host portu 3001 — bu makinede 3000 başka bir projede kullanılıyor,
+  bkz. [docs/10](docs/10-gelistirme-rehberi.md).
 - AI mikroservisinin FastAPI uygulaması (`uvicorn`) buna dahil değil — hâlâ ayrı, native
   çalıştırılıyor (bkz. `AI Microservice/README.md`); backend AI'siz de çalışır (H1
-  fallback). `web/` henüz yok, eklendiğinde buraya kendi compose dosyasıyla dahil edilir.
-- Sadece backend + DB yetiyorsa `backend/docker-compose.yml`'i tek başına da
-  çalıştırabilirsin, bkz. [docs/10](docs/10-gelistirme-rehberi.md).
+  fallback). AI'ye bağlı uçlar şu an bilinçli olarak dummy.
+- Her parça tek başına da çalıştırılabilir (`cd web && docker compose up` gibi); web
+  konteyneri backend kapalıyken de açılır, arayüz "sistem geçici olarak bakımda"
+  uyarısını gösterir.
+- Frontend ayrıntıları: [web/README.md](web/README.md)
 
 ## Dokümantasyon
 
@@ -57,10 +73,11 @@ Tüm teknik dokümantasyonlar [`docs/`](docs/README.md) altında.
 
 ```
 backend/            NestJS 10 + Fastify + Prisma 5 + PostgreSQL 16
+web/                Next.js 16 (statik export) + nginx — arayüz ve API vekili
 AI Microservice/    Python/FastAPI/SBERT — ayrı ekip tarafından geliştiriliyor
 docs/               Teknik dokümantasyon
 .claude/            Claude Code yapılandırması ve slash komutları
-docker-compose.yml  backend + DB + AI'nin scratch DB'sini birlikte ayağa kaldırır
+docker-compose.yml  backend + DB + web + AI'nin scratch DB'sini birlikte ayağa kaldırır
 ```
 
 Hepsi aynı repoda (monorepo), ama `AI Microservice/` (Python/FastAPI/SBERT) ve ileride

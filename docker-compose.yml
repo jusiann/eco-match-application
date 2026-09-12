@@ -1,22 +1,30 @@
 # Monorepo-wide orchestration. Each part of the stack owns its own
-# docker-compose.yml (backend/, "AI Microservice/") — this file only
+# docker-compose.yml (backend/, web/, "AI Microservice/") — this file only
 # `include`s them so `docker compose up` from the repo root brings
 # everything up together, in the right order (each included file's own
 # healthchecks/depends_on still apply). Edit the owning file, not this one,
 # unless the change is genuinely cross-cutting.
+#
+# Host ports, once everything is up:
+#   http://localhost:8080       web — the app. /v1, /health and /socket.io are
+#                               reverse-proxied to the backend from here, so this
+#                               is the only address a user (or the browser) needs.
+#   http://localhost:8080/api/docs  Swagger, through the same proxy.
+#   http://localhost:3001       backend, direct (for curl / the e2e suite).
+#   http://localhost:8000       AI microservice, direct (for curl / its own tests).
+#   localhost:5434              backend Postgres.
+#   localhost:5433              the AI microservice's own pgvector Postgres.
 name: eco-match
 
 include:
   - backend/docker-compose.yml
+  - web/docker-compose.yml
   - "AI Microservice/docker-compose.yml"
 
-# Not included here:
-# - The AI FastAPI app itself (only its scratch Postgres is dockerized above,
-#   in AI Microservice/docker-compose.yml). Run it natively per
-#   "AI Microservice/README.md" (`uvicorn app.main:app --port 8000`) — see
-#   CLAUDE.md, the AI service is teammate-owned and out of scope here.
-#   Backend already tolerates it being unreachable (H1 fallback, docs/07),
-#   so there's no startup-order dependency to express even once it is
-#   containerized. If/when it is, reach it from the backend container at
-#   http://host.docker.internal:8000, not localhost.
-# - web/ — doesn't exist yet.
+# The AI FastAPI app (service "ai-service" in AI Microservice/docker-compose.yml)
+# runs in-network now, reachable from the backend container at
+# http://ai-service:8000 -- not host.docker.internal, that was only needed
+# back when it ran natively on the host. It still needs
+# "AI Microservice/fine_tuned_model/" to exist on disk before `up --build`
+# (bind-mounted in, not baked into the image) -- see AI Microservice/README.md
+# / fine_tune.py if it's ever missing.

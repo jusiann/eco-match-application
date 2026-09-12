@@ -108,9 +108,6 @@ içinde bir kayıt varsa `409` döner:
 | POST | `/v1/auth/register` | Public | Tesis + ilk kullanıcı (`facility_admin`). 201, doğrulama e-postası gönderir |
 | POST | `/v1/auth/login` | Public | `{access_token}` + refresh cookie |
 | POST | `/v1/auth/refresh` | Public (cookie) | Yeni access token |
-| POST | `/v1/auth/verify-email` | Public (token) | `email_verified = true`. Token 24 saat |
-| POST | `/v1/auth/forgot-password` | Public | Sıfırlama e-postası |
-| POST | `/v1/auth/reset-password` | Public (token) | |
 | GET | `/v1/auth/me` | Auth | Kullanıcı + tesis özeti |
 | PUT | `/v1/auth/update-profile` | Auth | |
 | POST | `/v1/auth/logout` | Auth | Refresh token'ı iptal eder |

@@ -477,11 +477,17 @@ oluyor, stok İKİ KEZ düşüyor, hatta **reddedilmiş bir eşleşme bile `acce
 reddedilmiş eşleşmenin kilitli kalması). **Karar:** raw sorgudan dönen `status` artık
 `.toUpperCase()` ile normalize ediliyor, karşılaştırmalar ondan sonra yapılıyor.
 
-**Bilinen açık (düzeltilmedi, bilinçli).** Eşleşme listesi/detayında `approximateLocation`
-(S3'ün örnek yanıtındaki yaklaşık konum) döndürülmüyor — "yaklaşık" olmanın ne kadar
-yuvarlama demek olduğu hiçbir yerde tanımlı değil. `osbName` + `sectorLabel` ile gizlilik
-kuralı zaten sağlanıyor (gerçek isim/adres/iletişim hiçbir zaman `completed` öncesi
-görünmüyor); konum sadece bir "yakınlık hissi" veriyor, eksikliği S3'ün özünü bozmuyor.
+**Bilinen açık — 2026-09-12'de kapatıldı.** Eşleşme listesi/detayında `approximateLocation`
+(S3'ün örnek yanıtındaki yaklaşık konum) ve `distanceKm` döndürülmüyordu — "yaklaşık" olmanın
+ne kadar yuvarlama demek olduğu hiçbir yerde tanımlı değildi. Çözüm: `findCandidates()`'ın
+zaten kullandığı 1-ondalık yuvarlama (`Math.round(lat*10)/10`, ~11km hassasiyet) burada da
+uygulandı — soru zaten oradaki kodla cevaplanmıştı, sadece `serialize()`'a taşınmamıştı.
+Mesafe PostGIS `ST_Distance` yerine JS'te haversine ile hesaplanıyor (bkz.
+matches.service.ts#getFacilityLocations) — listede N ayrı PostGIS sorgusu yerine tüm ilgili
+tesislerin konumunu tek sorguda çekip mesafeyi bellekte hesaplamak için; skor hesabının
+temelindeki otoriter mesafe zaten `findCandidates()`'ta ST_Distance ile hesaplanmıştı, burası
+sadece görüntü amaçlı. `osbName` + `sectorLabel` + bu ikisiyle gizlilik kuralı hâlâ sağlanıyor
+(gerçek isim/adres/iletişim hâlâ `completed` öncesi hiç görünmüyor).
 
 ---
 
