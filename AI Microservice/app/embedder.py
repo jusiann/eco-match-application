@@ -20,7 +20,7 @@ class Embedder:
         self._model = SentenceTransformer(settings.model_name)
 
         # Boyut doğrulaması — yanlış model yüklenirse erkenden patla
-        actual_dim = self._model.get_embedding_dimension()
+        actual_dim = self._model.get_sentence_embedding_dimension()
         if actual_dim != settings.vector_dim:
             raise ValueError(
                 f"Boyut uyuşmazlığı: model {actual_dim} üretiyor, "

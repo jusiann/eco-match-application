@@ -1,7 +1,16 @@
+# Project name shared with backend/ and web/ so a standalone
+# `cd "AI Microservice" && docker compose up` still lands in the same
+# "eco-match" project/network as the root-level include does.
+name: eco-match
+
 services:
+  # Service key stays plain "db" -- backend renamed ITS db service to
+  # "backend-db" to dodge the name collision (see backend/docker-compose.yml),
+  # this file was left untouched at the time.
   db:
     image: pgvector/pgvector:pg16
-    container_name: dongunet_pgvector
+    container_name: ecomatch_pgvector
+    restart: unless-stopped
     ports:
       - "5433:5432"
     environment:
@@ -11,6 +20,47 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ecomatch -d ecomatch"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  ai-service:
+    build:
+      context: .
+    container_name: eco-match-ai
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      # .env is written for native (host) runs, where the DB is reached at
+      # localhost:5433. Inside the compose network it's reachable at the
+      # "db" hostname on its container-internal port instead.
+      DB_HOST: db
+      DB_PORT: "5432"
+    ports:
+      # Host 8000: matches the port used when this ran natively
+      # (`uvicorn app.main:app --port 8000`), nothing else on this host
+      # claims it.
+      - "8000:8000"
+    volumes:
+      - .:/app
+      # Sınıflandırma modeli (paraphrase-multilingual-mpnet-base-v2, ~1.1GB)
+      # HuggingFace Hub'dan çekiliyor -- bu volume olmadan her container
+      # yeniden oluşturulduğunda sıfırdan iniyor. fine_tuned_model/ (eşleştirme
+      # modeli) buna dahil değil, o zaten bind-mount'la host'tan geliyor.
+      - hf_cache:/root/.cache/huggingface
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/health').status==200 else 1)"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
 volumes:
   pgdata:
+  hf_cache:
