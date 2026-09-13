@@ -149,7 +149,7 @@ def test2_tesisleri_kaydet() -> bool:
         vector = data["vector"]
         record_id = f"{RECORD_ID_PREFIX}{key}"
         try:
-            vector_store.add(record_id, RECORD_TYPE, vector)
+            vector_store.add(record_id, RECORD_TYPE, vector, text=data["built_text"])
             kayitli_id_ler.append(record_id)
             print(f"  {tesis['ad']:<24} POST /embed/passport → dim={data['dim']}, "
                   f"pgvector'a yazıldı (id={record_id}) ✓ ({ms:.1f} ms)")

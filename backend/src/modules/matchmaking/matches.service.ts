@@ -2,6 +2,8 @@ import { Injectable, NotFoundException, ForbiddenException, ConflictException } 
 import { MatchStatus, MaterialClass, Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { SystemConfigService } from '../../common/services/system-config.service';
+import { AiClientService } from '../ai/ai-client.service';
+import { EmbeddingsService } from '../materials/embeddings.service';
 import { ScoringService, CarbonFactors } from './scoring.service';
 import { RejectMatchDto, MatchListQueryDto } from './matches.dto';
 
@@ -10,6 +12,8 @@ const TERMINAL_STATUSES: MatchStatus[] = [MatchStatus.COMPLETED, MatchStatus.REJ
 interface CandidateRow {
   id: string;
   facility_id: string;
+  material_class: MaterialClass | null;
+  description: string;
   quantity_kg: string;
   specs: Record<string, unknown> | null;
   similarity: number;
@@ -44,6 +48,8 @@ export class MatchesService {
     private readonly prisma: PrismaService,
     private readonly scoringService: ScoringService,
     private readonly systemConfig: SystemConfigService,
+    private readonly aiClient: AiClientService,
+    private readonly embeddingsService: EmbeddingsService,
   ) {}
 
   private async getFacilityIdForUser(userId: string): Promise<string> {
@@ -420,7 +426,7 @@ export class MatchesService {
 
     // docs/03 "Vektör ve coğrafya sorguları" referans sorgusuyla birebir aynı desende
     const rows = await this.prisma.$queryRaw<CandidateRow[]>`
-      SELECT i.id, i.facility_id, i.quantity_kg, i.specs,
+      SELECT i.id, i.facility_id, i.material_class, i.description, i.quantity_kg, i.specs,
              1 - (e_out.vector <=> e_in.vector) AS similarity,
              ST_Distance(f_out.location, f_in.location) / 1000 AS distance_km,
              f_in.sector AS sector,
@@ -447,13 +453,38 @@ export class MatchesService {
       return { matches: [], message: 'Şu an uygun eşleşme yok. Yeni tesisler eklendiğinde bildirim alacaksınız.' };
     }
 
+    // Hibrit (BM25+SBERT) yeniden sıralama -- pgvector zaten topK adayı SBERT'e göre
+    // bulup sıraladı, burada sadece "material" faktörüne giren benzerlik skorunu AI'ın
+    // BM25 füzyonuyla güncelliyoruz (bkz. docs/07 /rerank). AI erişilemezse aiClient.rerank
+    // SBERT sırasını olduğu gibi döner (docs/07 H1: eşleştirme AI'a bağımlı kilitlenmez) --
+    // bu satır o durumda no-op'a eşdeğer, hiçbir ek kontrol gerekmez.
+    const outputText = this.embeddingsService.buildOutputText(output);
+    const reranked = await this.aiClient.rerank(
+      outputText,
+      rows.map((row) => ({
+        recordId: row.id,
+        // K-09: $queryRaw ham (lowercase) DB değerini döner, buildInputText ise Prisma'nın
+        // UPPERCASE enum'unu bekler -- embedding zamanında yazılan metinle birebir aynı
+        // metni üretmek için burada da elle çevrilmesi gerekiyor (aşağıdaki satırlarla aynı desen).
+        text: this.embeddingsService.buildInputText({
+          materialClass: row.material_class ? ((row.material_class as string).toUpperCase() as MaterialClass) : null,
+          description: row.description,
+          specs: row.specs,
+          quantityKg: row.quantity_kg,
+        }),
+        sbertSimilarity: row.similarity,
+      })),
+    );
+    const hybridByInputId = new Map(reranked.map((r) => [r.recordId, r.hybridScore]));
+
     const supplyKg = Number(output.stock);
     const scored = rows.map((row) => {
       const demandKg = Number(row.quantity_kg);
       const matchedQty = Math.min(supplyKg, demandKg);
       const distanceKm = row.distance_km !== null ? Number(row.distance_km) : null;
+      const materialSimilarity = hybridByInputId.get(row.id) ?? row.similarity;
 
-      const { score: materialRaw, quantityRatio } = this.scoringService.materialScore(row.similarity, supplyKg, demandKg);
+      const { score: materialRaw, quantityRatio } = this.scoringService.materialScore(materialSimilarity, supplyKg, demandKg);
       const quality = this.scoringService.qualityScore(row.specs, output.composition as Record<string, number> | null);
       const environmental = this.scoringService.environmentalScore(carbonFactors);
       const logistics = this.scoringService.logisticsScore(distanceKm);

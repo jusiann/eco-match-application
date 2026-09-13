@@ -2,13 +2,22 @@
 CREATE EXTENSION IF NOT EXISTS vector;
 
 -- Embeddings tablosu (rapordaki şemaya birebir uyumlu)
+-- text: BM25 hibrit araması için saklanan kaynak metin (enrich_text çıktısı).
+-- Nullable -- vektörü olup metni olmayan eski kayıtlar için hibrit arama
+-- sessizce SBERT'e düşer (bkz. app/routes/classify.py /search).
 CREATE TABLE IF NOT EXISTS embeddings (
     id          SERIAL PRIMARY KEY,
     record_id   VARCHAR(100) NOT NULL,
     record_type VARCHAR(10)  NOT NULL CHECK (record_type IN ('input', 'output')),
     vector      vector(768)  NOT NULL,
+    text        TEXT,
     created_at  TIMESTAMP    DEFAULT NOW()
 );
+
+-- Var olan bir veritabanı hacminde (Docker init script'i yalnızca boş hacimde
+-- çalışır) bu dosya yeniden çalıştırılmasa da kolon eksikse eklensin diye
+-- app/vector_store.py PgVectorStore.connect() da aynı ALTER'ı savunmacı
+-- olarak çalıştırır -- iki taraf da senkron tutulmalı.
 
 -- HNSW indeksi — hızlı kosinüs benzerlik araması
 CREATE INDEX IF NOT EXISTS idx_embeddings_hnsw

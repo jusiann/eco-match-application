@@ -17,7 +17,8 @@ AI servisi **hiçbir şey saklamaz**. Metin alır, vektör veya sınıflandırma
 | Türkçe endüstri sözlüğüyle zenginleştirmek (`enrich_text`) | AI servisi |
 | Vektörü saklamak | **Backend** |
 | `record_id` ile eşleştirmek | **Backend** |
-| Benzerlik araması yapmak | **Backend** (pgvector) |
+| Benzerlik araması yapmak (adayları bulmak) | **Backend** (pgvector) |
+| Bulunan adayları BM25 ile yeniden sıralamak (`/rerank`) | AI servisi (stateless — corpus istekle gelir) |
 | Eşik uygulamak (0.60) | **Backend** |
 | HITL kuyruğuna atmak | **Backend** |
 
@@ -101,6 +102,48 @@ ama **backend de eşiği kendi kontrol eder** — tek kaynağa güvenmiyoruz, e�
 `metal` · `plastic` · `organic` · `chemical` · `textile` · `glass` · `paper` · `other`
 
 Bilinmeyen bir değer gelirse backend bunu hata sayar ve kaydı HITL kuyruğuna alır.
+
+### `POST /rerank`
+
+Backend'in gerçek eşleştirme akışı (`matches.service.ts`) pgvector ile bulduğu topK
+adayı SBERT benzerlikleriyle birlikte gönderir; AI servisi bunları BM25 (kelime) ile
+füzyonlayıp yeniden sıralı döner. **Tamamen stateless** — AI hiçbir şey saklamaz/aramaz,
+`candidates` isteğin içinde gelir, DB'ye dokunulmaz (K-06 ile aynı ilke).
+
+**İstek**
+
+```json
+{
+  "query_text": "Malzeme: METAL. 304 paslanmaz çelik talaşı. Miktar: 500 kg",
+  "candidates": [
+    { "record_id": "550e8400-...", "text": "Malzeme: METAL. Ferrous hurda. Miktar: 1000 kg", "sbert_similarity": 0.72 }
+  ]
+}
+```
+
+`text` alanı, o adayın **embedding'e giren aynı metni** olmalı (`buildInputText` /
+`buildOutputText` çıktısı) — SBERT ve BM25 farklı metinleri tokenize/vektörlerse füzyon
+anlamsız olur. `candidates` en fazla 200 eleman.
+
+**Cevap — 200**
+
+```json
+{
+  "results": [
+    { "record_id": "550e8400-...", "hybrid_score": 0.6980, "bm25_score": 0.31, "sbert_score": 0.72 }
+  ]
+}
+```
+
+`results`, `candidates` ile **birebir aynı küme** — AI hiçbir adayı elemez/eklemez, sadece
+`hybrid_score`'a göre yeniden sıralar. Backend bu skoru `materialScore()`'a girdi olarak
+kullanır (önceden `similarity` idi). AI servisi ulaşılamazsa (H1 tablosu) backend
+`hybrid_score = sbert_score`, `bm25_score = 0` ile devam eder — davranış, bu endpoint hiç
+var olmasaymış gibi olur, eşleştirme AI'a bağımlı kilitlenmez.
+
+Bu endpoint AI'ın kendi `/search`'ünden farklı: `/search` AI'ın kendi (self-contained,
+sadece AI'ın kendi demo/test scriptlerinin kullandığı) pgvector korpusunda arar; `/rerank`
+gerçek backend verisiyle çalışır ve **gerçek kullanıcı eşleşme sonuçlarını etkiler**.
 
 ### `GET /health`
 
@@ -188,7 +231,8 @@ bağımlı olarak kilitlenmez.
 |---|---|
 | `/embed` (çıktı kaydı) | Çıktı **yine kaydedilir**, `embedding_pending = true`, Redis `pending_embeddings` kuyruğuna iş eklenir. Response 201 + `embeddingPending: true` |
 | `/classify` (canlı öneri) | `503 AI_SERVICE_UNAVAILABLE` → istemci sınıf dropdown'ını açar, kullanıcı elle seçer |
-| Eşleştirme | Etkilenmez — zaten embed edilmiş kayıtlarla arama yapılır |
+| Eşleştirme — aday **bulma** (pgvector) | Etkilenmez — zaten embed edilmiş kayıtlarla arama yapılır |
+| Eşleştirme — aday **sıralama** (`/rerank`) | Sessizce SBERT-only sıralamaya döner (`hybrid_score = sbert_score`) — 503/hata kullanıcıya asla yansımaz, `/rerank` bu endpoint için var olmasaymış gibi davranılır |
 
 ### Arka plan işçisi
 
@@ -216,6 +260,7 @@ Backend için anlamı: **aynı metin aynı vektörü döner**, ama her kaydın k
 | `/classify` p95 | < 500 ms | Kullanıcı form yazarken canlı öneri gösteriliyor |
 | `/embed` p95 | < 300 ms | Cache hit'te < 50 ms |
 | `/embed` yük | 100 eşzamanlı istek, p95 < 500 ms | |
+| `/rerank` p95 | < 300 ms | Aday listesi sayfası (`GET /v1/matches/find/:outputId`) her açılışta çağırır, topK≤20 küçük korpus |
 | Backend timeout | 3 s | Bunun üstü fallback |
 
 ## AI ekibine geri besleme
@@ -246,6 +291,7 @@ Backend bu repoda şunları **implemente etmez**, sadece çağırır:
 - FastAPI servisi, SBERT model yükleme
 - `enrich_text()` Türkçe endüstri sözlüğü
 - Sınıflandırıcı ve softmax güven hesabı
+- BM25 hibrit füzyon mantığı (`hybrid_search.py`, alpha kalibrasyonu) — backend sadece `/rerank`'ı çağırır, füzyon formülüne dokunmaz
 - Embedding cache (Redis)
 - AHP kalibrasyon script'i (`scripts/ahp_calibration.py`) — çıktısı admin panelden girilir
 - Doğruluk testleri, golden dataset

@@ -1,9 +1,19 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Output, Input } from '@prisma/client';
+import { Output, Input, MaterialClass, Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AiClientService } from '../ai/ai-client.service';
 
 type RecordType = 'input' | 'output';
+
+// matches.service.ts'in hibrit rerank için pgvector satırından yeniden kullandığı
+// alanlar -- tam Output/Input yerine bu daraltılmış şekli almak, raw SQL satırını
+// (Decimal değil string quantity_kg, vs.) sahte bir Prisma nesnesine cast etmeden
+// aynı metin kurma mantığını paylaşmayı sağlıyor.
+type MaterialTextFields = {
+  materialClass: MaterialClass | null;
+  description: string;
+  quantityKg: Prisma.Decimal | string | number;
+};
 
 // docs/07: metni backend hazırlar, AI servisi (dummy ya da gerçek) sadece vektöre çevirir.
 @Injectable()
@@ -15,7 +25,9 @@ export class EmbeddingsService {
     private readonly aiClient: AiClientService,
   ) {}
 
-  private buildOutputText(output: Output): string {
+  // public: matches.service.ts hibrit rerank için AYNI metni (embedding'e giren metin)
+  // AI'a gönderir -- BM25 ve SBERT farklı metinleri tokenize/vektörlerse füzyon anlamsız olur.
+  buildOutputText(output: MaterialTextFields & { composition: unknown }): string {
     const composition = output.composition as Record<string, number> | null;
     return [
       `Malzeme: ${output.materialClass}`,
@@ -29,7 +41,7 @@ export class EmbeddingsService {
       .join('. ');
   }
 
-  private buildInputText(input: Input): string {
+  buildInputText(input: MaterialTextFields & { specs: unknown }): string {
     const specs = input.specs as Record<string, unknown> | null;
     return [
       `Malzeme: ${input.materialClass}`,

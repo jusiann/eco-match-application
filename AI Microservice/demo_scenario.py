@@ -157,7 +157,7 @@ def adim2_ciktilari_kaydet() -> None:
             continue
         vector = resp.json()["vector"]
         record_id = f"{RECORD_ID_PREFIX}{key}"
-        vector_store.add(record_id, "output", vector)
+        vector_store.add(record_id, "output", vector, text=metin)
         kayitli_id_ler.append(record_id)
         basarili(f"{tesis['ad']:<28} → pgvector'a yazıldı (id={record_id}) {sure_yaz(ms)}")
 
@@ -174,7 +174,7 @@ def adim3_girdileri_kaydet() -> None:
             continue
         vector = resp.json()["vector"]
         record_id = f"{RECORD_ID_PREFIX}{key}"
-        vector_store.add(record_id, "input", vector)
+        vector_store.add(record_id, "input", vector, text=metin)
         kayitli_id_ler.append(record_id)
         basarili(f"{tesis['ad']:<28} → pgvector'a yazıldı (id={record_id}) {sure_yaz(ms)}")
 

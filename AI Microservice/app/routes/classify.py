@@ -9,6 +9,8 @@ from app.schemas import (
 from app.embedder import embedder, enrich_text
 from app.classifier import classifier
 from app.vector_store import vector_store
+from app.hybrid_search import HybridSearcher
+from app.config import settings
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -37,7 +39,13 @@ def classify(req: ClassifyRequest) -> ClassifyResponse:
 
 @router.post("/search", response_model=SearchResponse)
 def search(req: SearchRequest) -> SearchResponse:
-    """Metni vektörle, pgvector'da benzer kayıtları bul."""
+    """Metni vektörle, SBERT (pgvector) + BM25 hibrit sonucunu bul.
+
+    Hibrit füzyon app/hybrid_search.py'deki (alpha=BM25_ALPHA, GELISTIRME-RAPORU.md'de
+    kalibre edilmiş) HybridSearcher ile yapılır. BM25 korpusu bu record_type için metni
+    olan kayıtlardan kurulur (bkz. vector_store.get_texts) -- hiçbir kaydın metni yoksa
+    (eski/eksik veri) sessizce saf SBERT sonucuna düşer.
+    """
     try:
         enriched = enrich_text(req.text)
         vector = embedder.encode(enriched)
@@ -46,12 +54,13 @@ def search(req: SearchRequest) -> SearchResponse:
         raise HTTPException(status_code=503, detail=str(exc))
 
     try:
-        results = vector_store.search(
+        sbert_results = vector_store.search(
             query_vector=vector,
             record_type=req.record_type,
             threshold=req.threshold,
             limit=req.limit,
         )
+        corpus = vector_store.get_texts(req.record_type)
     except RuntimeError as exc:
         # pgvector bağlantısı yoksa
         logger.error("Arama sırasında DB hatası: %s", exc)
@@ -60,7 +69,27 @@ def search(req: SearchRequest) -> SearchResponse:
         logger.exception("Arama sırasında beklenmeyen DB hatası: %s", exc)
         raise HTTPException(status_code=503, detail="Arama sırasında veritabanı hatası oluştu.")
 
-    logger.info("Arama tamamlandı: %d sonuç bulundu (type=%s)", len(results), req.record_type)
+    if corpus:
+        # Her istek için ayrı örnek: paylaşılan bir singleton'ın _bm25/_corpus alanlarını
+        # eşzamanlı istekler arasında yarış durumuna açık bırakmamak için (bu servis sync
+        # def route'ları threadpool'da çalıştırıyor, bkz. AI entegrasyonu notları).
+        searcher = HybridSearcher(alpha=settings.bm25_alpha)
+        searcher.build_index(corpus)
+        fused = searcher.search(enriched, sbert_results, top_k=req.limit)
+        results = [
+            {
+                "record_id": r["record_id"],
+                "similarity": r["hybrid_score"],
+                "bm25_score": r["bm25_score"],
+                "sbert_score": r["sbert_score"],
+            }
+            for r in fused
+        ]
+    else:
+        results = sbert_results
+
+    logger.info("Arama tamamlandı: %d sonuç bulundu (type=%s, hibrit=%s)",
+                len(results), req.record_type, bool(corpus))
     return SearchResponse(results=results, query_text=enriched, total_found=len(results))
 
 

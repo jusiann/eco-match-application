@@ -93,7 +93,14 @@ class SearchRequest(BaseModel):
 
 class SearchResponse(BaseModel):
     """Benzerlik arama sonucu."""
-    results: list[dict] = Field(..., description="[{record_id, similarity}] listesi")
+    results: list[dict] = Field(
+        ...,
+        description=(
+            "[{record_id, similarity}] listesi. Korpusun metni varsa (hibrit arama "
+            "devrede) similarity = hibrit skor olur ve ayrıca bm25_score/sbert_score "
+            "kırılımı da eklenir; metin yoksa similarity saf SBERT kosinüs benzerliğidir."
+        ),
+    )
     query_text: str = Field(..., description="Zenginleştirilmiş arama metni (debug için)")
     total_found: int = Field(..., description="Bulunan sonuç sayısı")
 
@@ -112,3 +119,35 @@ class ReloadPrototypesResponse(BaseModel):
     category: str
     total_examples: int = Field(..., description="Kategorinin DB'deki (aktif) toplam örnek sayısı")
     new_added: int = Field(..., description="Bu istekte gerçekten eklenen (mükerrer olmayan) örnek sayısı")
+
+
+class RerankCandidate(BaseModel):
+    """Backend'in pgvector ile zaten bulduğu bir aday -- SBERT benzerliği hazır gelir,
+    AI servisi bunu yeniden hesaplamaz, sadece BM25 ile füzyonlar."""
+    record_id: str = Field(..., min_length=1, description="Backend'deki input.id (round-trip, AI bunu saklamaz/aramaz)")
+    text: str = Field(
+        ..., min_length=1, max_length=5000,
+        description="Adayın embedding'e giren AYNI metni (ör. buildInputText çıktısı) -- BM25 bununla tokenize eder",
+    )
+    sbert_similarity: float = Field(..., ge=0.0, le=1.0)
+
+
+class RerankRequest(BaseModel):
+    """Stateless yeniden sıralama isteği. AI servisi hiçbir şey saklamaz/aramaz --
+    candidates tamamen bu istekle gelir, DB'ye dokunulmaz (bkz. docs/07 K-06).
+    Backend'in gerçek eşleştirme akışı (matches.service.ts) pgvector ile bulduğu
+    topK adayı buraya gönderir, biz sadece BM25+SBERT füzyon skorunu döneriz."""
+    query_text: str = Field(..., min_length=1, max_length=5000, description="Çıktının embedding metni")
+    candidates: list[RerankCandidate] = Field(..., min_length=1, max_length=200)
+
+
+class RerankResultItem(BaseModel):
+    record_id: str
+    hybrid_score: float = Field(..., description="alpha*bm25 + (1-alpha)*sbert -- bkz. app/hybrid_search.py")
+    bm25_score: float
+    sbert_score: float = Field(..., description="İstekte gelen sbert_similarity ile aynı (round-trip)")
+
+
+class RerankResponse(BaseModel):
+    """candidates ile birebir aynı küme (hiçbiri elenmez/eklenmez), hibrit skora göre sıralı."""
+    results: list[RerankResultItem]

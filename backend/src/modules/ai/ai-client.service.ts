@@ -26,6 +26,30 @@ interface AiEmbedResponse {
   dim: number;
 }
 
+export interface RerankCandidate {
+  recordId: string;
+  text: string;
+  sbertSimilarity: number;
+}
+
+export interface RerankResultItem {
+  recordId: string;
+  hybridScore: number;
+  bm25Score: number;
+  sbertScore: number;
+}
+
+interface AiRerankResponseItem {
+  record_id: string;
+  hybrid_score: number;
+  bm25_score: number;
+  sbert_score: number;
+}
+
+interface AiRerankResponse {
+  results: AiRerankResponseItem[];
+}
+
 // AI Microservice'in kendi kategorileri (Türkçe, büyük harf, 7 tane --
 // AI Microservice/app/classifier.py CATEGORY_EXAMPLES) backend'in
 // MATERIAL_CLASSES'ıyla (İngilizce, küçük harf, 8 tane) örtüşmüyor -- iki ekip
@@ -189,6 +213,39 @@ export class AiClientService {
     } catch (err) {
       this.logger.error(`embed() basarisiz, AI servisine ulasilamadi: ${err}`);
       return { vector: [], model: '', dim: 0, normalized: false };
+    }
+  }
+
+  // Hibrit (BM25+SBERT) yeniden sıralama -- matches.service.ts'in pgvector'den bulduğu
+  // adayları gönderir. Stateless: candidates istekle gider, AI hiçbir şey saklamaz.
+  // docs/07 H1 "Eşleştirme" satırındaki gibi -- AI'a bağımlı KİLİTLENMEZ: erişilemezse
+  // adayları SBERT sırasıyla (hybridScore = sbertSimilarity, bm25Score = 0) olduğu gibi
+  // döndürürüz, çağıran taraf bu değişikliği fark etmeden devam eder.
+  async rerank(queryText: string, candidates: RerankCandidate[]): Promise<RerankResultItem[]> {
+    if (candidates.length === 0) return [];
+    try {
+      const raw = await this.requestWithRetry<AiRerankResponse>('/rerank', {
+        query_text: queryText,
+        candidates: candidates.map((c) => ({
+          record_id: c.recordId,
+          text: c.text,
+          sbert_similarity: c.sbertSimilarity,
+        })),
+      });
+      return raw.results.map((r) => ({
+        recordId: r.record_id,
+        hybridScore: r.hybrid_score,
+        bm25Score: r.bm25_score,
+        sbertScore: r.sbert_score,
+      }));
+    } catch (err) {
+      this.logger.error(`rerank() basarisiz, AI servisine ulasilamadi: ${err}`);
+      return candidates.map((c) => ({
+        recordId: c.recordId,
+        hybridScore: c.sbertSimilarity,
+        bm25Score: 0,
+        sbertScore: c.sbertSimilarity,
+      }));
     }
   }
 }

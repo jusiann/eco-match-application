@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from app.config import settings
 from app.embedder import embedder
 from app.classifier import classifier
-from app.routes import embed, classify
+from app.routes import embed, classify, rerank
 from app.vector_store import vector_store
 
 # Logging kurulumu
@@ -49,3 +49,4 @@ app = FastAPI(
 # Endpoint'leri bağla
 app.include_router(embed.router)
 app.include_router(classify.router)
+app.include_router(rerank.router)
