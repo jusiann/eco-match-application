@@ -81,7 +81,7 @@ Atık ilanlarını hammadde taleplerine anlamsal olarak eşleştiren, atıkları
 - Yüzeysel benzer ama endüstriyel olarak eşleşmeyen çiftler hâlâ yüksek skor alabiliyor
 - Ölçümler sentetik test setinde yapılmıştır; saha verisiyle doğrulama roadmap'tedir
 
-Modelin v1'den v9'a kadar nasıl geliştiği, hangi noktalarda hata alındığı ve nasıl çözüldüğü ölçüm grafikleriyle belgelenmiştir → [`docs/GELISTIRME-RAPORU.md`](docs/GELISTIRME-RAPORU.md)
+Modelin v1'den v9'a kadar nasıl geliştiği, hangi noktalarda hata alındığı ve nasıl çözüldüğü ölçüm grafikleriyle belgelenmiştir → [`GELISTIRME-RAPORU.md`](GELISTIRME-RAPORU.md)
 
 ## Test Paketi
 
