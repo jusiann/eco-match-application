@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Eco-Match Backend using NestJS & Fastify",
   "private": true,
-  "license": "UNLICENSED",
+  "license": "MIT",
   "scripts": {
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\"",

@@ -1,0 +1,19 @@
+EcoMatch Projesi - Lisans Bilgilendirme Notu (NOTICE)
+Telif Hakkı (c) 2026 VectorMatch Takımı
+
+EcoMatch projesinin kaynak kodu MIT Lisansı altında yayımlanmaktadır. Uygulamamızı geliştirmek için kullandığımız bağımlılıkların ve eklentilerin lisans uyumluluk durumları aşağıda açıklanmıştır:
+
+1. Uygulama Lisansı
+Bu proje ve tarafımızca yazılan tüm kodlar MIT Lisansı ile sunulmaktadır.
+
+2. Veritabanı ve PostGIS (GPL-2.0)
+Projede coğrafi mesafe hesaplamaları için kullanılan PostGIS veritabanı eklentisi GPL-2.0 lisanslıdır. Ancak bu eklenti, veritabanı sunucu sürecinde ayrı bir bileşen olarak çalışmaktadır. Uygulama kodu veritabanıyla sadece standart SQL sorguları üzerinden, ağ veya süreçler arası iletişim ile haberleştiği için GPL lisansının kopya bırakma (copyleft) şartı uygulama kodunu etkilemez.
+
+3. pgvector ve PostgreSQL
+pgvector, pgcrypto eklentileri ve PostgreSQL veritabanı sunucusu, açık kaynaklı ve esnek olan PostgreSQL Lisansı altında sunulmaktadır. 
+
+4. AI Modelleri ve Bileşenleri
+SBERT embedding üretimi için kullanılan sentence-transformers ve "all-mpnet-base-v2" modeli Apache-2.0 lisansına sahiptir. Python tarafında veritabanı bağlantısı için kullanılan psycopg2-binary, LGPL altındadır ve paylaşımlı (shared) kütüphane olarak bağlandığı için kaynak kodu açma zorunluluğu doğurmamaktadır. 
+
+5. Diğer Bağımlılıklar
+Kullanılan tüm diğer kütüphane ve araçlar MIT, Apache-2.0 veya BSD gibi projemizin MIT lisansıyla tam uyumlu olan açık kaynak lisanslarına sahiptir. Detaylı dökümantasyona "docs/14-kutuphane-ve-lisanslar.md" üzerinden erişebilirsiniz.

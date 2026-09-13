@@ -1,7 +1,7 @@
 # EcoMatch Web Panel
 
-EcoMatch, yapay zeka destekli endüstriyel simbiyoz ve sürdürülebilirlik yönetim platformudur.
-Bu panel, tesislerin atıklarını yönetmesini, eşleştirmeler almasını ve SKDM (CBAM) / Dijital
+EcoMatch, yapay zekâ destekli endüstriyel simbiyoz ve sürdürülebilirlik yönetim platformudur.
+Bu panel, tesislerin atıklarını yönetmesini, eşleştirmeler bulmasını ve SKDM (CBAM) / Dijital
 Ürün Pasaportu (DPP) raporlarını oluşturmasını sağlayan Next.js kontrol panelidir.
 
 Uygulama tamamen istemci tarafında çalışan tek sayfalık bir SPA'dır (`next.config.ts` →
@@ -10,151 +10,141 @@ dosyaları nginx sunar.
 
 ---
 
-## Docker ile çalıştırma (önerilen)
+## 1. Docker ile Çalıştırma (Önerilen)
 
-Repo kökünden:
+Repo kökünden tek komutla tüm yığını ayağa kaldırabilirsiniz:
 
 ```bash
 docker compose up --build
 ```
 
-Uygulama: **http://localhost:8080**
+**Uygulama Adresi: http://localhost:8080**
 
 Bu tek adres hem arayüzü hem API'yi sunar. `web` konteynerindeki nginx şu yolları backend'e
-ters vekil olarak iletir:
+ters vekil (reverse proxy) olarak iletir:
 
-| Yol | Hedef |
-|---|---|
-| `/v1/*` | REST API (backend global prefix'i) |
-| `/health`, `/health/ready` | Sağlık uçları (`/v1` prefix'inin dışında) |
-| `/socket.io/*` | Canlı bildirim akışı (WebSocket yükseltmesiyle) |
-| `/api/docs` | Swagger |
-| diğer her şey | Statik SPA (bilinmeyen yollar `index.html`'e düşer) |
+| Yol | Hedef | Açıklama |
+|---|---|---|
+| `/v1/*` | REST API | Backend global prefix'i (`http://backend:3000`) |
+| `/health`, `/health/ready` | Sağlık Uçları | Sistem sağlık kontrolleri |
+| `/socket.io/*` | WebSocket | Canlı bildirim akışı (WebSocket yükseltmesiyle) |
+| `/api/docs` | Swagger | OpenAPI dokümantasyon arayüzü |
+| Diğer her şey | Statik SPA | Bilinmeyen tüm yollar `index.html`'e düşer |
 
-### Neden ters vekil?
+### Neden Ters Vekil?
+Frontend ve backend tarayıcı açısından **aynı origin'de** (`localhost:8080`) çalışır:
+- **CORS Devre Dışı:** Preflight istekleri kalkar, origin listesi tutmaya gerek kalmaz.
+- **Güvenli Çerezler (httpOnly):** Refresh token'ın httpOnly cookie'si (K-18, `path=/v1/auth`, `SameSite=Lax`) sorunsuz çalışır.
+- **Port İzolasyonu:** Frontend imajı backend'in ana makine (host) portunu bilmek zorunda kalmaz.
 
-Frontend ve backend tarayıcı açısından **aynı origin'de** olur. Sonuçları:
-
-- CORS hiç devreye girmez — preflight yok, origin listesi tutmaya gerek yok.
-- Refresh token'ın httpOnly cookie'si (K-18, `path=/v1/auth`, `SameSite=Lax`) olduğu gibi
-  çalışır; `SameSite=None; Secure` gerektirmediği için http üzerinde geliştirirken de
-  oturum kalıcı olur.
-- Frontend imajı backend'in host portunu bilmek zorunda kalmaz.
-
-### Backend adresini değiştirme
-
-nginx'in hedefi `BACKEND_ORIGIN` ortam değişkeniyle belirlenir
-(`web/docker-compose.yml` → varsayılan `http://backend:3000`). Değiştirmek için imajı
-**yeniden derlemek gerekmez**, konteyneri yeniden başlatmak yeterlidir.
-
-`NEXT_PUBLIC_API_URL` ise bundan farklıdır: `next build` sırasında JS bundle'ına gömülür,
-sonradan değiştirilemez. Docker imajı bunu `"/"` (same-origin) ile derler — yani gerçek
-hedefi her zaman `BACKEND_ORIGIN` belirler.
-
-### Backend kapalıyken
-
-nginx, backend adını konteyner ayağa kalkarken değil **istek geldiğinde** çözer. Bu yüzden
-backend kapalıyken de arayüz açılır; uygulama kendi `/health/ready` yoklamasıyla "sistem
-geçici olarak bakımda" uyarısını gösterir (H2). Bu nedenle `web` servisinin backend'e
-`depends_on` bağımlılığı yoktur ve `cd web && docker compose up` tek başına da çalışır.
+### Backend Kapalıyken
+Nginx, backend adresini konteyner ayağa kalkarken değil **istek geldiğinde** dinamik olarak çözer (`resolver 127.0.0.11`). Bu sayede backend kapalıyken de arayüz açılır; uygulama kendi `/health/ready` yoklamasıyla "sistem geçici olarak bakımda" uyarısını gösterir (H2). `cd web && docker compose up` tek başına da çalışabilir.
 
 ---
 
-## Yerel geliştirme (`npm run dev`)
+## 2. Yerel Geliştirme (`npm run dev`)
 
 ```bash
+cd web
 npm install
-cp .env.example .env.local   # backend adresini kendi ortamınıza göre düzenleyin
+cp .env.example .env.local   # Backend adresini kendi ortamınıza göre düzenleyin
 npm run dev -- -p 3002
 ```
 
-`.env.local` içindeki `NEXT_PUBLIC_API_URL`, backend'i hangi adreste çalıştırdığınızla
-**birebir eşleşmelidir**:
+`.env.local` içindeki `NEXT_PUBLIC_API_URL`, backend'i hangi adreste çalıştırdığınızla birebir eşleşmelidir:
 
-| Backend nasıl çalışıyor | Değer |
+| Backend Nasıl Çalışıyor | Değer |
 |---|---|
 | Docker'da (`docker compose up`) | `http://localhost:3001` |
 | Yerelde `npm run dev` | `http://localhost:3000` (backend `.env` → `PORT`) |
 
-Değişken hiç tanımlı değilse `http://localhost:3001` varsayılır.
+*Değişken tanımlı değilse varsayılan `http://localhost:3001` kullanılır.*
 
-Frontend'i backend ile **aynı portta çalıştırmayın** — biri diğerini engeller, yukarıdaki
-gibi `-p 3002` verin.
-
-Bu kurulumda frontend ile backend farklı origin'lerde olacağı için CORS devreye girer.
-Backend `credentials: true` ile yapılandırılmıştır ve `CORS_ORIGINS` tanımlı değilse
-isteğin kendi origin'ini yansıtır — yani ek bir ayar gerekmez. Sıkılaştırmak isterseniz
-`backend/.env` içine `CORS_ORIGINS="http://localhost:3002"` yazabilirsiniz.
+Frontend'i backend ile **aynı portta çalıştırmayın** (3000/3001 doludur), yukarıdaki gibi `-p 3002` verin. Bu durumda CORS devreye girer; backend `credentials: true` ile yapılandırılmıştır ve gelen origin'i otomatik yansıtır.
 
 ---
 
-## Build
+## 3. Derleme ve Statik Export (Build)
 
 ```bash
 npm run build
 ```
 
-Statik export (`output: "export"`) üretir, çıktı `out/` klasöründe oluşur. Docker imajı da
-tam olarak bunu üretip nginx'e kopyalar.
+Statik export (`output: "export"`) üretir, çıktı `out/` klasöründe oluşur. Docker imajı da çok aşamalı derleme (multi-stage build) ile tam olarak bunu üretip Nginx'e kopyalar.
 
 ---
 
-## Kod haritası
+## 4. Entegrasyon ve Mimari Düzeltmeler
+
+Uygulama monorepo'ya taşınırken yapılan kritik entegrasyon çözümleri:
+
+1. **`basePath` Kaldırıldı:** Eski GitHub Pages özel `basePath: "/DonguNetWeb"` kaldırıldı; uygulama kök adreste çalışır.
+2. **CORS `credentials: true`:** `backend/src/main.ts` içinde `credentials: true` aktifleştirildi; tarayıcının refresh token `Set-Cookie` başlığını yok sayması engellendi.
+3. **Gövdesiz POST İstekleri (500 Hatası Çözüldü):** Fastify'ın boş gövdeli `application/json` isteklerinde 500 fırlatması sorunu çözüldü (`POST /v1/auth/refresh` artık sayfa her yenilendiğinde oturumu korur).
+4. **Marka Adı Güncellemesi:** Arayüzdeki tüm eski proje isimleri ("DöngüNet", "SymbioLoop") **EcoMatch** olarak standardize edildi.
+
+---
+
+## 5. Kod Haritası
 
 ```
-src/app/page.tsx                 Tüm uygulama durumu + görünüm yönlendirmesi
-src/lib/api.ts                   Tek API istemcisi — her uç burada tiplenir
-src/lib/session.ts               Access token (localStorage); refresh token httpOnly cookie'de
-src/lib/notificationsSocket.ts   Socket.IO /v1/notifications/stream
-src/components/                  Görünümler ve modal'lar
-src/components/PassportView/     DPP QR kodunun açtığı herkese açık pasaport sayfası
+src/
+├── app/
+│   ├── layout.tsx                Kök layout ve font yapılandırması
+│   └── page.tsx                  Tüm uygulama görünüm yönlendirmesi (Routing)
+├── lib/
+│   ├── api.ts                    Tek tip API istemcisi (tüm /v1 uçları tipli)
+│   ├── session.ts                Access token (localStorage) & oturum durumu
+│   └── notificationsSocket.ts    Socket.IO /v1/notifications/stream istemcisi
+└── components/
+    ├── DashboardView/            Genel istatistikler ve akış kartları
+    ├── MaterialsView/            Atık (çıktı) ve girdi yönetim ekranları
+    ├── MatchesView/              5 faktörlü eşleştirme ve kabul/red paneli
+    ├── OsbDashboardView/         OSB yöneticisi bölge paneli ve Leaflet haritası
+    ├── ReviewQueueView/          HITL alan uzmanı onay kuyruğu
+    ├── AdminView/                Tesis doğrulama ve AHP ağırlık kalibrasyonu
+    ├── ReportsView/              Çevresel etki, CBAM ve DPP rapor indirme
+    ├── ChatbotView/              Yerel güvenli asistan sohbet penceresi
+    └── PassportView/             DPP QR kodunun açtığı herkese açık doğrulama sayfası
 ```
 
-### DPP QR kodu → `/dpp/<passportId>?sig=<hmac>`
-
-Backend, pasaport QR'ını `PUBLIC_BASE_URL` önekiyle üretir (`dpp.service.ts#buildQrUrl`);
-Docker'da bu değer web konteynerinin adresidir (`http://localhost:8080`). Kodu okutan
-kişinin oturumu olmayabilir — doğrulama JWT ile değil, HMAC imzasıyla yapılır.
-
-`output: "export"` kullanıldığı için dinamik bir route segmenti (`app/dpp/[id]`)
-`generateStaticParams` olmadan üretilemez; pasaport id'leri derleme anında bilinemez. Bunun
-yerine nginx bilinmeyen yolları `index.html`'e düşürür ve yol `page.tsx` içinde istemci
-tarafında ele alınır (`parsePassportRoute`).
+### DPP QR Kodu: `/dpp/<passportId>?sig=<hmac>`
+Backend, pasaport QR'ını `PUBLIC_BASE_URL` önekiyle üretir (`http://localhost:8080`). Kodu taratan kişinin oturumu olmayabileceğinden doğrulama JWT ile değil, HMAC-SHA256 imzasıyla yapılır. Statik export kısıtını aşmak için Nginx bilinmeyen yolları `index.html`'e düşürür ve `page.tsx` rotayı istemci tarafında yakalar (`parsePassportRoute`).
 
 ---
 
-## Backend'e bağlı olan / olmayan kısımlar
+## 6. Backend ve Servis Entegrasyon Durumu
 
-**Gerçek `/v1/*` çağrıları yapıyor:**
+### Gerçek `/v1/*` Çağrıları ile Canlı Çalışan Modüller:
+- **Kimlik Doğrulama:** Kayıt, giriş, profil, oturum kapatma, çerez tabanlı rotasyonlu token yenileme.
+- **Tesis Yönetimi:** Tesis profili (`/v1/facilities/me`), doğrulama belgesi yükleme.
+- **Malzeme Yönetimi:** Çıktı ve girdi CRUD işlemleri, DPP pasaport üretimi.
+- **AI Eşleştirme ve Sınıflandırma:**
+  - `POST /v1/materials/outputs`: Canlı Python FastAPI SBERT servisi üzerinden 768 boyutlu normalize vektör üretir (`ai-service:8000`).
+  - `POST /v1/ai/classify`: 7 kategorili canlı atık sınıflandırma.
+- **Eşleştirme Motoru:** pgvector HNSW kosinüs benzerliği, PostGIS mesafe hesabı, 5 faktörlü AHP skorlama, kabul/red/iletişim bilgisi açma (`/v1/matches/:id/contact`).
+- **Raporlama:** Çevresel etki ve SKDM (CBAM) PDF çıktısı, DPP JSON verisi (`ReportsView`).
+- **Admin ve HITL:** Tesis onaylama, kullanıcı yönetimi, inceleme kuyruğu (`review_queue`), AHP ağırlıkları, IoT API anahtarları.
+- **Bildirimler:** Veritabanı bildirim geçmişi ve canlı WebSocket (Socket.IO) akışı.
+- **OSB Paneli:** Bölge istatistikleri, Leaflet haritası, aylık PDF/XLSX rapor üretimi.
 
-- Auth: register / login / me / logout / refresh (cookie tabanlı oturum geri yükleme)
-- Tesis: `facilities/me`, doğrulama belgesi yükleme
-- Materials: outputs/inputs CRUD, DPP pasaport üretimi
-- Matches: list / find / accept / reject **/ contact** (iletişim bilgileri yalnızca eşleşme
-  `completed` olduğunda açılır — `SuccessModal`)
-- **Reports: çevresel etki ve SKDM (CBAM) PDF'leri, DPP pasaport verisi** (`ReportsView`)
-- Admin: kullanıcılar, tesis doğrulama, review-queue, AHP ağırlıkları, API anahtarları
-- Notifications: liste + canlı WebSocket akışı (Header'daki "Bağlı" rozeti gerçek soket
-  durumunu gösterir)
-- OSB paneli: stats / facilities / map / aylık rapor indirme
-- OSB listesi (kayıt formundaki dropdown)
-
-**Bağlı DEĞİL — bilinçli olarak:**
-
-- **Chatbot** (`ChatbotView`, `ChatWidget`): anahtar kelime eşleştirmeli yerel bir sezgisel
-  yapı. Backend'de `POST /v1/chat` ve `POST /v1/ai/classify` uçları var ama şu an dummy bir
-  istemci tarafından besleniyorlar (K-24, K-31). Gerçek AI servisi devreye girdiğinde
-  bağlanacak.
-- `DashboardView`'daki IoT ve "Prophet AI" grafikleri: örnek veriyle çizilen görselleştirme
-  (backend'de karşılık gelen zaman serisi ucu yok).
+### Veri Güvenliği Nedeniyle Yerel Çalışan Modüller:
+- **Chatbot (`ChatbotView`, `ChatWidget`):** Şartname Madde 10.5 gereğince ("Bakanlık verileri izinsiz üçüncü taraf YZ servislerine aktarılamaz"), harici bulut LLM API'leri yerine yerel deterministik soru-cevap kütüphanesi ile çalışır. Hiçbir tesis veya veri tabanı bilgisi dışarı sızmaz.
 
 ---
 
-## Bilinen veri boşlukları
+## 7. Demo Giriş Bilgileri ve Oturum Kuralları
 
-- **`GET /v1/osbs` boş dönüyor** — migration'larda OSB seed verisi yok. Kayıt formundaki OSB
-  dropdown'u bu yüzden boş; alan zaten opsiyonel, ama OSB_MANAGER paneli veri olmadan
-  anlamlı çalışmaz.
-- **`GET /materials/outputs` pasaport ilişkisini döndürmüyor** — pasaport id'si yalnızca
-  aynı oturumda `POST /materials/outputs` ile oluşturulmuş kayıtlar için bilinir. Raporlar
-  ekranındaki DPP kartı ve `DppModal` bunu dürüstçe belirtir.
+Tüm test hesapları `013_demo_seed_data.sql` ile otomatik yüklenmiştir.
+
+> **Evrensel Demo Şifresi:** `Ecomatch2026!`
+
+| E-posta | Rol | Test Senaryosu |
+|---|---|---|
+| `aylin@dokutekstil.com.tr` | Tesis Yetkilisi | Çıktı ekleme, anında AI sınıflandırması, eşleşme arama |
+| `ali@yapigrup.com.tr` | Tesis Yetkilisi | Karşı teklifi inceleme, eşleşmeyi kabul etme |
+| `mehmet@bursaniluferosb.gov.tr` | OSB Yöneticisi | Bölgesel dashboard, harita analizi, aylık rapor indirme |
+| `kaan@ecomatch.app` | HITL Uzmanı | Düşük güvenli (<%80) sınıflandırmaları denetleme ve onaylama |
+| `ayse@ecomatch.app` | Sistem Admini | Tesis doğrulama, AHP kalibrasyonu, IoT API key üretimi |
+
+> **Önemli Oturum Kuralı (K-18):** Oturum tektir. Aynı kullanıcıyla yeni bir giriş yapıldığında veritabanındaki `refreshToken` sütunu güncellenir ve önceki oturum düşürülür. Bu güvenlik tasarımı gereğidir, hata değildir.

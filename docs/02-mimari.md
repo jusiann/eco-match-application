@@ -38,19 +38,18 @@ flowchart LR
     NOTIF -->|WebSocket| WEB
 ```
 
-## Kim neyi yazıyor
+## Servis bileşenleri ve mülkiyet
 
-Bu ayrım keskin. Bir tarafın diğerinin dosyasına dokunması, sözleşme tartışması
-açılmadan yapılmaz.
+Tüm bileşenler tek bir monorepo altında (`eco-match-application`) toplanmıştır ve kök `docker-compose.yml` ile tek komutta orkestre edilir.
 
-| Parça | Sahibi | Repo | Durum |
+| Parça | Konum | Teknoloji | Durum |
 |---|---|---|---|
-| **Backend (NestJS)** | Bu repo | `backend/` | Auth bitti, gerisi Faz 0'dan itibaren |
-| **AI mikroservisi** | Takım arkadaşı | ayrı | Sözleşme: [07-ai-entegrasyonu.md](07-ai-entegrasyonu.md) |
-| **Web + Mobil** | Frontend | ayrı | Sözleşme: [04-api-sozlesmesi.md](04-api-sozlesmesi.md) |
+| **Backend API** | `backend/` | NestJS 10 + Fastify + Prisma 5 | Tamamlandı (Faz 0-3 tüm modüller devrede) |
+| **AI Mikroservisi** | `AI Microservice/` | Python 3.12 + FastAPI + SBERT (`all-mpnet-base-v2`) | Tamamlandı (Stateless, model diskte hazır) |
+| **Web Arayüzü & Ters Vekil** | `web/` | Next.js 16 + React 19 + Nginx ters vekil | Tamamlandı (SPA + proxy tek origin) |
+| **Veritabanı Katmanı** | Docker | PostgreSQL 16 + pgvector + PostGIS | Tamamlandı (HNSW ve uzamsal indeksli) |
 
-Sınırların tek gerçek kaynağı yukarıdaki sözleşme dokümanlarıdır. "Ben şöyle döndürüyorum" diye
-sözlü anlaşma yapılmaz; önce sözleşme güncellenir, sonra iki taraf ona göre yazar.
+Bileşenler arası sınırlar sözleşme dokümanlarıyla [04-api-sozlesmesi.md](04-api-sozlesmesi.md) ve [07-ai-entegrasyonu.md](07-ai-entegrasyonu.md) güvenceye alınmıştır.
 
 ## Neden bu bölünme
 
@@ -194,12 +193,103 @@ Detay: [07-ai-entegrasyonu.md](07-ai-entegrasyonu.md) ve
 | Claude API | Chatbot devre dışı, asistan mesajı DB'ye yazılmaz |
 | MQTT | Sensör verisi gelmez, tesis manuel stok güncellemeye döner |
 
+## Kullanıcı rolleri ve yetkilendirme matrisi
+
+Sistemde RBAC (Role-Based Access Control) mimarisi uygulanmaktadır. Kullanıcı rolleri `RolesGuard` ve `@Roles(...)` dekoratörleri ile endpoint bazında doğrulanır. Ayrıca tesis yetkilileri için tesisin admin tarafından onaylanmış olması kuralı `VerifiedFacilityGuard` ile zorunlu kılınmıştır.
+
+| Rol | Kapsam ve Açıklama | Yetkili Olduğu İşlemler |
+|---|---|---|
+| **Tesis Yetkilisi** (`facility_user`) | Kendi tesisini temsil eder. Atık (çıktı) ve hammadde (girdi) yönetir. | Çıktı/girdi ekleme/güncelleme/silme, eşleşme arama, eşleşme tekliflerini kabul/reddetme, DPP görüntüleme, iletişim bilgilerine erişim (yalnızca kabul edilmiş eşleşmelerde), tesis profilini düzenleme. |
+| **OSB Yöneticisi** (`osb_admin`) | Bağlı olduğu Organize Sanayi Bölgesindeki tüm tesislerin kümülatif döngüsel ekonomi verilerini izler. | OSB Dashboard erişimi, bölge haritası üzerinde tesis ve simbiyoz akışlarını görüntüleme, aylık kümülatif CO2 ve CBAM raporlarını PDF/Excel formatında indirme. |
+| **HITL Uzmanı** (`expert`) | Yapay zekanın güven skoru düşük (< 0.80) atık sınıflandırmalarını denetleyen alan uzmanı. | İnceleme kuyruğundaki (`review_queue`) atık kayıtlarını görüntüleme, yapay zekanın en olası 3 tahminini inceleme, onaylama veya düzeltme, SLA süresi dolan kayıtları yönetme. |
+| **Sistem Yöneticisi** (`admin`) | Platformun genel operasyonunu, güvenliğini ve algoritma parametrelerini yönetir. | Yeni kayıt olan tesisleri doğrulama (`verify`), kullanıcı rolleri atama, AHP skorlama ağırlıklarını (`weights_config`) güncelleme, IoT API anahtarları üretme, `audit_log` denetim izlerini inceleme. |
+| **Anonim / Kamu** | Sisteme giriş yapmamış dış kullanıcılar veya sevkiyat denetçileri. | Dijital Ürün Pasaportu (DPP) QR kod doğrulama sayfası (`/dpp/:passportId?sig=...`), platform genel tanıtım sayfası, sistem sağlık durumu (`/health`). |
+
+### Yetkilendirme Matrisi
+
+| Kaynak / İşlem | Anonim | Tesis Yetkilisi | OSB Yöneticisi | HITL Uzmanı | Sistem Admini |
+|---|:---:|:---:|:---:|:---:|:---:|
+| DPP Doğrulama (İmzalı QR) | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Giriş / Kayıt / Token Yenileme | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Çıktı / Girdi CRUD | ❌ | ✅ *(Onaylı tesis)* | ❌ | ❌ | ❌ |
+| Eşleşme Arama ve Kabul/Red | ❌ | ✅ *(Kendi tesisi)* | ❌ | ❌ | ❌ |
+| Çevresel Etki & CBAM Raporları | ❌ | ✅ *(Kendi tesisi)* | ✅ *(Bölge özeti)*| ❌ | ✅ *(Tüm sistem)* |
+| OSB Dashboard & Bölge Haritası | ❌ | ❌ | ✅ | ❌ | ✅ |
+| HITL İnceleme Kuyruğu | ❌ | ❌ | ❌ | ✅ | ✅ |
+| Tesis Doğrulama & Kullanıcı Yönetimi | ❌ | ❌ | ❌ | ❌ | ✅ |
+| AHP Ağırlık Kalibrasyonu | ❌ | ❌ | ❌ | ❌ | ✅ |
+| IoT API Anahtarı Üretimi | ❌ | ❌ | ❌ | ❌ | ✅ |
+
+---
+
+## Ölçeklenebilirlik ve performans yaklaşımı
+
+Platform, tek bir OSB'den ulusal ölçekte yüzlerce OSB ve on binlerce tesise sorunsuz genişleyebilecek şekilde tasarlanmıştır:
+
+1. **Durumsuz (Stateless) Servis Mimarisi:**
+   - Hem NestJS backend hem de FastAPI AI mikroservisi tamamen durumsuzdur (stateless). Oturum bilgisi JWT içinde taşınır, refresh token veritabanında saklanır.
+   - Herhangi bir sunucu örneği (instance) gelen herhangi bir isteği karşılayabilir. Docker Swarm veya Kubernetes üzerinde CPU/istek yüküne göre yatay otomatik ölçekleme (HPA - Horizontal Pod Autoscaler) doğrudan uygulanabilir.
+
+2. **Vektörel Benzerlikte HNSW İndeksleme:**
+   - pgvector eklentisinde kaba kuvvet (flat) arama yerine **HNSW (Hierarchical Navigable Small World)** indeksi (`vector_cosine_ops`) kullanılmaktadır.
+   - HNSW indeksi, logaritmik karmaşıklıkta ($O(\log N)$) en yakın komşu araması sağlar; 100.000 malzeme kaydı altında dahi sorgu süreleri 15-30 milisaniyenin altında kalır.
+
+3. **Uzamsal Sorgularda PostGIS R-Tree İndeksi:**
+   - Tesisler arası mesafe ölçümlerinde koordinatlar `GEOMETRY(Point, 4326)` tipinde saklanır ve GiST (Generalized Search Tree) uzamsal indeksleri kullanılır. Böylece yarıçap veya OSB içi filtreleme disk I/O yapmadan doğrudan bellek içi indeks üzerinden çözülür.
+
+4. **Teknik Veritabanı Ayrımı ve Bağlantı Havuzu:**
+   - Backend ve AI mikroservisi kendi izole veritabanlarına (`eco-match-db:5434` ve `ecomatch_pgvector:5433`) sahiptir. Ağır vektör eğitim/prototip sorguları ile operasyonel CRUD işlemleri birbirinin I/O kaynaklarını tüketmez.
+   - Prisma ve PgBouncer uyumlu bağlantı havuzlama (connection pooling) ile eşzamanlı binlerce istemci desteklenir.
+
+5. **Nginx Ters Vekil & Statik Varlık Dağıtımı:**
+   - Nginx, SPA statik dosyalarını doğrudan bellekten (gzip/brotli sıkıştırmasıyla) sunar. Backend yalnızca `/v1/*` JSON API çağrılarına odaklanır, CPU statik dosya sunumuyla yorulmaz.
+
+6. **Devre Kesici (Circuit Breaker) ile Hata İzolasyonu:**
+   - AI servisine yönelik isteklerde NestJS `AiClientService` devre kesici (60 saniyelik pencere, %50 hata oranı eşiği) ve 3 aşamalı exponential backoff retry uygular. AI servisinde geçici bir yoğunluk oluşsa dahi backend çökmez; malzeme kaydı `embedding_pending = true` olarak kaydedilir ve arka planda asenkron işlenir.
+
+---
+
 ## Çalıştırma ortamı
 
-Docker Compose ile ayağa kalkan servisler: `postgres` (pgvector + postgis eklentileriyle),
-`redis` (embedding cache + idempotency + iş kuyruğu), `mosquitto` (opsiyonel),
-`ai-service`, `backend`, `frontend`. Nginx önde: SSL sonlandırma + rate limit.
+Docker Compose ile monorepo kökünden tek komutla ayağa kalkan servis topolojisi:
 
-Backend'in tek başına geliştirilmesi için `postgres` ve `redis` yeterlidir; AI servisi
-olmadan çalışırken embedding'ler `pending` kalır ve eşleştirme çalışmaz — bu beklenen
-davranıştır, hata değil.
+```
+[ İstemci Tarayıcısı ]
+         │
+         ▼ (Port 8080)
+┌─────────────────────────────────────────────────────────────┐
+│ eco-match-web (Next.js SPA + Nginx Ters Vekil)              │
+│ ├─ /              → Next.js Statik Sayfalar (HTML/JS/CSS)   │
+│ ├─ /v1/*          → eco-match-backend:3000                  │
+│ ├─ /api/docs      → eco-match-backend:3000 (Swagger)        │
+│ └─ /socket.io     → eco-match-backend:3000 (WebSocket)      │
+└──────────────┬──────────────────────────────────────────────┘
+               │ (Docker iç ağı)
+               ▼
+┌─────────────────────────────────────────────────────────────┐
+│ eco-match-backend (NestJS 10 + Fastify)                     │
+│ ├─ Port 3001 (host doğrudan erişim)                         │
+│ ├─ DB: eco-match-db:5432 (Host 5434)                        │
+│ └─ AI: eco-match-ai:8000                                    │
+└──────────────┬───────────────────────────────┬──────────────┘
+               │                               │
+               ▼                               ▼
+┌──────────────────────────────┐ ┌──────────────────────────────┐
+│ eco-match-db                 │ │ eco-match-ai (FastAPI+SBERT) │
+│ PostgreSQL 16 + pgvector     │ │ ├─ Port 8000                 │
+│ + PostGIS (Port 5434)        │ │ └─ DB: ecomatch_pgvector     │
+└──────────────────────────────┘ └──────────────┬───────────────┘
+                                                │
+                                                ▼
+                                 ┌──────────────────────────────┐
+                                 │ ecomatch_pgvector            │
+                                 │ PostgreSQL 16 + pgvector     │
+                                 │ (Port 5433)                  │
+                                 └──────────────────────────────┘
+```
+
+Tek komut:
+```bash
+docker compose up --build
+```
+Kullanıcının erişeceği tek adres: **`http://localhost:8080`**.

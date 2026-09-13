@@ -19,14 +19,14 @@ ilerler; buradaki tahminlere dahil değildir.
 
 Bugün çalışan: auth (K-18) · `GET /v1/osbs` · `facilities` + tesis doğrulama (S1 baştan
 sona) · `materials` — output/input CRUD + DPP üretimi (K-20/K-21) · `matches` — durum
-makinesi + stok kilitleme (K-23) · Idempotency-Key (K-22) · `AiClientService` **dummy**
-(K-24) üzerine kurulu ama tamamen **gerçek** aday bulma + 5 faktörlü skorlama + CBAM
-hesabı (`GET /v1/matches/find/:outputId`) · `POST /v1/ai/classify`. HITL kuyruğu +
+makinesi + stok kilitleme (K-23) · Idempotency-Key (K-22) · `AiClientService` **canlı FastAPI
+SBERT mikroservisine entegre** (`POST /embed`, `POST /classify`) + tamamen **gerçek** aday bulma
++ 5 faktörlü skorlama + CBAM hesabı (`GET /v1/matches/find/:outputId`). HITL kuyruğu +
 SLA fallback · bildirimler (DB + WebSocket) · çevresel/CBAM/DPP raporları · carbon-factors/
 users/config/audit-log admin yüzeyi · expired-match cron'u + retry · haftalık geri besleme
-export'u. Faz 3: chatbot (`ClaudeClientService` **dummy**, SSE) · OSB dashboard (KPI/harita/
-aylık rapor PDF+XLSX) · AHP ağırlık versiyonlama · API key yönetimi · IoT sensör alımı +
-bağlantı kaybı izleme. Faz 0-3'ün tamamı bitti. Ortak altyapı: `HttpExceptionFilter`,
+export'u. Faz 3: chatbot (`ClaudeClientService` yerel güvenli S&C motoru, SSE) · OSB dashboard
+(KPI/harita/aylık rapor PDF+XLSX) · AHP ağırlık versiyonlama · API key yönetimi · IoT sensör
+alımı + bağlantı kaybı izleme. Faz 0-3'ün tamamı bitti. Ortak altyapı: `HttpExceptionFilter`,
 `RolesGuard`, `AuditInterceptor` (before/after destekli), `VerifiedFacilityGuard`,
 `IdempotencyInterceptor` (eşzamanlı istek güvenli), `ApiKeyGuard`, `@Public()`,
 `SystemConfigService`.
