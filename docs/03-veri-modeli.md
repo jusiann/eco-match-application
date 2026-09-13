@@ -572,3 +572,85 @@ Bunlar bilinçli borç, bug değil:
 - Dosya depolama (belge, PDF, QR) MVP'de yerel disk; S3/MinIO'ya geçiş Faz 3.
 - `notification_prefs` Faz 2'de devreye giriyor; o zamana kadar tüm bildirimler
   varsayılan davranışla gider.
+
+---
+
+## 8. AI Veri Yapıları, Vektör Modeli ve Eğitim Veri Seti Şeması
+
+Şartname Madde 10.3 (Başlık 5) gereğince, yapay zekâ mikroservisinin kullandığı 768 boyutlu vektör yapıları, PostgreSQL `vector(768)` kolon özellikleri ve 602 satırlık eğitim veri seti (`veri.csv`) şeması aşağıda detaylandırılmıştır.
+
+### 8.1. `embeddings` Tablosu Şeması (PostgreSQL + pgvector)
+
+Backend veritabanında (`eco-match-db`) yer alan ve anlamsal arama için kullanılan tablo tanımı (`004_materials.sql` ve `008_indexes.sql`):
+
+```sql
+CREATE TABLE IF NOT EXISTS embeddings (
+  id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  record_id      UUID NOT NULL,
+  record_type    record_type NOT NULL,          -- ENUM ('input', 'output')
+  vector         vector(768) NOT NULL,          -- 768 boyutlu SBERT embedding
+  model_version  VARCHAR(50) NOT NULL,          -- örn: 'ai-service-fine-tuned-mpnet-v1'
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT uq_embeddings_record UNIQUE (record_id, record_type)
+);
+
+-- HNSW (Hierarchical Navigable Small World) Vektör İndeksi
+CREATE INDEX IF NOT EXISTS idx_embeddings_hnsw 
+  ON embeddings USING hnsw (vector vector_cosine_ops)
+  WITH (m = 16, ef_construction = 64);
+```
+
+**Alan Açıklamaları:**
+- `record_id`: İlgili `inputs` veya `outputs` tablosundaki UUID birincil anahtarı.
+- `record_type`: Polimorfik kayıt tipi (`input` veya `output`). Bir malzeme için yalnızca bir aktif embedding kaydı olabilir (`uq_embeddings_record` kısıtı).
+- `vector`: 768 boyutlu IEEE-754 kayan noktalı sayı dizisi ($L_2$ normalize edilmiş, kosinüs mesafesi $<=>$).
+- `model_version`: Vektörü üreten AI modelinin kimliği (sürüm güncellemelerinde geriye dönük uyumluluk ve yeniden vektörleme tespiti için).
+- `idx_embeddings_hnsw`: $O(\log N)$ arama karmaşıklığı sunan HNSW indeksi. Kosinüs benzerliği hesaplamasında `vector_cosine_ops` kullanılır.
+
+---
+
+### 8.2. AI Mikroservisi Dahili Vektör Tablosu (`category_examples`)
+
+AI mikroservisinin kendi izole pgvector veritabanında (`ecomatch_pgvector:5433`) çalışan ve prototip tabanlı sınıflandırma için kullanılan şema:
+
+```sql
+CREATE TABLE IF NOT EXISTS category_examples (
+  id        SERIAL PRIMARY KEY,
+  category  VARCHAR(50) NOT NULL,   -- METAL, PLASTIK, ORGANIK, vb.
+  example   TEXT NOT NULL,          -- Örnek malzeme tanımı
+  source    VARCHAR(50) NOT NULL,   -- 'csv_import' veya 'human_review'
+  active    BOOLEAN DEFAULT TRUE,
+  CONSTRAINT uq_category_example UNIQUE (category, example)
+);
+
+CREATE INDEX IF NOT EXISTS idx_cat_examples_active ON category_examples (active);
+```
+
+---
+
+### 8.3. `veri.csv` Eğitim ve Değerlendirme Veri Seti Şeması (602 Satır)
+
+`AI Microservice/veri.csv` dosyası 2 ana bölümden ve toplam 602 satırdan oluşur:
+
+#### Bölüm 1: Sınıflandırma Örnekleri (140 Satır, Satır 1-141)
+Atık sınıflandırma modelinin prototiplerini ve doğruluk testini oluşturan şema:
+
+| Kolon Adı | Tip | Örnek Değer | Açıklama |
+|---|---|---|---|
+| `id` | VARCHAR(10) | `KG001`, `KG009`, `KG137` | Benzersiz kategori örnek kodu. |
+| `kategori` | VARCHAR(20) | `METAL`, `PLASTİK`, `ORGANİK` | 7 temel endüstriyel malzeme kategorisi. |
+| `tanim` | TEXT | *"çelik talaşı"*, *"DKP sac fire"* | Sahada karşılaşılan atık veya yan ürün serbest metni. |
+| `tip` | VARCHAR(20) | `kisa`, `kisaltma`, `karma`, `yazim_hatali`, `genel` | Girdinin dilbilgisel ve sektörel zorluk seviyesi sınıfı. |
+
+#### Bölüm 2: Eşleştirme ve Simbiyoz Çiftleri (462 Satır, Satır 142-602)
+SBERT modelinin `CosineSimilarityLoss` ile eğitilmesini ve F1 skorunun ölçülmesini sağlayan ikili veri şeması:
+
+| Kolon Adı | Tip | Örnek Değer | Açıklama |
+|---|---|---|---|
+| `id` | VARCHAR(10) | `IN001`, `IN145` | Benzersiz çift kodu. |
+| `kategori` | VARCHAR(20) | `METAL`, `PLASTİK`, `KİMYASAL` | Malzemelerin ait olduğu endüstriyel sektör grubu. |
+| `cikti_tanim` | TEXT | *"304 paslanmaz çelik CNC talaşı"* | Atık veya yan ürün serbest metin açıklaması. |
+| `girdi_tanim` | TEXT | *"Bakır rafinasyon tesisi granül girdisi"* | Hammadde veya ikame girdi arayan tesisin talep metni. |
+| `etiket` | INTEGER (0/1) | `1` veya `0` | **1**: Endüstriyel simbiyoz uyumlu (Pozitif çift).<br/>**0**: Metalurjik/kimyasal uyumsuz (Hard Negative). |
+| `neden` | TEXT | *"Farklı metal ailesi: ergitme sıcaklıkları farklı..."* | Negatif veya pozitif kararın teknik/mühendislik gerekçesi. |
+
