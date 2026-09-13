@@ -4,24 +4,55 @@ Organize Sanayi Bölgelerinde endüstriyel simbiyozu otomatikleştiren AI destek
 Bir tesisin atığı, başka bir tesisin hammaddesi — EcoMatch bu eşleşmeyi bulur, skorlar ve
 gerekli uyum belgelerini (DPP, CBAM) üretir.
 
-**TEKNOFEST 2026** · Sıfır Atık & Döngüsel Ekonomi · Takım: VectorMatch · Takım ID: #1003771
+**TEKNOFEST 2026** · Sıfır Atık & Döngüsel Ekonomi Yarışması · Tema: 3.2 Endüstriyel Atık Yönetimi ve Yeniden Kullanım  
+**Takım Adı:** VectorMatch · **Takım ID:** #1003771
 
-## Hızlı başlangıç
+---
 
-```bash
-git clone <repo-url>
-cd eco-match-application
-docker compose up --build
-```
+## 🏆 TEKNOFEST 2026 Teknik Doğrulama Teslim Belgeleri
 
-**Uygulama: `http://localhost:8080`** — kullanıcının bilmesi gereken tek adres.
+Şartname (Madde 10.3 – 10.9) ve KYS Teknik Doğrulama portalı gereksinimleri doğrultusunda hazırlanan resmi dokümanlar aşağıda sunulmuştur:
 
-> İlk kurulumda AI modeli indirilir (~5 dk). Sonraki başlatmalar çok daha hızlıdır.
+> [!IMPORTANT]
+> **KYS Formuna Yüklenecek Ana Teknik Çizim Belgesi:**  
+> 👉 [**EcoMatch_Prototip_Teknik_Cizim_ve_Sistem_Mimarisi.pdf**](docs/pdf/EcoMatch_Prototip_Teknik_Cizim_ve_Sistem_Mimarisi.pdf) *(Sistem Mimarisi, Konteyner Topolojisi, Simbiyoz Süreç Akışı, ER Veritabanı Şeması ve Kamu Entegrasyon Haritası)*  
+> 
+> **Tüm Şartname Raporlarını Birleştiren Tek Cilt Master Rapor:**  
+> 👉 [**EcoMatch_TEKNOFEST_2026_Teknik_Dogrulama_Master_Raporu.pdf**](docs/pdf/EcoMatch_TEKNOFEST_2026_Teknik_Dogrulama_Master_Raporu.pdf) *(6 MB - 10 Bölüm Eksiksiz Cilt)*
 
-Demo giriş bilgileri için bkz. [docs/11-demo-veri-seti.md](docs/11-demo-veri-seti.md).
-Tüm hesaplar aynı şifreyi kullanır: `Ecomatch2026!`
+### Şartname Maddeleri ve İlgili Teslim Belgeleri Matrisi
 
-Ayrıntılı kurulum rehberi: [docs/12-kurulum-kilavuzu.md](docs/12-kurulum-kilavuzu.md)
+| # | Şartname Maddesi / Başlığı | Açıklama | Markdown | Resmi PDF |
+|---|---|---|:---:|:---:|
+| **—** | **KYS Form Çizim Alanı** | Prototip Teknik Çizim ve Sistem Mimarisi | [docs/teknik-mimari-raporu.md](docs/teknik-mimari-raporu.md) | [**İndir (PDF)**](docs/pdf/EcoMatch_Prototip_Teknik_Cizim_ve_Sistem_Mimarisi.pdf) |
+| **01** | **Madde 10.3 (2 & 8)** | Kurulum Dokümanı & Çalıştırılabilir Paket | [docs/12-kurulum-kilavuzu.md](docs/12-kurulum-kilavuzu.md) | [**İndir (PDF)**](docs/pdf/01_Madde_10_3_Kurulum_Dokumani.pdf) |
+| **02** | **Madde 10.3 (3)** | Kullanıcı Kılavuzu (4 Rol İçin Uygulama Rehberi) | [docs/13-kullanici-kilavuzu.md](docs/13-kullanici-kilavuzu.md) | [**İndir (PDF)**](docs/pdf/02_Madde_10_3_Kullanici_Kilavuzu.pdf) |
+| **03** | **Madde 10.3 (4) & 10.8** | Teknik Mimari, API Sözleşmesi & Entegrasyon | [docs/teknik-mimari-raporu.md](docs/teknik-mimari-raporu.md) | [**İndir (PDF)**](docs/pdf/03_Madde_10_3_ve_10_8_Teknik_Mimari_Raporu.pdf) |
+| **04** | **Madde 10.3 (5)** | Veri Modeli ve Veritabanı Tasarım Açıklaması | [docs/03-veri-modeli.md](docs/03-veri-modeli.md) | [**İndir (PDF)**](docs/pdf/04_Madde_10_3_Veri_Modeli_Aciklamasi.pdf) |
+| **05** | **Madde 10.3 (6) & 10.4** | Kütüphane, Bağımlılık ve Lisans Uygunluk Beyanı | [docs/14-kutuphane-ve-lisanslar.md](docs/14-kutuphane-ve-lisanslar.md) | [**İndir (PDF)**](docs/pdf/05_Madde_10_4_Acik_Kaynak_ve_Lisans_Uygunluk_Beyani.pdf) |
+| **06** | **Madde 10.5** | Yapay Zekâ Kullanımı & Veri Sınırı Güvencesi | [docs/15-yapay-zeka-beyani.md](docs/15-yapay-zeka-beyani.md) | [**İndir (PDF)**](docs/pdf/06_Madde_10_5_Yapay_Zeka_Kullanim_Beyani.pdf) |
+| **07** | **Madde 10.6 & 10.7** | Veri Güvenliği, KVKK ve Veri Silme Taahhütnamesi | [docs/17-veri-guvenligi-ve-silme-beyani.md](docs/17-veri-guvenligi-ve-silme-beyani.md) | [**İndir (PDF)**](docs/pdf/07_Madde_10_6_ve_10_7_Veri_Guvenligi_Silme_ve_KVKK_Beyani.pdf) |
+| **08** | **Madde 10.9** | Çevresel Etki Metodolojisi & LCA Göstergeleri | [docs/16-cevresel-etki-metodolojisi.md](docs/16-cevresel-etki-metodolojisi.md) | [**İndir (PDF)**](docs/pdf/08_Madde_10_9_Cevresel_Etki_ve_Dogrulama_Metodolojisi.pdf) |
+| **09** | **Madde 10.3 (7)** | Demo Videosu Senaryosu & Sunum Bilgi Notu | [docs/18-demo-videosu-senaryosu.md](docs/18-demo-videosu-senaryosu.md) | [**İndir (PDF)**](docs/pdf/09_Madde_10_3_Demo_Videosu_ve_Sunum_Bilgi_Notu.pdf) |
+
+---
+
+## Jüri İçin Hızlı Başlangıç (Tek Tıkla Çalıştırma)
+
+Jüri heyetinin sistemi kendi bağımsız ortamında sıfır konfigürasyon ile çalıştırması için:
+
+- **Windows:** Proje kök dizinindeki [`start.bat`](start.bat) dosyasına çift tıklayın. Docker servisleri otomatik ayağa kalkacak ve tarayıcınızda açılacaktır.
+- **Linux / macOS:** Proje kök dizininde `./start.sh` komutunu çalıştırın.
+- **Manuel Docker Komutu:**
+  ```bash
+  git clone https://github.com/jusiann/eco-match-application.git
+  cd eco-match-application
+  docker compose up --build
+  ```
+
+**Uygulama Giriş Adresi:** `http://localhost:8080` (Jüri ve kullanıcı için tek giriş noktası)  
+**Tüm Demo Hesaplar Evrensel Şifresi:** `Ecomatch2026!`  
+*(Hazır roller ve test hesapları için bkz: [docs/11-demo-veri-seti.md](docs/11-demo-veri-seti.md))*
 
 ### Tek komutla neler ayağa kalkar?
 
