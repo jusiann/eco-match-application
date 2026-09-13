@@ -4,12 +4,20 @@ Atık ilanlarını hammadde taleplerine anlamsal olarak eşleştiren, atıkları
 
 ## Hızlı Başlangıç
 
+## Hızlı Başlangıç
+
 1. Sanal ortam: `python -m venv .venv && .venv\Scripts\activate`
 2. Bağımlılıklar: `pip install -r requirements.txt`
 3. PostgreSQL: `docker compose up -d`
-4. Başlangıç verisi: `python seed_from_csv.py`
-5. Servisi başlat: `uvicorn app.main:app --port 8000`
-6. Test: `python tests/test_final.py`
+4. **Modeli eğit: `python fine_tune.py`** → `./fine_tuned_model` üretir (~5 dk, tek seferlik)
+5. Eğitimi doğrula: `python evaluate_finetuned.py` → ayrım ≥ 0.65 çıkmalı
+6. Başlangıç verisi: `python seed_from_csv.py`
+7. Servisi başlat: `uvicorn app.main:app --port 8000`
+8. Test: `python tests/test_final.py`
+
+> **Not:** 4. adım atlanırsa servis fine-tuned modeli bulamaz. `app/` içindeki
+> model yükleme kontrolü bu durumda açılışta hata verir — sessizce orijinal
+> modele düşmez.
 
 ## Endpoint'ler
 
