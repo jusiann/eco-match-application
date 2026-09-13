@@ -15,7 +15,7 @@ EcoMatch platformunda kullanılan tüm yapay zekâ, makine öğrenmesi ve doğal
 | Bileşen / Görev | Kullanılan Model / Mimari | Çalışma Ortamı | Lisans | Temel Fonksiyon |
 |---|---|---|---|---|
 | **Anlamsal Vektörleştirme** | `sentence-transformers/all-mpnet-base-v2` | Yerel (Docker CPU) | Apache-2.0 | Malzeme metinlerinden 768 boyutlu yoğun (dense) vektör üretimi. |
-| **İnce Ayarlı Eşleştirme (Fine-Tuned)** | Fine-Tuned SBERT (`fine_tuned_model/`) | Yerel (Docker CPU) | Apache-2.0 | 462 atık-hammadde çiftiyle CosineSimilarityLoss kullanılarak eğitilmiş özel eşleştirme modeli. |
+| **İnce Ayarlı Eşleştirme (Fine-Tuned)** | Fine-Tuned SBERT (`fine_tuned_model/`) | Yerel (Docker CPU) | Apache-2.0 | 452 atık-hammadde çiftiyle CosineSimilarityLoss kullanılarak eğitilmiş özel eşleştirme modeli. |
 | **Atık Sınıflandırma** | Prototip Tabanlı SBERT (7 Kategori) | Yerel (Docker CPU) | Apache-2.0 | Malzeme açıklamasından 7 temel atık kategorisini ve güven skorunu tespit etme. |
 | **Hibrit Arama Motoru** | BM25 + SBERT Hibrit ($\alpha = 0.1$) | Yerel (Docker CPU) | Apache-2.0 | Kelime bazlı ve anlamsal benzerliğin ağırlıklandırılmış kombinasyonu. |
 | **Vektör Veritabanı** | PostgreSQL 16 + pgvector (HNSW) | Yerel (Docker DB) | PostgreSQL | 768D kosinüs benzerliği üzerinden logaritmik hızlı indeksleme. |
@@ -71,14 +71,14 @@ flowchart TD
 
 ## 3. Eğitim Veri Seti İfşası (`veri.csv`)
 
-EcoMatch projesinin yapay zekâ bileşenlerinin geliştirilmesinde kullanılan `AI Microservice/veri.csv` (602 satır) veri setinin niteliği:
+EcoMatch projesinin yapay zekâ bileşenlerinin geliştirilmesinde kullanılan `AI Microservice/veri.csv` (592 satır) veri setinin niteliği:
 
 1. **Sentetik Üretim Süreci:**
    - Veri setimiz; büyük dil modelleri (LLM) kullanılarak ve çevre/metalurji/kimya mühendisliği literatüründeki endüstriyel simbiyoz taksonomileri referans alınarak **sentetik olarak üretilmiştir.**
    - Ekibimiz tarafından her satır tek tek incelenmiş, teknik tutarlılık ve malzeme uyumluluğu elden geçirilmiştir.
-2. **Veri Setinin Yapısı (602 Satır):**
+2. **Veri Setinin Yapısı (592 Satır):**
    - **Bölüm 1 (Sınıflandırma Örnekleri - 140 Satır):** 7 kategori (Metal, Plastik, Organik, Kimyasal, Tekstil, Cam, Kâğıt) için kısa ifadeler, kısaltmalar, karma terimler ve yazım hatalı metinler.
-   - **Bölüm 2 (Eşleştirme Çiftleri - 462 Satır):** Endüstriyel simbiyoz uyumlu pozitif çiftler (etiket=1) ve teknik/fiziksel olarak uyumsuz "hard negative" negatif çiftler (etiket=0, gerekçe açıklamalı).
+   - **Bölüm 2 (Eşleştirme Çiftleri - 452 Satır):** Endüstriyel simbiyoz uyumlu pozitif çiftler (etiket=1) ve teknik/fiziksel olarak uyumsuz "hard negative" negatif çiftler (etiket=0, gerekçe açıklamalı).
 3. **Sentetik Verinin Getirdiği Avantajlar:**
    - Gerçek şirketlere veya OSB tesislerine ait hiçbir ticari sır, tescilli reçete, patent veya KVKK kapsamındaki kişisel veri ifşa edilmemiş veya riske atılmamıştır.
 4. **Sınırlılıklar ve Yol Haritası:**
@@ -115,7 +115,7 @@ Farklı metin tiplerinde modelin kategori tahmin başarısı:
 
 1. **Dil ve Terminoloji Yanlılığı:**
    - *Risk:* Temel model (`all-mpnet-base-v2`) çok dilli olsa da ağırlıklı olarak İngilizce ve genel Türkçe literatürle eğitilmiştir; Türk sanayi jargonunu eksik temsil edebilir.
-   - *Azaltma:* 462 çiftlik yerel veri setiyle yapılan ince ayar (fine-tuning) sayesinde pozitif-negatif ayrımı 0.012'den 0.675'e yükseltilmiştir.
+   - *Azaltma:* 452 çiftlik yerel veri setiyle yapılan ince ayar (fine-tuning) sayesinde pozitif-negatif ayrımı 0.012'den 0.675'e yükseltilmiştir.
 2. **Kısaltma Hassasiyeti Yanlılığı:**
    - *Risk:* Sanayide yaygın olan teknik kısaltmalarda doğruluk %46.4'e kadar gerilemektedir.
    - *Azaltma:* Giriş metnini AI modeline iletmeden önce genişleten bir "Sektörel Kısaltma Normalizasyon Sözlüğü" yol haritasına eklenmiştir.

@@ -491,7 +491,12 @@ sadece görüntü amaçlı. `osbName` + `sectorLabel` + bu ikisiyle gizlilik kur
 
 ---
 
-## K-24 · `AiClientService` dummy: sözleşme gerçek, içerik değil
+## K-24 · `AiClientService` dummy: sözleşme gerçek, içerik değil — **KAPANDI, bkz. K-34**
+
+> **Kapatıldı (2026-09-13).** AI ekibinin servisi hazır olduğunda `ai-client.service.ts`
+> gerçek bir HTTP istemcisiyle değiştirildi — retry, circuit breaker ve iki sözleşme
+> uyarlaması (kategori isimleri, `/embed` eksik alanları) dahil. Bu bölümdeki "dummy"
+> tasarımı artık tarihsel referans; güncel durum için K-34 ve `docs/07`'ye bakın.
 
 **Bağlam.** Ekip arkadaşının AI servisi (ayrı repo, MIT'nin bir eşleştirme modelini
 kullanacak) henüz hazır değil. Faz 1'in geri kalanı (`ai/classify`, embedding üretimi,
@@ -751,3 +756,52 @@ bu katmanın (katman 3, içerik benzer ama anahtar farklı/yok) birbirini tamaml
 doğrulandı: aynı Idempotency-Key'le gelen bir tekrar bu kontrole hiç uğramıyor (interceptor
 zaten handler'ı çalıştırmıyor), sadece YENİ bir anahtarla (veya hiç anahtarsız) gelen ama
 içerik olarak şüpheli istekler bu katmana takılıyor.
+
+---
+
+## K-34 · `AiClientService` gerçek HTTP istemcisine geçti — K-24'ü kapatır
+
+**Bağlam.** AI ekibinin FastAPI servisi hazır oldu. K-24'teki dummy `AiClientService`'in
+gerçek bir HTTP istemcisiyle değiştirilmesi gerekiyordu. Ama gerçek servis, `docs/07`'nin
+tanımladığı sözleşmeyi birebir uygulamıyordu — iki fark ortaya çıktı:
+
+1. **Kategori isimleri.** AI servisi 7 Türkçe büyük harf kategori döner (`METAL`, `PLASTIK`,
+   `ORGANIK`, `KIMYASAL`, `TEKSTIL`, `CAM`, `KAGIT`) — backend'in beklediği 8 İngilizce küçük
+   harf (`metal`...`paper`, `other`) değil. AI tarafında "other" karşılığı **kasıtlı olarak
+   yok**: sınıflandırıcı prototip-tabanlı, her zaman en yakın 7 kategoriden birini seçmek
+   zorunda.
+2. **`/embed` eksik alanlar.** Gerçek `/embed` sadece `{vector, dim}` dönüyor; `docs/07`'nin
+   beklediği `model` ve `normalized` alanları AI tarafında yok.
+
+**Karşılaştırılan iki seçenek.**
+- **(A) AI servisini backend'e hizala** — `schemas.py`'ye `model`/`normalized` eklenir,
+  kategori isimleri İngilizce/küçük harfe çevrilir, "other" için bir eşik/etiket eklenir.
+  Ayrı bir repo/ekip, ayrı bir deploy döngüsü demek; kategori isimlerini değiştirmek
+  `evaluate_finetuned.py`, `demo_scenario.py`, `presentation_graphs.py` ve mevcut ölçüm
+  raporlarını (bkz. `AI Microservice/GELISTIRME-RAPORU.md`) geçersiz kılar. Teslime kalan
+  süre kısa.
+- **(B) `docs/07`'yi gerçeğe hizala, backend'de ince bir adaptör katmanı yaz** — AI
+  servisine hiç dokunulmaz, tek değişen dosya `ai-client.service.ts`.
+
+**Karar.** (B). `ai-client.service.ts` içine:
+- `AI_CATEGORY_TO_MATERIAL_CLASS` eşleme tablosu (7 Türkçe → 7 İngilizce; `other` AI'dan
+  hiç gelmediği için tabloda yok, `mapCategory()`'nin bilinmeyen bir değer için düşeceği
+  `.toLowerCase()` dalı sadece savunma amaçlı).
+- `EMBED_MODEL_TAG` sabiti + `normalized: true` — AI'ın `encode(..., normalize_embeddings=True)`
+  çağrısı zaten her zaman normalize vektör ürettiği için bu iddia gerçek, sadece AI'ın
+  kendisi bunu response'da raporlamıyor.
+
+**"Other"/düşük güven davranışı.** AI'ın hiç "other" döndürmemesi sorun değil: HITL yönlendirme
+zaten AI'ın kategorisine değil, backend'in kendi hesapladığı `requiresHumanReview =
+confidence < hitlThreshold` (`system_config['match.hitl_threshold']`, varsayılan 0.80,
+docs/07 satır 96-98'in zaten öngördüğü ayrım) bayrağına bakıyor — bu davranış K-24'ten beri
+değişmedi, AI'ın "bilmiyorum" diyememesi bu tasarımda hiçbir şeyi kırmıyor.
+
+**Doğrulama.** `AI Microservice/tests/test_backend_contract.py` eklendi — servis ayakta
+olmadan, statik olarak `CATEGORY_EXAMPLES` anahtarlarının ve `EmbedResponse`/
+`ClassifyResponse` şemalarının backend'in beklediğiyle birebir eşleştiğini doğrular. AI
+tarafında bir kategori adı/şema değişikliği bu testi kırar.
+
+**Sonuç.** `docs/07` gerçek sözleşmeyi (adaptör dahil) yansıtacak şekilde güncellendi.
+Çağıran kod (`materials.service.ts`, `embeddings.service.ts`, `ai.service.ts`) hiç
+değişmedi — K-24'ün öngördüğü gibi tek değişen dosya `ai-client.service.ts` oldu.

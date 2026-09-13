@@ -40,12 +40,23 @@ services:
       context: .
     container_name: eco-match-backend
     env_file:
-      - .env
+      # .env is written for native (non-docker) runs and isn't committed
+      # (gitignored) -- a fresh clone won't have it, and shouldn't need to:
+      # the environment block below covers what this container actually
+      # requires, with a demo-safe JWT_SECRET_KEY default. If .env exists,
+      # its values still apply for anything not overridden below.
+      - path: .env
+        required: false
     environment:
       # .env is written for native/non-docker runs (localhost). Inside the
       # compose network the db is reachable at the "backend-db" hostname instead.
       DATABASE_URL: postgresql://postgres:1397@backend-db:5432/eco_match?schema=public
       DIRECT_URL: postgresql://postgres:1397@backend-db:5432/eco_match?schema=public
+      # JwtModule reads this with no fallback (auth.module.ts) -- unset means
+      # every sign/verify call throws. Fine as a fixed demo value here; real
+      # deployments must override with a real secret via .env or a real
+      # secrets mechanism.
+      JWT_SECRET_KEY: docker-demo-only-jwt-secret-change-me
       # Base URL stamped into Digital Product Passport QR codes and PDF links
       # (dpp.service.ts#baseUrl). These are scanned from a phone / opened in a
       # browser, so this has to be the address the USER can reach — the web

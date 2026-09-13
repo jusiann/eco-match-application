@@ -114,7 +114,7 @@ Projede coğrafi koordinat mesafe hesaplamaları (`ST_Distance`) için **PostGIS
 | Model Adı | Sağlayıcı / Kaynak | Lisans | Kullanım Şekli |
 |---|---|---|---|
 | `sentence-transformers/all-mpnet-base-v2` | Hugging Face / Microsoft | Apache-2.0 | 768 boyutlu anlamsal metin vektörleştirme; yerel model diskten okunur. |
-| `fine_tuned_model/` | VectorMatch Takımı | MIT | `all-mpnet-base-v2` temel alınarak 462 simbiyoz çiftiyle eğitilmiş takım modelimiz. |
+| `fine_tuned_model/` | VectorMatch Takımı | MIT | `all-mpnet-base-v2` temel alınarak 592 satırlık veri setinden (452 eşleştirme + 140 sınıflandırma örneği) türetilen çiftlerle eğitilmiş takım modelimiz. |
 
 ---
 

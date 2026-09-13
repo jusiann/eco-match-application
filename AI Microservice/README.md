@@ -17,6 +17,10 @@ Atık ilanlarını hammadde taleplerine anlamsal olarak eşleştiren, atıkları
 > model yükleme kontrolü bu durumda açılışta hata verir — sessizce orijinal
 > modele düşmez.
 
+> **Docker ile çalıştırıyorsan** (`docker compose up --build`): 4. adım otomatik
+> — `ai-service` konteyneri açılışta modeli kendisi üretir/kontrol eder, elle
+> `fine_tune.py` çalıştırmana gerek yok. Detay: [docs/12-kurulum-kilavuzu.md](../docs/12-kurulum-kilavuzu.md).
+
 ## Endpoint'ler
 
 | Endpoint             | Method | Açıklama                  |

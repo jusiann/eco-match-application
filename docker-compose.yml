@@ -24,7 +24,8 @@ include:
 # The AI FastAPI app (service "ai-service" in AI Microservice/docker-compose.yml)
 # runs in-network now, reachable from the backend container at
 # http://ai-service:8000 -- not host.docker.internal, that was only needed
-# back when it ran natively on the host. It still needs
-# "AI Microservice/fine_tuned_model/" to exist on disk before `up --build`
-# (bind-mounted in, not baked into the image) -- see AI Microservice/README.md
-# / fine_tune.py if it's ever missing.
+# back when it ran natively on the host. "AI Microservice/fine_tuned_model/"
+# is not committed to the repo (~420MB) and doesn't need to exist beforehand:
+# its entrypoint.sh trains it on first boot (~5 min, see fine_tune.py) and
+# writes the result to that bind-mounted path, so later `up` calls skip
+# training and start immediately.
