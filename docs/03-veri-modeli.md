@@ -577,7 +577,7 @@ Bunlar bilinçli borç, bug değil:
 
 ## 8. AI Veri Yapıları, Vektör Modeli ve Eğitim Veri Seti Şeması
 
-Şartname Madde 10.3 (Başlık 5) gereğince, yapay zekâ mikroservisinin kullandığı 768 boyutlu vektör yapıları, PostgreSQL `vector(768)` kolon özellikleri ve 602 satırlık eğitim veri seti (`veri.csv`) şeması aşağıda detaylandırılmıştır.
+Şartname Madde 10.3 (Başlık 5) gereğince, yapay zekâ mikroservisinin kullandığı 768 boyutlu vektör yapıları, PostgreSQL `vector(768)` kolon özellikleri ve 592 satırlık eğitim veri seti (`veri.csv`) şeması aşağıda detaylandırılmıştır.
 
 ### 8.1. `embeddings` Tablosu Şeması (PostgreSQL + pgvector)
 
@@ -628,9 +628,10 @@ CREATE INDEX IF NOT EXISTS idx_cat_examples_active ON category_examples (active)
 
 ---
 
-### 8.3. `veri.csv` Eğitim ve Değerlendirme Veri Seti Şeması (602 Satır)
+### 8.3. `veri.csv` Eğitim ve Değerlendirme Veri Seti Şeması (592 Satır)
 
-`AI Microservice/veri.csv` dosyası 2 ana bölümden ve toplam 602 satırdan oluşur:
+`AI Microservice/veri.csv` dosyası 2 ana bölümden ve toplam 592 veri satırından oluşur
+(ayrıca 10 alt-bölüm başlık satırı vardır; dosyanın ham satır sayısı bunlarla birlikte 602'dir):
 
 #### Bölüm 1: Sınıflandırma Örnekleri (140 Satır, Satır 1-141)
 Atık sınıflandırma modelinin prototiplerini ve doğruluk testini oluşturan şema:
@@ -642,7 +643,7 @@ Atık sınıflandırma modelinin prototiplerini ve doğruluk testini oluşturan 
 | `tanim` | TEXT | *"çelik talaşı"*, *"DKP sac fire"* | Sahada karşılaşılan atık veya yan ürün serbest metni. |
 | `tip` | VARCHAR(20) | `kisa`, `kisaltma`, `karma`, `yazim_hatali`, `genel` | Girdinin dilbilgisel ve sektörel zorluk seviyesi sınıfı. |
 
-#### Bölüm 2: Eşleştirme ve Simbiyoz Çiftleri (462 Satır, Satır 142-602)
+#### Bölüm 2: Eşleştirme ve Simbiyoz Çiftleri (452 Satır, Satır 142-602)
 SBERT modelinin `CosineSimilarityLoss` ile eğitilmesini ve F1 skorunun ölçülmesini sağlayan ikili veri şeması:
 
 | Kolon Adı | Tip | Örnek Değer | Açıklama |

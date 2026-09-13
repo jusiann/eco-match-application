@@ -105,7 +105,7 @@ demo yapılabilir.
 | 1.1 | `facilities` modülü — profil, belge yükleme | **K** | 2 | S1 | Tamamlandı |
 | 1.2 | Admin doğrulama endpoint'leri | **K** | 1 | S1 | Tamamlandı |
 | 1.3 | `materials` modülü — output/input CRUD | **K** | 2.5 | S2 | Tamamlandı (CRUD) — K-20 |
-| 1.4 | `AiClient` — retry + circuit breaker | **K** | 2 | H1 | Tamamlandı (dummy) — K-24, retry/CB yok |
+| 1.4 | `AiClient` — retry + circuit breaker | **K** | 2 | H1 | Tamamlandı — K-24 → K-34: gerçek HTTP istemcisi, retry + circuit breaker var |
 | 1.5 | `EmbeddingsService` — pgvector yazma | **K** | 1.5 | S2 | Tamamlandı — K-24 |
 | 1.6 | `DPPGenerator` — JSON + PDF + QR + ESPR kontrolü | **K** | 2.5 | S2, E8 | Tamamlandı — K-21 |
 | 1.7 | Aday bulma sorgusu — pgvector + PostGIS + self-match filtresi | **K** | 2 | S3, E1 | Tamamlandı — K-24 |
@@ -117,22 +117,26 @@ demo yapılabilir.
 
 **Alt toplam: ~21.5 gün** (paralel çalışmayla ~18)
 
-### Faz 1 tamamlandı: AI-bağımlı kısımlar dummy (1.4, 1.5, 1.7, 1.8, 1.9)
+### Faz 1 tamamlandı: AI entegrasyonu gerçek (1.4, 1.5, 1.7, 1.8, 1.9)
 
-Ekip arkadaşının AI servisi henüz yok. `AiClientService` dummy (K-24) — sözleşme şekli
-`docs/07`'yle birebir, içerik anlamsız. Üzerine kurulu her şey **gerçek**:
+AI ekibinin servisi hazır. `AiClientService` artık gerçek bir HTTP istemcisi (K-24 → **K-34
+ile kapatıldı**) — AI mikroservisine bağlanıyor, 3s timeout, 500ms/1s/2s retry, rolling-window
+circuit breaker içeriyor; sözleşme şekli backend'deki adaptör katmanıyla `docs/07`'ye uyarlanmış
+durumda (bkz. docs/07, docs/09 K-34). Üzerine kurulu her şey **gerçek**:
 
-- **`POST /v1/ai/classify`:** dummy `classify()`'ı sarmalıyor, backend kendi HITL eşiğini
-  (`system_config['match.hitl_threshold']`) kontrol ediyor.
+- **`POST /v1/ai/classify`:** gerçek `classify()`'ı sarmalıyor, backend kendi HITL eşiğini
+  (`system_config['match.hitl_threshold']`) kontrol ediyor — AI'ın döndürdüğü kategoriden
+  bağımsız, sadece `confidence` değerine bakıyor (AI servisi hiçbir zaman "other" döndürmez,
+  düşük güven durumunu backend'in kendi eşiği yakalıyor).
 - **`EmbeddingsService`:** `buildEmbeddingText()` (docs/07 ile birebir) + pgvector yazımı
   gerçek. `materials.service.ts`'e bağlandı — çıktı/girdi oluşturulduğunda (materialClass
   varsa) otomatik embed ediliyor, `embeddingPending` artık gerçekten `false` olabiliyor.
 - **`GET /v1/matches/find/:outputId`:** gerçek pgvector cosine benzerlik araması
   (docs/03'teki referans sorguyla birebir), self-match/eşik/aktiflik filtreleri, gerçek
   5 faktörlü skor (docs/05 formülleri, `scoring.service.ts`), gerçek CBAM hesabı
-  (`carbon_factors` tablosundan). Sadece girdi vektörleri rastgele olduğu için eşleşme
-  kalitesi anlamsız — test ederken `embeddings`'e doğrudan bilinen vektör yazılarak
-  (`find.test.js`) deterministik hâle getirildi.
+  (`carbon_factors` tablosundan). AI servisi artık gerçek embedding'ler ürettiği için
+  eşleşme kalitesi de anlamlı; test ederken ayrıca `embeddings`'e doğrudan bilinen vektör
+  yazılarak (`find.test.js`) deterministik hâle getirildi.
 - **Ekonomik skor için malzeme fiyatları:** hiçbir dokümanda yoktu, `scoring.service.ts`
   içinde açıkça yer tutucu olarak işaretlenmiş sabit bir tabloyla dolduruldu.
 - **Gerçek hata (testte bulundu, K-25):** `embeddings` tablosu polimorfik FK'sız;
@@ -245,17 +249,17 @@ CBAM ve çevresel rapor PDF üretiliyor · A3 cron'u çalışıyor.
 
 **Alt toplam: ~14.5 gün**
 
-### Faz 2 tamamlandı: AI-bağımlı kısım dummy, gerisi gerçek
+### Faz 2 tamamlandı: AI entegrasyonu dahil hepsi gerçek
 
 Uzman (expert) onayı, bildirimler, raporlama ve admin ek yüzeyi (carbon-factors CRUD,
 kullanıcı yönetimi, sistem config, audit-log) uçtan uca test edildi
 (`review-queue.test.js`, `notifications.test.js`, `reports.test.js`, `admin-extra.test.js`).
 
-- **HITL kuyruğu:** sınıfsız bir çıktı oluşturulduğunda dummy `AiClientService.classify()`
-  çağrılıyor (K-24), `human_review_queue` satırı + `EXPERT` rolündeki tüm kullanıcılara
+- **HITL kuyruğu:** sınıfsız bir çıktı oluşturulduğunda gerçek `AiClientService.classify()`
+  çağrılıyor (K-24 → K-34), `human_review_queue` satırı + `EXPERT` rolündeki tüm kullanıcılara
   `review_required` bildirimi gerçek. Onay/red gerçek iş kuralı; onayda embedding yeniden
-  hesaplanıyor (dummy). 72 saatlik SLA fallback cron'u `ai_suggestion.top3[0]`'ı otomatik
-  uyguluyor (gerçek mantık, dummy veri üzerine).
+  hesaplanıyor (artık gerçek AI servisiyle). 72 saatlik SLA fallback cron'u
+  `ai_suggestion.top3[0]`'ı otomatik uyguluyor (gerçek mantık, gerçek veri üzerine).
 - **Bildirimler:** DB yazımı + tercih kontrolü + WebSocket (`/v1/notifications/stream`)
   teslimatı tamamen gerçek. E-posta/push tercihleri **saklanıyor** ama gerçek gönderim
   kanalı yok — sadece in-app + WS teslim ediliyor.

@@ -262,9 +262,11 @@ QR kodun içindeki imza budur. Geçersiz imza → 403.
 
 Durum makinesi implemente edildi (Faz 1.10, K-23): list/get/accept/reject/contact
 gerçek veriyle çalışıyor, `SELECT ... FOR UPDATE` ile stok kilitleniyor (E7). `find`
-(aday bulma + skorlama) implemente edildi (Faz 1.7/1.8/1.9, K-24) — pgvector benzerlik
-araması, 5 faktörlü skor, CBAM hesabı gerçek; sadece embedding'lerin kaynağı olan
-`AiClientService` dummy. `retry` henüz yok (Faz 2.8, expired match cron'una bağlı).
+(aday bulma + skorlama) implemente edildi (Faz 1.7/1.8/1.9, K-24 → K-34 ile
+kapatıldı) — pgvector benzerlik araması, 5 faktörlü skor, CBAM hesabı ve artık
+embedding'lerin kaynağı olan `AiClientService` de gerçek: AI mikroservisine HTTP ile
+bağlanıyor, 3s timeout, 500ms/1s/2s retry ve rolling-window circuit breaker içeriyor
+(bkz. K-34, docs/07). `retry` henüz yok (Faz 2.8, expired match cron'una bağlı).
 
 | Metod | Yol | Rol | Açıklama |
 |---|---|---|---|
@@ -469,19 +471,21 @@ Tesis doğrulama endpoint'leri (`/v1/admin/verifications/*`) yukarıda,
 
 ## AI Proxy ve Chatbot
 
-`POST /v1/ai/classify` implemente edildi ama **dummy** bir `AiClientService` tarafından
-besleniyor (Faz 1.4, K-24) — ekip arkadaşının gerçek AI servisi hazır olduğunda tek
-değişecek dosya `ai-client.service.ts`, sözleşme şekli zaten `docs/07` ile birebir.
-`confidence`/`materialClass` değerleri şu an anlamlı değil, sadece şekli doğru.
-`/v1/chat*` de implemente edildi (Faz 3.3/3.4) ama aynı şekilde **dummy** bir
-`ClaudeClientService` tarafından besleniyor (K-31) — SSE akışı, mesaj kaydı, context,
-rate limit gerçek; yanıt içeriği sabit/kanned.
+`POST /v1/ai/classify` gerçek `AiClientService` tarafından besleniyor (Faz 1.4, K-24 →
+**K-34 ile kapatıldı**) — AI mikroservisine (ayrı repo, FastAPI) gerçek HTTP isteği atıyor,
+3s timeout, 500ms/1s/2s retry ve rolling-window circuit breaker uyguluyor. AI servisinin
+kendi kategori isimleri (Türkçe, büyük harf, 7 tane) ve `/embed` yanıtının eksik alanları
+backend'deki adaptör katmanında (`ai-client.service.ts`, bkz. K-34, docs/07) uyarlanıyor —
+`confidence`/`materialClass` artık gerçek modelin ürettiği değerler.
+`/v1/chat*` de implemente edildi (Faz 3.3/3.4) ama **hâlâ ve bilinçli olarak dummy** bir
+`ClaudeClientService` tarafından besleniyor (K-31, bkz. docs/15 Madde 10.5 uyumu) — SSE
+akışı, mesaj kaydı, context, rate limit gerçek; yanıt içeriği sabit/kanned.
 
 | Metod | Yol | Rol | Açıklama |
 |---|---|---|---|
-| POST | `/v1/ai/classify` | Auth | Canlı sınıflandırma önizlemesi (S2 adım 4). **Dummy backing (K-24)** |
+| POST | `/v1/ai/classify` | Auth | Canlı sınıflandırma önizlemesi (S2 adım 4). **Gerçek AI servisi (K-34)** |
 | POST | `/v1/internal/ai/embed` | Internal | `EmbeddingsService` içinde dahili sarmalayıcı — dışa açık route değil, ayrı bir HTTP endpoint'i yok |
-| POST | `/v1/chat` | Auth | Claude proxy, SSE streaming. **İmplemente edildi, dummy backing (Faz 3.3, K-31)** |
+| POST | `/v1/chat` | Auth | Claude proxy, SSE streaming. **İmplemente edildi, bilinçli olarak dummy backing (Faz 3.3, K-31)** |
 | GET | `/v1/chat/history` | Auth | Son mesajlar. **İmplemente edildi (Faz 3.3)** |
 
 **`POST /v1/ai/classify`** — istemci form yazarken 500 ms debounce ile çağırır:

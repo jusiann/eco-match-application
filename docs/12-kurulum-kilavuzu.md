@@ -44,7 +44,7 @@ docker compose up --build
 > [!NOTE]
 > **İlk Çalıştırma Notu:**
 > - İlk başlatmada sınıflandırma modeli (`paraphrase-multilingual-mpnet-base-v2`) HuggingFace önbelleğine indirilir (~1.1GB, birkaç dakika sürebilir).
-> - Eşleştirme modeli (`fine_tuned_model/`, 462 simbiyoz çiftiyle eğitilmiştir) **repoda tutulmaz** (~420MB, bilinçli tasarım tercihi). `ai-service` konteyneri açılışta bu klasörü kontrol eder: yoksa `fine_tune.py`'yi otomatik çalıştırıp **~5 dakikada** üretir; hata olursa konteyner durur (sessizce farklı bir modele düşülmez). Model host'taki `AI Microservice/fine_tuned_model/` altına yazıldığından **sonraki her `docker compose up` çağrısında bu adım atlanır** ve servis birkaç saniyede hazır olur. İlerlemeyi `docker compose logs -f ai-service` ile izleyebilirsiniz.
+> - Eşleştirme modeli (`fine_tuned_model/`, 592 satırlık veri setinden — 452 eşleştirme + 140 sınıflandırma örneği — çıkarılan çiftlerle eğitilmiştir) **repoda tutulmaz** (~420MB, bilinçli tasarım tercihi). `ai-service` konteyneri açılışta bu klasörü kontrol eder: yoksa `fine_tune.py`'yi otomatik çalıştırıp **~5 dakikada** üretir; hata olursa konteyner durur (sessizce farklı bir modele düşülmez). Model host'taki `AI Microservice/fine_tuned_model/` altına yazıldığından **sonraki her `docker compose up` çağrısında bu adım atlanır** ve servis birkaç saniyede hazır olur. İlerlemeyi `docker compose logs -f ai-service` ile izleyebilirsiniz.
 > - Demo veritabanı (`013_demo_seed_data.sql`), veritabanı konteyneri ilk kez açıldığında 14 kullanıcı, 13 tesis, 5 OSB ve tüm eşleşme durumlarıyla **otomatik olarak yüklenir**.
 
 ---

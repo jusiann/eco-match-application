@@ -61,3 +61,40 @@ Platform mimarisinde uygulanan sektör standardı teknik tedbirler:
 > **Takım ID:** #1003771  
 > **Tarih:** 2026  
 > **İmza:** *[Yetkili Takım Kaptanı İmzası]*  
+
+---
+
+## 4. Demo Ortamı Kimlik Bilgileri — Bilinçli Tercih ve Üretim Planı
+
+`docker-compose.yml` ve `.env.example` dosyalarında sabit, açık metin kimlik bilgileri
+bulunur (ör. PostgreSQL şifreleri `1Eco2Meko3Seko` / `1397`, demo `JWT_SECRET_KEY`). Bu,
+gözden kaçmış bir güvenlik açığı değil, **jüri değerlendirmesi için bilinçli bir tercihtir**:
+tek komutla (`git clone && docker compose up --build`) ve hiçbir manuel `.env` hazırlığı
+gerektirmeden çalışan, tekrarlanabilir bir demo ortamı sağlamak.
+
+### 4.1. Neden kabul edilebilir (demo kapsamında)
+
+- Ortam tamamen yalıtılmış yerel Docker ağında çalışır (bkz. Bölüm 1.3), dışa açık bir
+  üretim sunucusu değildir.
+- Kimlik bilgileri gerçek kullanıcı verisi korumak için değil, jürinin sıfırdan kurduğu
+  geçici bir değerlendirme ortamını ayağa kaldırmak için var — üzerindeki veri zaten
+  Bölüm 3'teki imha taahhüdü kapsamında en geç 15 iş günü içinde silinir.
+- Alternatifi (jüriden `.env` dosyaları oluşturup gizli değerler üretmesini istemek) tek
+  komutla kurulum vaadini bozar ve değerlendirme sürecine sürtünme ekler.
+
+### 4.2. Üretim / pilot OSB dağıtımında değişecekler
+
+Bu proje bir pilot OSB'ye gerçek veriyle dağıtılırsa aşağıdakiler **zorunludur** —
+mevcut sabit değerler hiçbir üretim ortamında olduğu gibi kullanılmaz:
+
+| Alan | Demo (şu an) | Üretim planı |
+|---|---|---|
+| DB şifreleri (`POSTGRES_PASSWORD`) | Compose dosyasında açık metin | Ortam değişkeni enjeksiyonu (CI/CD secrets, konteyner orkestratörünün kendi secret mekanizması) — repoda hiç görünmez |
+| `JWT_SECRET_KEY` | Sabit demo değeri | Dağıtım anında rastgele üretilen, ortama özel, secret manager'da (ör. HashiCorp Vault, AWS Secrets Manager, Doppler) saklanan değer |
+| Rotasyon | Yok (demo tek seferlik) | Periyodik rotasyon planı — özellikle `JWT_SECRET_KEY` değişince aktif refresh token'ların geçersiz kalacağı göz önünde bulundurulmalı |
+| Erişim kontrolü | Repo herkese açık okunabilir | Secret manager'a erişim rol bazlı (RBAC), audit edilebilir |
+| Dağıtım | `docker-compose.yml` içinde gömülü | `docker-compose.yml`/manifest'ler secret **referansı** taşır, değerin kendisini değil |
+
+Bu geçiş, mevcut kod tarafında ek bir mimari değişiklik gerektirmez: uygulama zaten tüm
+kimlik bilgilerini ortam değişkenlerinden okuyor (`ConfigModule`, `pydantic-settings`) —
+değişen sadece bu değerlerin **nereden geldiği** (repo → secret manager) olacaktır.

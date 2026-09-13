@@ -38,41 +38,55 @@ yeniden başlatmak bedava.
 
 Base URL: `AI_SERVICE_URL` ortam değişkeni. Servisler arası çağrı, internet'e açık değil.
 
+> **K-34 (2026-09-13).** AI servisinin gerçek şekli, bu bölümün önceki halinin varsaydığından
+> iki noktada farklı çıktı: kategori isimleri ve `/embed`'in döndürdüğü alanlar. Teslime kalan
+> süre kısaydı; AI servisini (ayrı repo/ekip, ölçüm raporları buna bağlı) değiştirmek yerine
+> backend'de ince bir adaptör katmanı (`ai-client.service.ts`) yazıldı. Aşağıdaki sözleşme artık
+> **AI servisinin gerçekte döndürdüğü şekli** + **backend'in bunu nasıl uyarladığını**
+> gösteriyor — ikisi birden güncel/doğru kaynak. Detay ve alternatiflerin karşılaştırması:
+> docs/09 K-34.
+
 ### `POST /embed`
 
-**İstek**
+**İstek** — backend sadece `text` gönderir (AI servisi `record_id`/`record_type` almaz,
+tutmaz; eşleştirme tamamen backend tarafında olduğu için buna ihtiyacı yok, bkz. yukarıdaki
+"Temel kural"):
 
 ```json
-{
-  "text": "Malzeme: organic — Tekstil boyahanesi çıkışı arıtma çamuru. Bileşim: selüloz %60, su %30",
-  "record_id": "550e8400-e29b-41d4-a716-446655440000",
-  "record_type": "output"
-}
+{ "text": "Malzeme: organic — Tekstil boyahanesi çıkışı arıtma çamuru. Bileşim: selüloz %60, su %30" }
 ```
 
 | Alan | Tip | Zorunlu | Not |
 |---|---|---|---|
 | `text` | string | Evet | 1-5000 karakter |
-| `record_id` | UUID | Hayır | Sadece log/trace |
-| `record_type` | `input`\|`output` | Hayır | Sadece log/trace |
 
-**Cevap — 200**
+**AI servisinin gerçek cevabı — 200**
 
 ```json
 {
   "vector": [0.023, -0.145, "... 768 eleman"],
-  "model": "all-mpnet-base-v2",
-  "dim": 768,
-  "normalized": true
+  "dim": 768
 }
 ```
 
-`normalized: true` **kritiktir**: backend vektörü DB'ye olduğu gibi yazar, kendisi
-normalize etmez. `false` dönerse backend bunu hata sayar — pgvector cosine mesafesi
-normalize edilmemiş vektörlerde yanlış sonuç verir.
+AI servisi `model` ve `normalized` alanlarını **döndürmez** (`AI Microservice/app/schemas.py`
+`EmbedResponse`). Backend'in adaptörü (`ai-client.service.ts`) bunları kendisi tamamlar:
+- `normalized: true` — AI'ın `embedder.py` içindeki `encode(..., normalize_embeddings=True)`
+  çağrısı zaten her zaman L2-normalize vektör ürettiği için bu, bilinen-doğru bir sabit.
+  AI tarafı gerçekten normalize etmeyi bırakırsa bu varsayım da yanlış olur — sözleşme
+  değişikliği gerektirir (aşağıdaki prosedür).
+- `model: "ai-service-fine-tuned-mpnet-v1"` — AI servisinde karşılığı yok, backend'in kendi
+  sabit etiketi (`embeddings.model_version` kolonuna yazılır). AI ekibi modeli değiştirirse
+  bu sabit elle güncellenmeli.
+
+Backend'e ulaşan nihai obje (`EmbedResult`) böylece hâlâ `{vector, model, dim, normalized}`
+şeklinde — `EmbeddingsService`'in aşağıdaki `!normalized || dim !== 768` kontratı hiç
+değişmedi, sadece `normalized`'in kaynağı AI değil backend'in adaptörü.
 
 `vector` uzunluğu tam **768** olmalı. Az veya çok gelirse backend reddeder ve
-`embedding_pending` bırakır.
+`embedding_pending` bırakır. AI servisine hiç ulaşılamazsa adaptör throw etmez, `{vector: [],
+model: '', dim: 0, normalized: false}` sentinel'i döner — bu da aynı `!normalized` kontrolüne
+takılıp aynı fallback'i (embedding_pending=true) tetikler.
 
 ### `POST /classify`
 
@@ -82,25 +96,35 @@ normalize edilmemiş vektörlerde yanlış sonuç verir.
 { "text": "boya artığı, karışık" }
 ```
 
-**Cevap — 200**
+**AI servisinin gerçek cevabı — 200**
 
 ```json
 {
-  "material_class": "chemical",
+  "category": "KIMYASAL",
   "confidence": 0.62,
-  "top3": [["chemical", 0.62], ["organic", 0.21], ["other", 0.17]],
-  "requires_human_review": true
+  "all_scores": {"KIMYASAL": 0.62, "ORGANIK": 0.21, "PLASTIK": 0.17}
 }
 ```
 
-`requires_human_review` = `confidence < 0.80`. AI servisi bu bayrağı kendisi hesaplar
-ama **backend de eşiği kendi kontrol eder** — tek kaynağa güvenmiyoruz, eşik
-`system_config` tablosunda ve orası otoritedir.
+AI servisi **`material_class` değil `category`** döner, **Türkçe ve büyük harf**, tam olarak
+şu 7 tanesi (`AI Microservice/app/classifier.py` `CATEGORY_EXAMPLES`):
+`METAL` · `PLASTIK` · `ORGANIK` · `KIMYASAL` · `TEKSTIL` · `CAM` · `KAGIT`
 
-`material_class` değerleri **lowercase**, tam olarak şu 8 tanesi:
-`metal` · `plastic` · `organic` · `chemical` · `textile` · `glass` · `paper` · `other`
+"other" karşılığı **AI tarafında yok** — sınıflandırıcı prototip-tabanlı, gelen metni her
+zaman bu 7 kategoriden en yakınına atar, "bilmiyorum" diye bir çıkışı yok. `top3` ve
+`requires_human_review` alanları da AI'ın cevabında **yok** — backend'in adaptörü:
 
-Bilinmeyen bir değer gelirse backend bunu hata sayar ve kaydı HITL kuyruğuna alır.
+- `top3`'ü `all_scores`'u kendisi sıralayıp üretir.
+- Kategori adını `AI_CATEGORY_TO_MATERIAL_CLASS` tablosuyla İngilizce/küçük harfe çevirir
+  (`metal`·`plastic`·`organic`·`chemical`·`textile`·`glass`·`paper` — 7 tanesi, `other` bu
+  tabloda yok çünkü AI'dan hiç gelmiyor).
+- `requiresHumanReview`'i **kendisi** hesaplar: `confidence < system_config['match.hitl_threshold']`
+  (varsayılan 0.80). Yani "other" olmaması hiçbir şeyi kırmıyor — düşük güven durumunu backend
+  zaten kategoriden bağımsız, sadece `confidence` sayısına bakarak yakalıyor.
+
+Bilinmeyen bir kategori adı gelirse (tablo dışı) adaptör `.toLowerCase()` ile geçiştirir —
+bu sadece savunma amaçlı, normal akışta hiç tetiklenmemesi beklenir (bkz. `AI
+Microservice/tests/test_backend_contract.py`, bu 7 kategoriyi statik olarak doğrular).
 
 ### `GET /health`
 
