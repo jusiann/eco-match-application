@@ -43,8 +43,8 @@ docker compose up --build
 
 > [!NOTE]
 > **İlk Çalıştırma Notu:**
-> - İlk başlatmada SBERT modeli HuggingFace önbelleğine indirilir (yaklaşık 3-5 dakika sürebilir). 
-> - Takımımız tarafından 462 simbiyoz çiftiyle eğitilen model (`fine_tuned_model/`) repo içinde hazır olarak sunulduğundan **ayrıca bir model eğitimi yapmanıza gerek yoktur**.
+> - İlk başlatmada sınıflandırma modeli (`paraphrase-multilingual-mpnet-base-v2`) HuggingFace önbelleğine indirilir (~1.1GB, birkaç dakika sürebilir).
+> - Eşleştirme modeli (`fine_tuned_model/`, 462 simbiyoz çiftiyle eğitilmiştir) **repoda tutulmaz** (~420MB, bilinçli tasarım tercihi). `ai-service` konteyneri açılışta bu klasörü kontrol eder: yoksa `fine_tune.py`'yi otomatik çalıştırıp **~5 dakikada** üretir; hata olursa konteyner durur (sessizce farklı bir modele düşülmez). Model host'taki `AI Microservice/fine_tuned_model/` altına yazıldığından **sonraki her `docker compose up` çağrısında bu adım atlanır** ve servis birkaç saniyede hazır olur. İlerlemeyi `docker compose logs -f ai-service` ile izleyebilirsiniz.
 > - Demo veritabanı (`013_demo_seed_data.sql`), veritabanı konteyneri ilk kez açıldığında 14 kullanıcı, 13 tesis, 5 OSB ve tüm eşleşme durumlarıyla **otomatik olarak yüklenir**.
 
 ---
@@ -130,6 +130,6 @@ docker compose up --build
 | Belirti | Olası Neden | Çözüm |
 |---|---|---|
 | **Port Çakışması (8080 veya 3001 dolu)** | Ana makinenizde başka bir web sunucusu (IIS, Apache vb.) çalışıyor olabilir. | Çakışan servisi durdurun veya `web/docker-compose.yml` içindeki `8080:80` port eşlemesini boş bir porta (örn. `8085:80`) çekin. |
-| **AI Servisi İlk Açılışta 'unhealthy'** | İlk çalıştırmada HuggingFace'ten model dosyaları indirilirken süre uzayabilir. | `docker logs eco-match-ai -f` komutuyla indirme ilerlemesini izleyin. İndirme tamamlandığında servis otomatik olarak `healthy` durumuna geçecektir. |
+| **AI Servisi İlk Açılışta 'unhealthy'** | İlk çalıştırmada hem HuggingFace model indirmesi hem de `fine_tuned_model/` eğitimi (~5 dk) sürüyor olabilir. | `docker logs eco-match-ai -f` komutuyla ilerlemeyi izleyin. Healthcheck ilk 10 dakika içindeki başarısızlıkları zaten "unhealthy" saymaz (`start_period`); eğitim/indirme bitince servis otomatik `healthy` olur. |
 | **"Cannot connect to the Docker daemon"** | Docker Desktop kapalıdır. | Docker Desktop uygulamasını başlatın ve durumunun "Engine Running" olduğunu teyit edin. |
 | **Bellek Yetersizliği Hatası (OOM)** | Docker'a ayrılan RAM miktarı 8 GB'ın altındadır. | Docker Desktop Settings $\to$ Resources $\to$ Memory değerini en az 8 GB olarak güncelleyin. |

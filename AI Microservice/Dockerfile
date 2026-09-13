@@ -27,7 +27,10 @@ RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/wh
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
+# Windows'tan klonlanırsa execute biti kaybolabilir; CMD yine de "sh entrypoint.sh"
+# ile interpreter üzerinden çağırdığı için bu satır olmasa da çalışır — savunma amaçlı.
+RUN chmod +x entrypoint.sh
 
 EXPOSE 8000
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["sh", "entrypoint.sh"]

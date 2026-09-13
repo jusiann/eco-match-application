@@ -32,7 +32,11 @@ services:
     container_name: eco-match-ai
     restart: unless-stopped
     env_file:
-      - .env
+      # Native (venv) çalıştırmalar için elle oluşturulan .env dosyası — jüri
+      # klonunda mevcut değil (gitignore'da) ve olması gerekmiyor: aşağıdaki
+      # environment bloğu + app/config.py varsayılanları container için yeterli.
+      - path: .env
+        required: false
     environment:
       # .env is written for native (host) runs, where the DB is reached at
       # localhost:5433. Inside the compose network it's reachable at the
@@ -49,7 +53,9 @@ services:
       # Sınıflandırma modeli (paraphrase-multilingual-mpnet-base-v2, ~1.1GB)
       # HuggingFace Hub'dan çekiliyor -- bu volume olmadan her container
       # yeniden oluşturulduğunda sıfırdan iniyor. fine_tuned_model/ (eşleştirme
-      # modeli) buna dahil değil, o zaten bind-mount'la host'tan geliyor.
+      # modeli) buna dahil değil: repoda tutulmuyor, entrypoint.sh ilk açılışta
+      # yoksa fine_tune.py ile üretip host'taki bu bind-mount'a yazıyor --
+      # ikinci açılıştan itibaren burada bulunduğu için eğitim tekrarlanmıyor.
       - hf_cache:/root/.cache/huggingface
     depends_on:
       db:
@@ -59,7 +65,11 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 30s
+      # fine_tuned_model/ yoksa entrypoint.sh içinde ilk açılışta ~5 dakika
+      # süren eğitim çalışır; start_period bu pencereyi (yavaş donanım payıyla)
+      # kapsayacak şekilde genişletildi ki bu süre boyunca healthcheck
+      # başarısızlıkları konteyneri "unhealthy" işaretlemesin.
+      start_period: 600s
 
 volumes:
   pgdata:
