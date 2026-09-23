@@ -107,7 +107,7 @@ uyarısını gösterir.
 
 ## Dokümantasyon
 
-Tüm teknik dokümantasyonlar [`docs/`](docs/README.md) altında.
+Tüm teknik dokümantasyonlar [`docs/`](docs/README.md) altında
 
 | Doküman                                                                          | İçerik                                        |
 | -------------------------------------------------------------------------------- | --------------------------------------------- |
